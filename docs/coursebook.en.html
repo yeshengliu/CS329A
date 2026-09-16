@@ -42,6 +42,7 @@ select#partsel{background:var(--panel);color:var(--fg);border:1px solid var(--li
 .tbtn:hover{color:var(--fg);border-color:var(--acc)}
 .tbtn.on{color:var(--acc);border-color:var(--acc)}
 #btnLang{font-weight:700;min-width:52px}
+.tools{display:flex;gap:6px;align-items:center;flex:0 0 auto}
 
 .layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1400px;margin:0 auto}
 aside{position:sticky;top:56px;align-self:start;height:calc(100vh - 56px);overflow:auto;padding:16px 14px 60px;border-right:1px solid var(--line)}
@@ -116,6 +117,23 @@ mark{background:var(--hit);color:var(--hitfg);border-radius:3px;padding:0 2px}
 
 @media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
   main{padding:20px}.brand small{display:none}}
+@media(max-width:640px){
+  header.top{position:static;flex-wrap:wrap;gap:8px;padding:8px 12px}
+  .brand{order:1;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+  .brand small{display:none}
+  header.top .tools{order:2;margin-left:0;gap:5px;flex:0 0 auto}
+  .tbtn{padding:6px 9px;font-size:12.5px}
+  #btnLang{min-width:46px}
+  select#partsel{order:3;flex:1 1 100%;max-width:none;width:100%;font-size:13.5px;padding:8px 10px}
+  .searchwrap{order:4;flex:1 1 100%;max-width:none;margin-left:0}
+  .searchwrap kbd{display:none}
+  main{padding:16px 14px 100px}
+  .lechead h1{font-size:23px}
+  .sec h2{font-size:19px}
+  .figs{grid-template-columns:1fr}
+  aside{padding:12px 10px 24px}
+  select#partsel{text-overflow:ellipsis}
+}
 @media print{header.top,aside,.overlay,.panel,#lightbox,#progress{display:none!important}
   .layout{display:block}main{max-width:none;padding:0}.figs{grid-template-columns:1fr 1fr}
   body.ponly .prose,body.ponly .chain{display:block} section.sec{break-inside:avoid}}
@@ -128,9 +146,11 @@ mark{background:var(--hit);color:var(--hitfg);border-radius:3px;padding:0 2px}
   <select id="partsel"></select>
   <div class="searchwrap"><span class="ic">⌕</span>
     <input id="q" type="search" autocomplete="off"><kbd>/</kbd></div>
-  <button class="tbtn" id="btnPonly" data-i18n="ponly">只看图</button>
-  <button class="tbtn" id="btnLang">EN</button>
-  <button class="tbtn" id="btnTheme" title="theme">◐</button>
+  <div class="tools">
+    <button class="tbtn" id="btnPonly" data-i18n="ponly">只看图</button>
+    <button class="tbtn" id="btnLang">EN</button>
+    <button class="tbtn" id="btnTheme" title="theme">◐</button>
+  </div>
 </header>
 
 <div class="layout">
