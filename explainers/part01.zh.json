@@ -1,0 +1,259 @@
+{
+  "n": 1,
+  "title": "课程概览",
+  "summary": "CS329A 将自我改进的 AI agents 定位为静态 LLM pipeline 的继任者。讲座先追溯 scaling laws（compute/data/parameters）如何引出 emergent chain-of-thought，再梳理催生 ChatGPT 的 post-training 技术栈（SFT、instruction tuning、RLHF/RLAIF）。随后展示 inference/test-time scaling（重复采样 + verifiers、o1 式 reasoning）如何被折回训练形成自我改进循环，综述 agentic workflows 与应用领域，最后介绍课程安排。",
+  "sections": [
+    {
+      "t": 5,
+      "title": "欢迎与课程定位",
+      "problem": "课程需要向背景各异的听众介绍 CS329A，界定其主题（自我改进的 AI agents），并建立讲师的公信力。",
+      "why": "两位讲师来自前沿 LLM 工作，因此内容锚定在当下实践，而非教科书式的抽象。",
+      "how": "通过自我介绍、听众投票，以及说明这是第二次开课、讲座与课程机制均已更新，网站是信息中枢。",
+      "detail": "<p>CS329A 被定位为一门关于 <b>自改进 AI agents</b> 的课程。讲师 <b>Akanksha</b> 是兼职教授，从事 large language models 相关工作，并在创业公司 <b>Reflection AI</b> 做研究；<b>Azalia Mirhoseini</b> 是 CS 系的助理教授。两人在 <b>Google Brain / Google DeepMind</b> 相识，Azalia 还参与过 Codex、Anthropic 和 Gemini。这是他们<b>第二次</b>讲授该课程，讲座与课程安排都有更新。</p><ul><li>听众投票：以 <b>硕士生</b>为主，PhD 和本科生较少——他们称这是“非常好的平衡”。</li><li>讲师对这门课受关注的程度感到惊讶。</li><li>课程网站 <code>cs329a.stanford.edu</code> 提供讲座材料、阅读清单、作业安排和项目提案结构。</li><li>今天的议程：先做 LLM/scaling 概览，再讲直接影响成绩的课程安排。</li></ul>",
+      "terms": ["CS329A", "self-improving agents", "Reflection AI", "Google Brain"]
+    },
+    {
+      "t": 143,
+      "title": "Scaling laws 与模型规模增长",
+      "problem": "早期 BERT/T5 级别的模型表现尚可但有局限；尚不清楚单纯扩大规模能把能力推到多远。",
+      "why": "经验上，随着 compute、dataset size 和 parameter count 增加，test loss 平滑下降——一种可预测的幂律（scaling）关系——因此规模越大，base model 严格更好。",
+      "how": "同时在三个维度上扩展：更多 compute、更多 data、更多 transformer layers/parameters，以压低 test loss 并改进预训练 base model。",
+      "detail": "<p>讲座的第一个趋势是 <b>scaling laws</b>：以 compute 为横轴、loss 为纵轴，loss 下降；更多数据进一步降低 test loss；更多参数（更深的 transformers）又进一步降低 loss。这三个维度成为 GPT-3 及其后继者的基础。</p><ul><li>模型规模在 <b>2018–2024</b> 大致指数增长：BERT <b>340M</b>、GPT-2 <b>1.5B</b>、GPT-3 <b>175B</b>、PaLM <b>540B</b>，GPT-4 估计达到<b>数万亿</b>参数。</li><li>LLM 中的“Large”字面上就指这种规模的膨胀。</li><li>据讲座所述，该趋势在去年左右开始触及<b>饱和点</b>，这也促成了课程后续内容。</li><li>这种 scaling 催生了 GPT-3、ChatGPT、PaLM 和 Gemini。</li></ul>",
+      "terms": ["scaling laws", "test loss", "parameters", "GPT-3", "PaLM"]
+    },
+    {
+      "t": 293,
+      "title": "为何 scaling 重要：benchmarks 与 few-shot learning",
+      "problem": "原始 loss 数值很抽象；实际问题是 scaling 究竟带来了什么能力。",
+      "why": "更大的模型在自然语言与 reasoning benchmarks 上持续改进，并获得了 in-context learning：只需几个示例就能遵循任务模板，而无需针对特定任务做微调。",
+      "how": "使用 prompting——描述任务（zero-shot）或提供少量示范（few-shot）——让固定模型无需重训练即可泛化到新任务。",
+      "detail": "<p>强调了规模的三个回报：</p><ul><li>在自然语言、reasoning 等任务上的 <b>benchmark 提升</b>。</li><li><b>Few-shot / zero-shot learning。</b>Zero-shot = 给出任务（例如“translate English to French”）而不给示例；few-shot = 附上若干 English→French 配对，再要求翻译 “cheese”。过去必须按领域微调；现在几个示例就能让模型遵循模板，使原型开发变得容易。</li><li><b>Emergent behavior：</b>诸如 reasoning 的能力只在更大模型中出现，在小规模上无法预测。</li></ul><p>这些 in-context 能力由 GPT-3 和 PaLM 在众多任务上展示，使 prompting——而非 fine-tuning——成为默认接口，并为后续 reasoning 工作埋下种子。</p>",
+      "terms": ["few-shot learning", "zero-shot", "in-context learning", "emergent behavior"]
+    },
+    {
+      "t": 399,
+      "title": "Emergent behavior 与 chain of thought",
+      "problem": "Scaling laws 描述的是平均 loss，无法预测质变式的新行为，而有些行为只有超过某规模阈值才会奏效。",
+      "why": "Chain of thought（CoT）是一种 emergent capability：在小规模（LLaMA ~8B、GPT ~7B、PaLM 8B）上提供 reasoning 步骤毫无作用，而更大的模型能利用示范的过程解决新问题。",
+      "how": "不要只给一个孤立的 one-shot 答案，而是在 prompt 中给出完整的推理解答过程（CoT prompting），让模型学到该流程并迁移使用。",
+      "detail": "<p>Azalia 将涌现描述为“直到有了这些更大的模型我们才可能预测”的行为。典型例子是 <b>chain of thought</b>。</p><ul><li>通常的 one-shot 数学 prompting 只给问题和答案；模型未必能泛化。</li><li>CoT prompting 额外展示推理：“Roger 一开始有 5 个球。两罐各 3 个是 6。5+6=11。”模型随后能在新问题上复现该过程。</li><li>这个玩具示例对今天的 1B 模型微不足道，但这一性质“至今成立”，并支撑着 thinking/reasoning models。</li><li>经验上，小模型（8B LLaMA、~7B GPT）从 CoT 毫无收益；更大的 LLaMA/PaLM 能利用这些 trace 更好地解题。</li></ul>",
+      "terms": ["chain of thought", "emergent behavior", "LLaMA", "PaLM"]
+    },
+    {
+      "t": 603,
+      "title": "更多 emergent abilities 与 scaling 势头延续",
+      "problem": "CoT 并非唯一突然出现的能力，实验室需要判断继续扩大规模是否仍有回报。",
+      "why": "某些技能——modular arithmetic、word unscrambling——在特定模型规模上突然开启，因此小模型无论怎么 prompting 都学不会。",
+      "how": "前沿实验室持续推动 scaling laws，假定更大规模会涌现更多 emergent behaviors。",
+      "detail": "<p>除 CoT 之外，更大的模型会突然获得 <b>modular arithmetic</b> 和 <b>word unscramble</b> 等能力——“在某个规模上它突然就出现了”。这些是阶跃函数而非平滑改进，且无法仅靠 prompting 从小模型中诱导出来。</p><ul><li>正是这些意外，让前沿公司和实验室持续有动力推进 scaling laws，而不是只优化已知目标。</li><li>Azalia 的要点是我们无法提前预测这些跃迁：它们只在更大模型出现后才被观察到，她预期会有<b>更多 emergent behaviors</b> 浮现并影响下游 agent 能力。</li><li>这为讲座的转向做铺垫：当 pre-training/fine-tuning 开始停滞，<b>inference-time computation</b> 成为提升模型能力的新前沿。</li><li>这也为整门课程提供动机：如果能力会随规模与 test-time compute 不可预测地出现，那么构建其上的 agents 必须通过实证衡量，而不能想当然。</li></ul>",
+      "terms": ["emergent abilities", "modular arithmetic", "word unscramble", "frontier labs"]
+    },
+    {
+      "t": 649,
+      "title": "ChatGPT 与 post-training 配方",
+      "problem": "仅靠 scaling 得到的是 GPT-3，而不是可用的助手；GPT-3 时代的模型无法可靠地遵循指令。",
+      "why": "ChatGPT 引入了两项 post-training 创新——instruction tuning 和 RLHF——使 base model 与人类指令和偏好对齐，从而带来爆发式采用。",
+      "how": "将 instruction tuning（有监督的指令/答案配对）与 reinforcement learning from human feedback 结合，将生成结果导向人类偏好的答案。",
+      "detail": "<p>ChatGPT 于 <b>2022 年 11 月</b>发布，<b>5 天内达到 100 万用户</b>——比幻灯片上其他著名软件与服务都快。Azalia 强调这不仅是规模：在参数扩展之上的一系列创新，才实现了对 GPT-3 的跃迁。</p><ul><li>两项关键创新：<b>instruction tuning</b> 和 <b>reinforcement learning from human feedback（RLHF）</b>。</li><li>这里先做预告，课程中会深入学习。</li><li>课程逐步构建的 pipeline：<b>pre-training → 在高质量数据上 fine-tuning → instruction tuning → RLHF/RLAIF</b>。</li><li>这段历史框定了讲座的其余部分：先详述 pre-training/alignment pipeline，再讲更新的 inference-scaling 与 agentic 方向。</li><li>它也预告了反复出现的主题——能力跃迁来自将规模与训练/反馈目标结合，而非仅靠规模。</li></ul>",
+      "terms": ["ChatGPT", "instruction tuning", "RLHF", "post-training"]
+    },
+    {
+      "t": 720,
+      "title": "Pretraining 与 alignment：流程概览",
+      "problem": "预训练模型已吸收所有互联网文本，但没有对错概念，也不知道如何遵循指令。",
+      "why": "Pre-training 只在原始网页/书籍数据上优化 next-token prediction，因此学到的是统计结构，而非人类价值或遵循任务的行为。",
+      "how": "加入 alignment/fine-tuning 阶段，将模型导向人类目标、偏好与价值——具体体现为用精选数据微调 base model 以获得 sensibleness 和 safety 等属性。",
+      "detail": "<p><b>Pre-training</b> 步骤最简单：在大量文本/数据上训练以预测 next token；这是任何语言模型的起点。但由此得到的 base model“在统计上了解世界的状态”，却不知道什么是对的，也不遵循指令。</p><ul><li>Alignment——将模型导向人类目标/偏好/价值——被描述为“仍是个大问题……我们还没掌握它”。</li><li>课程展示了用精选高质量数据微调 base model 以获得 <b>sensibleness</b> 和 <b>safety</b> 的曲线，这些数据演示了何为安全/不安全、合理/荒谬。</li><li>Fine-tuning 是 ChatGPT 相对 GPT-3 及更早模型的“关键差异化因素”。</li><li>尽管模型越来越强大，讲师强调 alignment 尚未解决——它仍是一个活跃问题，课程会反复回到它。</li></ul>",
+      "terms": ["pre-training", "alignment", "base model", "sensibleness", "safety"]
+    },
+    {
+      "t": 861,
+      "title": "基于精选数据的 supervised fine-tuning",
+      "problem": "预训练模型需要的行为无法由原始网页文本可靠地教会。",
+      "why": "Fine-tuning 仍重复 next-token prediction，但在质量高得多的精选语料上进行，从而把模型输出分布推向你真正想要的分布。",
+      "how": "在昂贵精选的数据上微调——书籍、创意散文等高质量文本——而非抓取的网页数据。",
+      "detail": "<p>Supervised fine-tuning（SFT）“与 pre-training 过程相同”（next-token prediction），但用的是<b>质量高得多的数据</b>，因此模型架构不变，输出分布却发生偏移。</p><ul><li>精选语料的例子：<b>书籍、创意散文</b>，以及公司花费数百万——可能数亿——美元获得的授权文本。</li><li>“模型因此变得好得多。”</li><li>讲座强调这是若干数据精选步骤中的第一步：同一个高质量数据杠杆在 instruction tuning 和 reward modeling 中会再次出现。</li><li>这一阶段的数据质量决定下游行为，是构建前沿模型成本与投入的重要部分。</li></ul>",
+      "terms": ["supervised fine-tuning", "next-token prediction", "data curation"]
+    },
+    {
+      "t": 907,
+      "title": "Instruction tuning",
+      "problem": "即便是微调良好的 base model，也不会自然地像助手那样响应用户请求。",
+      "why": "原始文本缺少明确的 instruction→answer 映射，因此模型从未学会遵循指令并给出期望答案的对话格式。",
+      "how": "在 instruction/question–answer 配对上训练（人类生成的数据/模板加合成数据），让模型学会作答并展示过程；chain-of-thought fine-tuning 会把 reasoning 连同标签一起给出。",
+      "detail": "<p><b>Instruction tuning</b> 让模型接触 <b>instruction + question/answer 配对</b>。传统上这些数据由 <b>人类生成的数据或模板</b> 加上 <b>synthetic data</b> 组合而成。</p><ul><li>示例指令：“Please answer the following question. What is the boiling point of nitrogen?”后面跟着答案。</li><li><b>Chain-of-thought fine-tuning</b> 更进一步，向模型展示通向答案的过程，并提供标签/结果。</li><li>该数据集的<b>质量与泛化性</b>“对模型质量有很大影响”。</li><li>经过这一阶段，模型“越来越像我们今天看到的模型”——你可以提问并来回交流。</li></ul>",
+      "terms": ["instruction tuning", "chain-of-thought fine-tuning", "synthetic data"]
+    },
+    {
+      "t": 1011,
+      "title": "RLHF 与 reward modeling",
+      "problem": "有监督配对只能覆盖有限的行为，且没有标量目标告诉模型两个看似合理的答案哪个更好。",
+      "why": "RLHF 的目标不是固定的监督标签，而是从人类偏好评分中蒸馏出的学习型 <b>reward model</b>，因此可以针对一个近似的人类评判者优化生成。",
+      "how": "让人类（有时是专家）对模型答案评分，在这些比较上训练一个 reward model，再用它引导 LLM 的参数朝高奖励生成靠拢；不同奖励类型可加权。",
+      "detail": "<p><b>RLHF</b> = reinforcement learning from human feedback。与 SFT 的关键区别在于 <b>目标和数据</b> 的构造方式：不再是有监督的 prompt/label 配对，而是从人类偏好构建 <b>reward model</b>。</p><ul><li>公司投入巨资让人类（有时是专家，有时是普通人）对生成答案的正确与否进行评分。</li><li>Reward model 在训练时替代人类，把 LLM 导向它评分高的答案。</li><li>提到的奖励维度：<b>correctness、helpfulness、specificity、harmlessness</b>，按实验室关注的重点加权（transcript 在这里在 RLHF 和 “RLAIF” 之间有所混用）。</li><li>合起来看，<b>pre-training → 高质量 fine-tuning → instruction tuning → RLHF</b> 是使 ChatGPT 远强于 GPT-3 及更早模型的核心组件。</li></ul>",
+      "terms": ["RLHF", "reward model", "human preferences", "helpfulness", "harmlessness"]
+    },
+    {
+      "t": 1177,
+      "title": "Inference scaling 与 Large Language Monkeys",
+      "problem": "直到讲座前约一年，能力都来自 pretraining 和 fine-tuning；test-time compute 未被当作 scaling 轴。",
+      "why": "生成是随机的（可通过 temperature 控制），因此单个样本只揭示了更大空间中的一个点——模型可能已经知道正确答案，只是很少输出。",
+      "how": "并行采样：对同一问题采样多个答案，用 verifier/选择机制（如 unit tests）挑出验证正确的答案——完全不改变任何模型参数。",
+      "detail": "<p>Inference 是能力的新前沿。Azalia 介绍了 <b>Large Language Monkeys</b>，其灵感来自 <b>infinite monkey theorem</b>：让 LLM 扮演猴子，反复要求它求解同一个输入问题。</p><ul><li>不做单次生成，而是产生许多次（<b>parallel sampling</b>）并用 <b>verifier</b> 选出正确的那个——例如对生成的代码运行 unit tests，保留通过测试的版本。</li><li>为何有效：模型回答有方差；它们是非确定性的，而 <b>temperature</b> 控制这种多样性。</li><li>“Inference scaling”意味着模型参数保持<b>固定</b>——只改变 decoding/sampling 来产生更难问题的解。</li><li>Q&amp;A 指出，可能答案的空间远大于 10,000 次采样所能覆盖的范围，且 temperature 提得太高会产生乱码（通常超过约 1.2 就不行）。</li></ul>",
+      "terms": ["inference scaling", "parallel sampling", "verifier", "temperature", "Large Language Monkeys"]
+    },
+    {
+      "t": 1403,
+      "title": "重复采样结果：coverage scaling",
+      "problem": "重复采样真能把弱模型变成强解题者吗？",
+      "why": "只要有一个样本正确，完美的 verifier 就能找出来，因此 coverage——k 个样本中至少一个解出的题目比例——应随 k 上升，即使单样本准确率很低。",
+      "how": "在数学和编程 benchmarks 上，将每题采样数从 1 增至 10,000，测量 coverage。",
+      "detail": "<p>实验在数学和编程 benchmarks 上把每题采样数从 <b>1 扫到 10,000</b>，并绘制 <b>coverage</b>（至少一个样本解出的比例）。</p><ul><li>单个样本时，较小的开源模型（LLaMA 3 8B、LLaMA 7B）落后于 <b>GPT-4o</b>。</li><li>随着样本增加，小模型的 coverage 曲线在所展示的所有情形中都越过 GPT-4o。</li><li>解读：模型“已经知道的东西”远比单次生成所暴露的多得多。</li><li>对某些难题，10,000 个样本中只有 <b>3–4 个</b>正确——既显示了潜力，也显示了样本效率之低。</li><li>这为不改变参数量的 inference scaling 提供动机，而“还有很多其他方式”可以做到，不止重复采样。</li></ul>",
+      "terms": ["coverage", "pass@k", "GPT-4o", "LLaMA", "sample efficiency"]
+    },
+    {
+      "t": 1496,
+      "title": "Q&A：采样成本、verifiers 与 temperature",
+      "problem": "学生探究重复采样的实际限制：latency、没有 checker 时如何验证，以及多样性控制。",
+      "why": "并行样本可以并发运行，因此 latency 问题不如总 compute 成本突出；而选择需要 verifier，这在开放式领域很难。",
+      "how": "当没有 unit-test 式 verifier 时，使用 reward models / LLM-as-judge；调整 temperature 及其他技巧以获得多样性；在 compute 成本与问题复杂度之间权衡。",
+      "detail": "<p>Q&amp;A 的要点：</p><ul><li><b>答案空间：</b>模型只能在它能生成的答案中选择；完整空间远大于 10,000 个样本，但相对于一个 7B/8B 小 LLaMA 偶尔能解出的 IMO 级问题，10,000 已“采样效率很高”。</li><li><b>Latency/成本：</b>并行样本可以批处理，因此 latency 问题较小，但存在随问题复杂度变化的 compute 成本权衡——课程后续会讲。</li><li><b>Verifiers：</b>有 verifier 时更容易；否则有关于 <b>LLM judges、LLM reward functions 以及带工具的 LLMs</b> 的研究。会有一讲专门讨论 verifiers。</li><li><b>Temperature：</b>不能太高（会出乱码）；超过约 1.2 就“不太好”，有研究在调它以及其他获得答案多样性的技巧。</li></ul>",
+      "terms": ["LLM-as-judge", "reward model", "temperature", "latency", "verifier"]
+    },
+    {
+      "t": 1696,
+      "title": "DeepSeek/o1 与闭合 train–test 循环",
+      "problem": "Inference scaling 在固定模型上改进输出，但本身不会让模型变好；reasoning 发布（DeepSeek、o1、Gemini thinking）提出了新问题。",
+      "why": "Test-time 生成可以变成训练数据：当答案已知（数学）或可验证（代码）时，可以筛选大量生成的解/trace 作为合成监督，改进模型而不只是改进输出。",
+      "how": "在循环中结合 fine-tuning 与 test-time scaling——在 test time 生成大量高质量合成数据，加入训练集，再微调——使模型持续自我改进。",
+      "detail": "<p>DeepSeek（<b>2024 年 12 月</b>发布）、OpenAI 的 <b>o1</b> 系列和 Gemini thinking 模型标志着一个转变。新做法是 <b>把 fine-tuning 和 test-time scaling 结合起来</b>。</p><ul><li>对数学而言，答案已知，模型可以生成许多通向 golden answer 的 reasoning paths。</li><li>对编程问题而言，它可以在 test-time scaling 期间生成大量高质量数据，这些数据成为训练集的一部分。</li><li>在这些数据上微调会让模型更好——“这就是我们非常兴奋的自我改进部分。”</li><li>讲师称这个循环是开放式的：“把 test time scaling 反馈进训练，模型能变得多好是没有边界的。”</li></ul>",
+      "terms": ["DeepSeek", "o1", "test-time scaling", "synthetic data", "self-improvement"]
+    },
+    {
+      "t": 1820,
+      "title": "Reasoning models 与 test-time compute",
+      "problem": "难题需要不止一次前向传播；固定的计算量限制了数学/IMO 级任务的质量。",
+      "why": "像人类一样，reasoning models 花更多 compute——更长的 chains of thought 和多种策略——因此准确率可随 test-time compute 扩展，而参数量保持固定。",
+      "how": "训练/引出能进行 problem analysis、task decomposition、带反馈的自评估（tests、calculator）、self-correction 和 backtracking 的 thinking traces；OpenAI 的 o1 展示了在 AIME 上 pass@1 随 test-time compute 呈对数线性上升。",
+      "detail": "<p>动机：对困难问题，人类会思考更久并尝试不同策略；thinking models 也是如此。讲座列出的步骤：</p><ul><li><b>Problem analysis</b> —— 解析问题在问什么。</li><li><b>Task decomposition</b> —— 拆解为更简单、更易处理的子问题。</li><li><b>Self-evaluation / feedback</b> —— 运行测试、使用 calculator，或评判答案。</li><li><b>Self-correction and backtracking</b> —— 放弃错误思路并尝试另一条。</li></ul><p>其中一部分被整理进训练数据；大部分是在 fine-tuning 和 RL-from-synthetic-data 过程中习得的。OpenAI 的 o1 展示了在困难的 AIME 数学 benchmark 上，固定参数下 <b>pass@1</b> 随 test-time compute 呈<b>对数线性</b>增长。一个实例是 o1 编写 bash script 来转置矩阵，自行完成分析、分解和过程中的自我纠正（“wait, something is wrong”）。</p>",
+      "terms": ["test-time compute", "pass@1", "AIME", "problem analysis", "backtracking", "self-correction"]
+    },
+    {
+      "t": 2086,
+      "title": "Reasoning 对比 GPT-4o 及机制 Q&A",
+      "problem": "reasoning models 的提升是因为真的生成了推理，还是仅因为被要求逐步思考？",
+      "why": "答案因指标而异：coverage/pass@k 可以仅靠采样提升，但 pass@1 需要模型知道哪条 chain 正确——这正是 train-time/RL 学习所补充的。",
+      "how": "把训练数据看作在教一个泛化的思考者：模型学到的分解、回溯和分析能泛化到训练指令之外。",
+      "detail": "<p>像 o1 这样的 reasoning models 在数学计算、数据分析和编程上优于 GPT-4o，但在创意/个人写作和文本编辑上未必。</p><ul><li>有学生问，提升是来自生成推理过程，还是仅仅来自要求模型逐步思考从而发现潜在能力；讲师回答说，数据已把模型变成“泛化的思考者”，其技能可泛化到新问题。</li><li>base model 也能做一定推理，但“不太清楚哪一个才是正确的”；train-time/test-time scaling 的很大一部分是在教正确性选择，这也是为什么 reasoning models 提升的是 <b>pass@1</b>，而重复采样提升的是 <b>pass@k / coverage</b>。</li><li>思考很昂贵，但“我们希望它们生成这些，因为这能带来更好的答案”。</li></ul>",
+      "terms": ["pass@1", "pass@k", "GPT-4o", "generalized thinker"]
+    },
+    {
+      "t": 2257,
+      "title": "Q&A：reasoning traces 与 reasoning 如何习得",
+      "problem": "是否应由一个单独的（更小的）模型产生推理，而让更大的模型给出最终答案？reasoning traces 是硬编码的还是学到的？",
+      "why": "reasoning 能力随模型规模扩展，且经验上模型偏好自己生成的 traces，甚至胜过来自更好模型的 traces——因此简单混合模型并不可靠。",
+      "how": "从 CoT 密集的指令数据和模板中自举，再让模型通过 fine-tuning 和 RL 泛化；outcome-reward 和 process-reward models 提供教会更好推理的反馈。",
+      "detail": "<p>Q&amp;A 要点：</p><ul><li>通常由<b>更大</b>的模型做推理，你可以用更小的模型来总结最终答案——但“模型更喜欢自己的 trace”，即便那些 trace 来自更好的模型。</li><li>reasoning 如何教：“两者兼有。”base model 已有一些思考能力；CoT 在 instruction-tuning 数据和模板中被大量使用；很多是通过 fine-tuning 和 RL from synthetic data 学到的。没有单一已发表工作能完全覆盖这一点。</li><li>课程会讲 <b>outcome reward models</b> 和 <b>process reward models</b>。总会有一些自举（模板、CoT），但模型能泛化到远超训练指令的范围。</li><li>有学生问采样数是否应取决于问题难度；在没有已发表工作的情况下，一个带有复杂度概念的 <b>reward model</b> 可以用来决定是否做更多（重复或并行）采样。</li></ul>",
+      "terms": ["own traces", "outcome reward model", "process reward model", "bootstrapping", "RL from synthetic data"]
+    },
+    {
+      "t": 2449,
+      "title": "从 LLM 到 agents",
+      "problem": "作为 chatbot 或 reasoning model 的 LLM 本质上是单轮的：互动有趣，但不会替你完成任务。",
+      "why": "完成一项任务需要不止一次生成：系统必须持有目标、规划、与环境交互、对反馈作出反应，并决定何时停止——还需要 memory 来保持不偏离任务。",
+      "how": "把模型包进 agent 循环——目标、规划、tool calls、环境反馈、self-correction 和停止条件——如 Claude Code 和 Deep Research 那样。",
+      "detail": "<p>近来的 agents（Claude Code、Deep Research、Codex）让人能端到端完成真实工作流。Azalia 的例子：研究在斯坦福上课期间到哪儿租一年的房子——agent 浏览许多网站、做总结并返回优缺点。“这在以前是不可能的。”</p><ul><li>agents 的显著特征：<b>目标 → 规划 → 采取行动 → 获取反馈 → 决定何时停止</b>。</li><li>它们可能需要 <b>external tools</b> 和某种 <b>memory</b> 来跟踪任务。</li><li>今天的现实大多是 <b>静态 agentic workflows</b>：一个模型产生解答，另一个评判并决定是否接受；Deep Research 对多个输入调用 LLM 并聚合成摘要。</li><li>编程和研究是端到端自主性开始显现“生命迹象”的领域。</li></ul>",
+      "terms": ["agent", "Claude Code", "Deep Research", "tool use", "memory"]
+    },
+    {
+      "t": 2703,
+      "title": "Agentic workflow 构件与编排",
+      "problem": "开放式 agent 循环很难做得可靠，因此大多数已部署系统使用手工构建的 LLM 调用图。",
+      "why": "把任务分解为固定 workflow 可以插入验证与控制，这比无约束的循环更容易做到可靠。",
+      "how": "组合原语——LLM calls、verifiers（代码/数学中的 unit tests）、critics/judges（LLM-as-judge）、tool calls（search、weather）——并用 prompt chaining、routing、parallelization 以及 orchestrator/LLM manager 来编排。",
+      "detail": "<p>典型 workflows 包含：</p><ul><li>带指令/输入的 <b>LLM calls</b>，产生输出。</li><li><b>Verifiers</b>（会有一整讲专门讨论）和 <b>critics/judges</b>——实际上就是 LLM-as-judge 范式。</li><li><b>Tool calls</b>——例如 Deep Research 的 web search、查天气。</li></ul><p>提到的编排模式：<b>prompt chaining</b>（把子任务串到最终目标）、<b>routing</b>（复杂 vs. 简单路径）、<b>parallelization</b>（独立子任务并行运行再聚合），以及负责规划并发起后续 LLM 调用的 <b>orchestrator / LLM manager</b>（见 Claude Code）。evaluator 或 judge 可以替代真实世界的测试反馈。所有这些都比普通 reasoning LLM 更要求更好的 <b>planning、multi-step reasoning 和 self-improvement</b>。</p>",
+      "terms": ["prompt chaining", "routing", "parallelization", "orchestrator", "LLM-as-judge"]
+    },
+    {
+      "t": 2889,
+      "title": "Coding agents、可靠性与 RL",
+      "problem": "一年前 coding agents 的 edit-run-inspect 循环并不可靠；让它变得可靠是有用自主性的关键。",
+      "why": "agent 必须浏览仓库、搜索/编辑文件、运行终端命令，并用命令输出决定下一步编辑——除非循环可验证且能自我纠正，否则错误会累积。",
+      "how": "与之前相同的循环，靠更强大的模型、更好的 RL、RL with verifiable rewards 和 train-time scaling 来实现；一旦模型改进，就会出现自我改进循环：模型生成并验证自己的任务。",
+      "detail": "<p>coding agent 通过 <b>terminal</b> 与计算机交互：编辑文件、浏览/搜索仓库、运行命令、检查输出，并分支到其他文件。这个循环“非常像”agent 循环——“去年还不太可靠”，现在“刚刚开始变得可靠”。</p><ul><li>讲师认为范式未变；进展来自<b>更强大的模型和更好的 RL</b>。</li><li><b>RL with verifiable rewards</b> 和 <b>train-time scaling</b> 正在奏效。</li><li><b>自我改进循环</b>：随着模型改进，它们能<b>生成任务</b>，任务也变得更可靠；例如在 <b>Code Monkeys</b> 中，为模型生成的代码生成 unit tests 并检查它们是否有帮助，是一个很强的验证信号。</li><li>他们邀请大家做研究项目，使生成/验证更稳健。</li></ul>",
+      "terms": ["coding agent", "RLVR", "train-time scaling", "Code Monkeys", "unit tests"]
+    },
+    {
+      "t": 3042,
+      "title": "Generator–verifier gap",
+      "problem": "模型能生成海量内容，但能生成并不等于能产出有用的东西。",
+      "why": "有用性需要反馈信号；在反馈廉价的地方（数学、代码、基于规则的领域）改进可以持续，但在创意写作等开放式领域，人类反馈成为瓶颈。",
+      "how": "投入稳健的验证——组合 verifiers、LLM judges/reward models、工具——并接受验证而非生成才是限制因素。",
+      "detail": "<p>这就是 <b>generator–verifier gap</b>：模型很容易生成无意义内容或看似合理的 reasoning traces，但判断有用性需要反馈循环。</p><ul><li>在反馈良好且廉价的领域（数学、代码、基于规则的任务），持续改进是可能的。</li><li>在 <b>creative writing</b> 等领域，人类反馈“最终成为瓶颈”。</li><li>获得<b>稳健验证</b>很难；Azalia 的实验室有一篇关于<b>组合 verifiers</b> 的论文，而验证“仍是这个领域的瓶颈之一”。</li><li>后续学生讨论问，大幅跃升来自 RL 还是多样的 pre-training 数据——讲师说<b>没有共识</b>；两者都有帮助，这个循环尚未被充分理解，这只是被商业化的“最初的生命迹象”，仍有许多研究待做。</li></ul>",
+      "terms": ["generator-verifier gap", "verification bottleneck", "creative writing", "RL"]
+    },
+    {
+      "t": 3172,
+      "title": "Agent 任务循环与重复性知识工作",
+      "problem": "即使有目标，用户真正想要什么往往也不清楚，而且可能没有明显信号表明任务已完成。",
+      "why": "用户意图通常描述不足，因此 agent 必须澄清它、搜索正确上下文，并依赖验证（往往是它自己生成的测试）来判断何时完成。",
+      "how": "使用 目标 → 澄清意图 → 搜索 → 行动 → 验证 的循环，并瞄准那些验证与重复性使委托变得容易的任务：code migrations、version upgrades、重构、data engineering、data-warehouse migration。",
+      "detail": "<p>从 agent 图中得出的一个抽象：即使给定目标，模型也必须<b>澄清用户意图</b>，然后搜索相关文件、选择动作并<b>验证</b>——在编程示例中，就是通过它可能自己生成的测试。</p><ul><li>关键问题是 agent 如何知道它完成了所要求的事，因为<b>用户往往没有把问题描述得足够清楚</b>。</li><li>像 <b>o3</b> 这样的模型见过许多这类端到端 traces，因此能规划、推理并得出结论；要实现完整的端到端目标仍有很多需要。</li><li><b>重复性任务</b>是 agents 大放异彩之处：code migrations、version upgrades、代码库重构、数据抽取与清洗、data-warehouse migration——对人类枯燥，容易委托。</li></ul>",
+      "terms": ["intent clarification", "verification", "code migration", "data engineering"]
+    },
+    {
+      "t": 3279,
+      "title": "客户支持 agents",
+      "problem": "客户支持是高频、吃力不讨好的工作，且该领域涵盖许多子任务，很难用单一系统覆盖。",
+      "why": "支持工作很大部分是查找和摘要而非深度推理，因此 LLM 可以提供实时知识和草稿，减轻 agent 的认知负担。",
+      "how": "部署聚焦的能力：实时转录、从数据库找出相关文章的 knowledge assist、smart reply 草拟，以及通话摘要；某些细分正在走向端到端自动化。",
+      "detail": "<p>客户支持被称为最普遍的 agent 应用之一。提到的具体 LLM 能力：</p><ul><li><b>Live transcription</b>——给出干净的交互记录（现在在会议中也很常见）。</li><li><b>Knowledge assist</b>——支持 agent 不必什么都知道；向 LLM 求解并找出相关文章，“比只有像索引一样的搜索更好”。</li><li><b>Smart replies</b>——agents 草拟聊天回复。</li><li><b>Call summaries</b>——本身就改善了客户体验。</li></ul><p>多家公司瞄准这一领域，各自覆盖问题的不同细分，其中实时转录和查找式 assist 今天已很有用，一些端到端自动化也开始出现。这个模式可推广：高频、以查找为主、反馈廉价的工作流最容易委托给 LLM agents。</p>",
+      "terms": ["knowledge assist", "smart replies", "transcription", "call summary"]
+    },
+    {
+      "t": 3359,
+      "title": "Deep research agents",
+      "problem": "全面的报告过去需要人工文献综述：阅读并总结每篇论文，再进行综合。",
+      "why": "多步研究过程——确定参考文献、判断相关性、总结、组合——是可分解的，因此 agent 可以让这条 pipeline 自动化。",
+      "how": "给 agent 一个主题；它确定要查阅的参考文献、构建大纲、总结每篇的相关内容，并组合成一篇完整文章——这是作业之一。",
+      "detail": "<p>对复杂主题，agents 可以产出以前需要完整文献综述才能得到的全面报告。</p><ul><li>Pipeline：确定要看哪些 <b>references</b> → 构建判断相关性的 <b>outline</b> → <b>summarize</b> 每篇的相关内容 → <b>combine</b> 成一篇完整文章。</li><li>示例 prompt：“2022 Winter Olympics opening ceremony”。</li><li>结果“在某些情况下非常令人印象深刻”；学生将在某次作业中尝试它，这使它成为课程中较可直接测试的 agent 能力之一。</li><li>机制上这是一个 fan-out/fan-in 模式：并行检索与总结，再聚合——类似之前讨论的 parallelization 编排原语。质量瓶颈是参考文献相关性和忠实摘要，而非文本生成。</li></ul>",
+      "terms": ["deep research", "literature review", "outline", "summarization"]
+    },
+    {
+      "t": 3409,
+      "title": "AI scientists",
+      "problem": "科学发现是开放式且昂贵的；研究者需要帮助来产生想法并迭代实验。",
+      "why": "LLM 可以作为广泛的头脑风暴引擎，结合网络上的知识，可能提出超出单个研究者框架的想法。",
+      "how": "在整个研究生命周期中使用 agents——想法生成、实验迭代和论文写作——如 AI Scientist 论文所示。",
+      "detail": "<p>一个前瞻方向：把研究 agents 用作 <b>AI scientists</b> 来协助数学和科学问题。</p><ul><li><b>Idea generation</b>：LLM 头脑风暴假设。</li><li><b>Experiment iteration</b>：它帮助迭代你想做的实验（来自 <b>AI Scientist</b> 论文）。</li><li><b>Paper write-up</b>：它帮助改进写作本身。</li><li>尽管这些模型会 <b>hallucinate</b>，但它们生成大量想法的能力——借助阅读网络——可以提出资深研究者或只上过课的人可能遗漏的另辟蹊径的方向，使它们成为有价值的头脑风暴伙伴。</li><li>权衡很明确：创造力/多样性之所以有价值，恰恰<i>因为</i>生成廉价，但 hallucination 意味着输出必须被筛选——再次把瓶颈推到验证和人类判断上。</li></ul>",
+      "terms": ["AI Scientist", "idea generation", "experiment iteration", "hallucination"]
+    },
+    {
+      "t": 3485,
+      "title": "课程主题与 guest lectures",
+      "problem": "学生需要理解课程范围，以及本次开课与上一次有何不同。",
+      "why": "该领域发展迅速，因此大纲混合了核心讲座与来自前沿实验室的 guest lectures，以保持内容更新。",
+      "how": "讲座、guest talks（post-training 演进、multimodal agents、robotics）与学生项目展示相结合，全部围绕同一核心主题组织。",
+      "detail": "<p>课程覆盖广泛的主题列表；<b>总体主题在整个学期保持不变</b>。形式：</p><ul><li><b>Lectures</b> 加上来自前沿 AI 实验室人士的 <b>guest lectures</b>。</li><li>guest 主题包括 <b>post-training 如何演进</b>，以及 <b>multimodal agents 和 robotics</b>。</li><li>学生进行 <b>project presentations</b>。</li><li>阅读清单（论文）发布在网站上；学生应同步阅读以建立更深的直觉，并可基于对这些论文的批评或改进来做项目。</li><li>Azalia 称主题列表“非常酷”，并强调主线：planning、multi-step reasoning 和 self-improvement 是贯穿每周的能力，把 guest talks 与核心讲座串起来。</li></ul>",
+      "terms": ["guest lectures", "post-training", "multimodal agents", "robotics"]
+    },
+    {
+      "t": 3683,
+      "title": "课程安排与 homeworks",
+      "problem": "成绩和截止日期取决于对机制的理解，而本学期课程规模很大。",
+      "why": "由于班级很大，政策必须统一执行——没有例外——因此学生必须围绕截止日期做好规划。",
+      "how": "用网站和 Canvas 获取更新；先修要求、本学期三次 homeworks（比上次开课多一次）、一个课程项目，以及固定的截止日期均已发布；讲座在课前上传。",
+      "detail": "<p>课程安排：</p><ul><li>检查先修要求，只在有把握时注册；官方更新通过 <b>Canvas</b>，材料放在外部网站。</li><li>每次课前上传讲座；所有作业和项目的截止日期都已发布。</li><li>本学期有 <b>三次 homeworks</b>——比上次开课多一次——与 TAs 共同设计，帮助学生更深入地学习主题。</li><li>外加一个 <b>course project</b>，学生围绕研究问题构建 agentic systems 或设计实验，会提供示例/建议。</li><li>由于本学期班级很大，讲师表示不能在截止日期上破例，因此 late days 应明智使用；不允许 audit，讲座视频最终会出现在 YouTube 上。</li></ul>",
+      "terms": ["Canvas", "prerequisites", "homeworks", "course project"]
+    },
+    {
+      "t": 3794,
+      "title": "课程项目、里程碑与评分",
+      "problem": "学生必须界定一个研究级项目并管理里程碑，而不是做一个 demo。",
+      "why": "课程看重研究贡献（假设、问题、可衡量的改进），因此像综述或普通应用这样的反面例子不合格。",
+      "how": "做有研究性的工作：新的 eval dataset/benchmark、对现有 agentic system 的可靠性研究，或在现有 benchmark 上做 hill climbing；交付 proposal、midterm progress、final report 和 poster。",
+      "detail": "<p>项目机制与期望：</p><ul><li>以 <b>2–4</b> 人组队（也可单人）；队友越多，可汇集越多用于实验的 <b>API credits</b>。过往成功项目发布在网站上。</li><li>可接受的方向：<b>新的 evaluation dataset/benchmark</b>、对现有 agentic system 的 <b>可靠性研究</b>，或在现有 benchmark 上做 <b>hill climbing</b>；你也可以基于课程论文构建或对其进行批评。</li><li>不可接受：只是 <b>survey</b> 或 <b>demo app</b>（“只是 live coding”）；项目需要假设和可衡量的改进或性质分析。</li><li>里程碑：项目 proposal（约十月初）、展示真实进展的 midterm presentation、final report，以及 <b>12 月 12 日下午 4–6 点</b> 有业界来宾的 poster session。</li><li>评分：<b>50% homeworks / 50% project</b>；需要遵守 honor code。</li><li>Office hours 在 Canvas；在 <b>Ed Stem</b> 公开提问；通过 <b>GradeScope</b> 提交里程碑/作业。</li><li>Late policy 较为宽松，但因班级规模没有例外；不允许 audit；讲座视频最终会上 YouTube。过往学生曾把项目成果发表成论文。</li></ul>",
+      "terms": ["benchmark", "hill climbing", "poster session", "GradeScope", "Ed Stem", "honor code"]
+    }
+  ]
+}

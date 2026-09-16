@@ -1,0 +1,454 @@
+{
+  "n": 7,
+  "title": "自我改进与 Deep Research Agent",
+  "summary": "自我改进被框定为对模型输出空间的搜索：正确解往往已经存在于样本之中，工程问题在于把它策展出来。讲座首先梳理 AlphaCode（在 GitHub 加 CodeContests 上预训练，每个问题采样 1M 个程序，用示例测试筛选，按语义聚类，向 Codeforces 提交约 10 个），随后是 AlphaCode 2（fine-tune Gemini Pro，训练一族 generator 以获得多样性，学习一个 scoring model 用于选择），表明更好的基座模型与学习得到的 selection 在削减样本成本的同时大致将 solve rate 翻倍。之后转向 deep research agent：推理模型被冻结在 knowledge cutoff 上，并在 GPQA 上用不确定性 token 来对冲，因此讲座对比 direct reasoning、plain RAG（一次性检索）、agentic RAG（推理期间搜索）和 Search-o1（即时查询并在检索到的文档内推理），最后以 Search-R1 与 calibration 收尾。",
+  "sections": [
+    {
+      "t": 5,
+      "title": "框架：将自我改进视为对输出空间的搜索",
+      "problem": "模型可以产生大量输出，但单条随机轨迹只是一次抽样，且没有内建机制能从它所能生成的一切中抽出正确解。",
+      "why": "相对于可能程序或答案的巨大空间，正确解十分稀少，因此仅靠生成会留下未被利用的价值；瓶颈在于策展（curation），而非采样。",
+      "how": "本讲将自我改进重新表述为对模型输出的搜索，分为代码模型的大规模采样搜索（AlphaCode / AlphaCode 2，在 Homework 2 中复用）与 deep research 的 agentic 搜索（Homework 3），coverage 与 selection 是贯穿始终的关注点。",
+      "detail": "<p>讲师围绕一个论断来组织整堂课：<b>正确解已经存在于模型的输出空间中的某处</b>；工程问题在于把它从模型所能生成的一切中<i>策展</i>出来。讲座宣布了两种搜索模式：</p><ul><li><b>代码模型采样搜索</b> &mdash; 生成大量样本并在其中搜索（AlphaCode / AlphaCode 2），即面向 HumanEval 的作业中复用的模式。</li><li><b>Deep research 的 agentic 搜索</b> &mdash; Homework 3 中使用的 retrieve-and-synthesize 循环。</li></ul><p>具体的对比是：一个像 <b>autocomplete</b>（补全一行）那样行为的编码助手，与 <b>competitive programming</b> 的对比——后者提供问题描述以及充当契约的输入/输出示例，并要求模型在写代码之前推断出算法。贯穿本讲余下部分的分解方式：<b>coverage</b>（正确样本究竟是否存在？）与 <b>selection</b>（流水线能否识别出它？）。</p>",
+      "terms": [
+        "search",
+        "coverage",
+        "selection",
+        "competitive programming",
+        "autocomplete",
+        "deep research"
+      ]
+    },
+    {
+      "t": 71,
+      "title": "AlphaCode 的设定与预览：端到端 competitive programming",
+      "problem": "行级代码补全有很高的成功率，但端到端地求解一整个 competitive programming 问题却表现很差。",
+      "why": "一道竞赛题需要阅读冗长的描述、从 docstring 推断出题者意图的算法，然后产出很长的解；而补全只是扩展一个程序员已经搭好框架的模式。",
+      "how": "AlphaCode（约 2022 年）直接攻取完整问题；发布时它在 10 场竞赛的参赛者中排名接近前 54%，首次展示了 AI 能够超越狭窄任务进行泛化并端到端求解问题。",
+      "detail": "<p>AlphaCode（约 2022 年）被呈现为编码 agent 的一个严格更难版本。补全模型看到一行并扩展它；competitive programming 问题则给出冗长的描述以及输入/输出对，要求一个端到端的程序，因此模型必须先推断出意图中的算法再求解。</p><ul><li><b>为何这一跃迁重要：</b>问题描述更长、解更长，并且要对<i>方法</i>进行推理，而不是扩展一个程序员已经搭好框架的模式。</li><li><b>成就预览：</b>发布时 AlphaCode 在 <b>10 场竞赛</b>的参赛者中排名接近 <b>前 54%</b> &mdash; 首次展示 AI 能够超越狭窄任务进行泛化并端到端求解问题。</li><li><b>基准对比：</b>比 HumanEval 难得多，后者指令已经明确说明了要实现什么，因此无需推理求解该问题需要做什么。</li><li><b>设定：</b>讲者随后逐一讲解流水线的框图。</li></ul>",
+      "terms": [
+        "AlphaCode",
+        "HumanEval",
+        "docstring",
+        "generalization",
+        "competitive programming",
+        "end-to-end"
+      ]
+    },
+    {
+      "t": 228,
+      "title": "AlphaCode 预训练：自有模型、masked-LM loss、700 GB 的 GitHub",
+      "problem": "AlphaCode 早于借用前沿 LLM 的实践，因此作者不得不从零构建并训练自己的模型。",
+      "why": "基座模型的质量为 coverage 设定了上限：你只能在它实际能生成的程序空间中进行聚类与选择。",
+      "how": "在约 700 GB 的 GitHub 代码加上 CodeContests（一个包含大量 competitive programming 问题与解的大型语料库）上，用 masked-language-model loss 和 next-token prediction 预训练一个 encoder-decoder 模型。",
+      "detail": "<p>AlphaCode 早于借用前沿 LLM 的实践，因此作者预训练了自己的模型。幻灯片讲解展示了一个<b>预训练阶段</b>，它产生一个可供采样的分布，在新系统中后来被大型语言模型取代。</p><ul><li><b>目标与数据：</b>masked-language-model loss（配合 next-token prediction），在约 <b>700 GB 的 GitHub</b> 代码加上 <b>CodeContests</b>（一个包含大量 competitive programming 问题与解的大型语料库）上预训练。</li><li><b>架构：</b>最初是一个 <b>encoder-decoder</b> 模型；AlphaCode 2 中尝试了 decoder-only 变体。</li><li><b>为何重要：</b>基座模型的质量为 <b>coverage</b> 设定了上限 &mdash; 你只能在它实际能生成的程序空间中进行聚类与选择。</li><li><b>定位：</b>前面几讲中的重复采样，在此预训练步骤之后以超大规模进行。</li></ul>",
+      "terms": [
+        "pre-training",
+        "masked-language-model loss",
+        "GitHub",
+        "CodeContests",
+        "encoder-decoder",
+        "coverage"
+      ]
+    },
+    {
+      "t": 342,
+      "title": "GOLD 正则化、value conditioning 与 decoder-only 模型",
+      "problem": "next-token prediction 对低概率与高概率 token 一视同仁，因此 fine-tuning 可能无法把概率集中到有意义的代码模式上。",
+      "why": "对于代码而言，precision 很重要：把概率质量分散到表层的 token 模式上会使可搜索的分布变差，无论你采样多少。",
+      "how": "在 fine-tuning 期间，加入 GOLD 加权项，提高较高概率 token 的权重、降低较低概率 token 的权重，并配合 value conditioning 与 prediction；AlphaCode 起初为 encoder-decoder，AlphaCode 2 使用 decoder-only 模型。",
+      "detail": "<p>在大规模采样产生回报之前，fine-tuning 目标必须把概率集中到有意义的代码结构上。标准的 next-token prediction 对低概率与高概率 token 一视同仁，这会把概率质量分散到表层模式上。</p><ul><li><b>GOLD 正则化：</b>在 fine-tuning 期间加入一个加权项，<b>给较高概率的 token 更高权重</b>、给较低概率的 token 更低权重，从而提升 precision 并把概率推向代码中有意义的模式。</li><li><b>Value conditioning 与 prediction：</b>与似然加权相关的一项额外 fine-tuning 技巧；讲者把它标记为本页幻灯片上的关键细节。</li><li><b>架构演进：</b>AlphaCode 起初是 encoder-decoder，AlphaCode 2 试验了 <b>decoder-only</b> 模型。</li><li><b>要点：</b>决定样本分布可搜索程度的，是 fine-tuning 的细节，而不只是规模。</li></ul>",
+      "terms": [
+        "GOLD",
+        "value conditioning",
+        "next-token prediction",
+        "precision",
+        "decoder-only",
+        "fine-tuning"
+      ]
+    },
+    {
+      "t": 398,
+      "title": "大规模采样：每个问题一百万程序",
+      "problem": "有了可用的模型后，单个解仍然只是从一个巨大空间中的一次抽样；coverage 要求许多独立的尝试。",
+      "why": "多样化的解才使聚类与选择有意义，而机器能够负担远超人类迭代量的样本规模。",
+      "how": "为每个问题生成约 100 万个多样的样本程序，大致一半 Python、一半 C++，在 prompt 中随机化问题 tags 与 ratings，并以高 temperature 采样。",
+      "detail": "<p>有了可用的模型后，AlphaCode 执行<b>大规模采样</b> &mdash; 这是课程早先讲过的重复采样的大得多的版本。</p><ul><li><b>规模：</b>每个问题约 <b>100 万个多样的样本程序</b>，大致一半 Python、一半 C++。</li><li><b>强制多样性：</b>prompt 随机化问题的 tags 与 ratings，采样使用<b>高 temperature</b>，因此各个解彼此不同，而不会坍缩到同一种模式。</li><li><b>为何机器负担得起：</b>讲师指出，这一体量对机器而言是可行的，尽管它远超人类迭代量。</li><li><b>相较于前面几讲的新阶段：</b>与单纯通过运行测试来闭环不同，AlphaCode 在评估与执行之前增加了<b>选择阶段</b>，决定哪些样本才值得测试。</li></ul>",
+      "terms": [
+        "large scale sampling",
+        "temperature",
+        "diversity",
+        "sample budget",
+        "tags and ratings"
+      ]
+    },
+    {
+      "t": 442,
+      "title": "提交前的筛选与语义聚类",
+      "problem": "评测系统只接受极少数程序，而那一百万样本中大多数要么是错的，要么是同一想法的语法副本。",
+      "why": "许多程序在语义上等价，因此重复提交近乎相同的程序会浪费为数不多的名额；流水线需要的是行为差异的概念，而非文本差异。",
+      "how": "先筛选出通过题面示例测试的样本，再用一个单独训练的 test-input generation model（从问题描述预测新的输入）对语法不同但语义等价的程序进行聚类。",
+      "detail": "<p>原始样本必须经过策展，因为评测系统只接受极少数提交。</p><ul><li><b>筛选：</b>只保留通过题面所给示例测试的样本，丢弃其余样本。</li><li><b>按语义聚类：</b>把语法不同但<b>语义等价</b>的程序归为一组。一个单独训练的 <b>test-input generation model</b> 从问题描述预测新的测试输入，并在这些输入上运行候选程序以揭示行为差异，包括在未见过的问题上。</li><li><b>为何聚类是关键：</b>它选出一组<b>足够多样</b>、值得评估的解，因为允许提交到平台的约 10 个提交中只有一小部分能用上。</li><li><b>与 coverage/selection 的联系：</b>足够多的样本中可能含有正确程序，但找到并区分出它是个独立的、更难的问题。</li></ul>",
+      "terms": [
+        "filtering",
+        "clustering",
+        "semantic equivalence",
+        "test-input generation model",
+        "submissions",
+        "diversity"
+      ]
+    },
+    {
+      "t": 501,
+      "title": "Codeforces 评估与首批现场结果",
+      "problem": "流水线需要一个真实世界中的正确性信号，以及与人类程序员公平的比较。",
+      "why": "Codeforces 检验正确性并与其他参赛者进行基准比较，而留出的 CodeContests 测试集提供了独立于现场评测系统的可度量信号。",
+      "how": "只把策展后的子集（每个问题约 10 个程序）提交到 10 场竞赛，每场约 5,000 名参赛者；结果平均排名约为 54.3，与过去六个月活跃的约 28% 参赛者具有竞争性。",
+      "detail": "<p>策展后的候选被提交到 <b>Codeforces</b> 这一竞赛平台，它检验正确性并与其他参赛者进行基准比较。</p><ul><li><b>约束：</b>全部 100 万样本无法提交，因此正是先前的筛选与聚类使提交成为可能。</li><li><b>留出信号：</b>在 <b>CodeContests</b> 上的评估使用作者构建的留出测试集，提供了独立于现场评测系统的可度量信号。</li><li><b>现场设置：</b>模型现场参加了 <b>10 场竞赛，每场约 5,000 名参赛者</b>，每个问题使用约 <b>10 次提交</b>。</li><li><b>头条结果：</b>平均排名约 <b>54.3</b>，与过去六个月活跃的约 <b>28%</b> 参赛者具有竞争性；排名同时反映提交解的<b>正确性与效率</b>。</li></ul>",
+      "terms": [
+        "Codeforces",
+        "CodeContests",
+        "average ranking",
+        "percentile",
+        "efficiency",
+        "held-out test set"
+      ]
+    },
+    {
+      "t": 626,
+      "title": "课堂问答：解释跨竞赛的方差",
+      "problem": "AlphaCode 的表现在不同竞赛间波动很大，从接近榜首到大约第 90 百分位，这使得可靠性难以刻画。",
+      "why": "有两种不同的可能原因：竞赛问题的 in-distribution 程度，以及选择阶段能否挑出正确的候选。",
+      "how": "讲师把问题抛回给班级，并分离出两个假设：问题的 in-distribution 程度（coverage），以及一个 selection bottleneck——许多候选几乎正确但并不完全正确。",
+      "detail": "<p>一名学生问，为什么每场竞赛的表现波动如此之大，从接近榜首到大约第 90 百分位。讲师把问题抛回给班级，问方差可能来自流水线的哪个环节。</p><ul><li><b>假设 1 &mdash; in-distribution 程度：</b>问题与训练问题相似的竞赛表现良好，而引入新算法或新问题风格的竞赛更难；输入与训练分布的接近程度驱动着 coverage。</li><li><b>假设 2 &mdash; selection bottleneck：</b>即使有大规模采样，<b>选出正确候选</b>的能力也因竞赛而异；可能存在<b>几乎正确但并不完全正确</b>的解，使排名变得困难。</li><li><b>结论：</b>两个因素共同决定系统在哪里成功、在哪里挣扎，清晰地把 coverage 问题与 selection 问题分开。</li></ul>",
+      "terms": [
+        "in-distribution",
+        "selection bottleneck",
+        "coverage",
+        "variance",
+        "ranking"
+      ]
+    },
+    {
+      "t": 820,
+      "title": "pass@k 与 10@k：分离 coverage 与 selection",
+      "problem": "目前不清楚：相对于仅仅让正确样本存在，选择阶段损失了多少准确率，以及采样规模的收益能否在筛选后依然保持。",
+      "why": "pass@k 提交全部 k 个样本，因此度量的是 coverage；而 10@k 只提交 k 个中的 10 个，因而还检验了筛选与打分过程。",
+      "how": "在验证集与测试集上，针对 9B、41B 以及 41B-plus-clustering 模型，在 1K、10K、100K、1M 样本预算下度量 10@k；改进是一致的，更大的模型加聚类稳定地最好。",
+      "detail": "<p>两个指标分别隔离出两种失败模式：</p><ul><li><b>pass@k</b> &mdash; 生成 k 个样本并把它们全部提交到隐藏测试；它度量采样的<b>搜索方面</b>有多好，即 <b>coverage</b>（无限次尝试）。</li><li><b>10@k</b> &mdash; 生成 k 个样本但只提交 <b>10</b> 个，因此它还度量<b>筛选与打分</b>过程。</li></ul><p>他们报告了在验证集与测试集上，针对 <b>9B</b> 模型、<b>41B</b> 模型以及 <b>41B + clustering</b> 的 10@1K、10@10K、10@100K 和 10@1M。更大的模型持续胜过更小的模型，增加样本预算也持续有帮助；<b>41B + clustering 稳定地最好</b>。讲者强调，这与早先 pass@k 与样本预算的结果一致，并且更大的模型能从每个额外样本中提取更多。</p>",
+      "terms": [
+        "pass@k",
+        "10@k",
+        "coverage",
+        "selection",
+        "clustering",
+        "model size"
+      ]
+    },
+    {
+      "t": 1062,
+      "title": "对数线性 scaling 与 selection 饱和差距",
+      "problem": "log-linear 采样趋势能否在 selection 阶段后保持，以及究竟是什么最终限制了性能，这些都并不显然。",
+      "why": "如果 diversity 持续增加，更多样本就应该持续有帮助；但提交数量的硬性上限意味着 selection 可能主导结果。",
+      "how": "把 solve rate 对采样预算作曲线：即使在 selection 之后 log-linear 趋势依然成立，更大的模型斜率更陡，clustering 提高了整体水平，但 10 次提交在接近 30% 处饱和，而无限制 pass@k 则超过 40%。",
+      "detail": "<p>核心论断是：solve rate 与采样预算之间的 <b>log-linear</b> 关系在 selection 阶段后依然成立 &mdash; solve rate 仍随样本预算对数线性上升，且更大的模型比 300M 参数的基线有<b>更陡的斜率</b>（41B 曲线对小型模型）。</p><ul><li><b>Selection 是真正的瓶颈：</b>只有 10 次提交时，准确率在接近 <b>30%</b> 处饱和，而无限制尝试的 pass@k 达到 <b>40%</b> 以上，从而隔离出可归因于筛选与聚类的差距。</li><li><b>为何聚类有帮助：</b>竞赛题很难，因此重复提交近乎相同的程序会浪费为数不多的名额；提交一个<b>多样化集合</b>才是换来准确率的关键。</li><li><b>Diversity 的注意事项：</b>采样更多只有在模型确实产出更多样化解时才有帮助；如果十倍的样本没有带来新的解类别，性能就不会提升。</li></ul>",
+      "terms": [
+        "log-linear",
+        "saturation",
+        "selection bottleneck",
+        "steepness",
+        "diversity",
+        "unlimited attempts"
+      ]
+    },
+    {
+      "t": 1161,
+      "title": "问答：外推、能力差距、diversity 与理论",
+      "problem": "一名学生问，把 log-linear 趋势再外推十倍是否就会让得分翻倍。",
+      "why": "外推假设 diversity 持续增加，并忽略了 capability gap：弱基座模型会触到极限，因此这一趋势不能被无界地推进。",
+      "how": "讲师把话题转向 AlphaCode 2，主张把基座模型做得更好比扩大采样更容易，聚类的存在正是为了找到多样化的解，并且 log-linear 形式在理论上可以推导出来。",
+      "detail": "<p>一名学生问，把 log-linear 趋势再外推 &mdash; 大约又是一个十倍 &mdash; 是否会让得分翻倍。讲师把话题转向 AlphaCode 2，主张<b>把基座模型做得更好是比无限扩大采样更容易的一条轴</b>，并且任何外推都必须面对成本。</p><ul><li><b>Capability gap：</b>如果基座模型不够强，它们会在某个点触到极限；更深层的目标是构建一个能推理并闭环的系统，然后把它蒸馏进一个大型推理模型。</li><li><b>Diversity 假设：</b>单纯不断加更多样本的计划假设 diversity 持续增加；聚类的存在是为了找到多样化集合，而更多不带来新解类别的样本并没有帮助。</li><li><b>理论：</b>pass@k 与样本预算之间的关系在理论上可以推导，引用的是 <i>Large Language Monkeys</i> 论文及其后续工作，这正是 log-linear 形式是意料之中而非令人惊讶的原因。</li></ul>",
+      "terms": [
+        "extrapolation",
+        "capability gap",
+        "diversity",
+        "Large Language Monkeys",
+        "distillation",
+        "log-linear"
+      ]
+    },
+    {
+      "t": 1356,
+      "title": "AlphaCode 要点：coverage、novelty，以及 loss 在哪里误导",
+      "problem": "高 coverage 令人鼓舞，但该方法有明确的天花板与实际限制，在复用它之前必须理解这些。",
+      "why": "loss 是 solve rate 的糟糕代理，因为许多程序都能解决同一问题，而 one-shot 生成无法处理需要多个步骤的问题。",
+      "how": "在算力允许的地方保留大规模采样，认识到 dynamic programming 与 constructive algorithms 等薄弱领域，并在时间受限时对生成出的可接受解进行排名，而不是假设有无限次尝试。",
+      "detail": "<p>AlphaCode 的要点：</p><ul><li><b>Coverage 是真实的，且确实新颖。</b>大规模采样加上筛选与聚类换来了高 coverage，而对训练数据做的 novelty 搜索确认生成的代码是 <b>out-of-distribution</b> 的 &mdash; 模型在推理，而不是在抄解。</li><li><b>Loss 是 solve rate 的糟糕代理。</b>因为许多程序都能解决同一问题，良好的 loss 可能与在 <b>dynamic programming</b> 和 <b>constructive algorithms</b> 等特定领域上的薄弱并存。</li><li><b>成本高得难以承受。</b>每个问题一百万样本在任何地方都不现实；在时间受限时，你希望对<b>生成出的可接受解进行排名</b>，而仅追求准确率的设定则偏好无限次尝试。</li><li><b>难题需要结构。</b>困难领域需要多得多的实验，且 one-shot 方法表现不佳，因此需要<b>多步</b>求解方法。</li></ul>",
+      "terms": [
+        "coverage",
+        "out-of-distribution",
+        "loss",
+        "dynamic programming",
+        "constructive algorithms",
+        "multi-step"
+      ]
+    },
+    {
+      "t": 1481,
+      "title": "AlphaCode 2：fine-tune 后的 Gemini Pro、模型家族与学习得到的 scorer",
+      "problem": "AlphaCode 预训练了一个定制模型，每个问题烧掉一百万样本，并依赖一个无法估计哪个候选实际正确的聚类启发式。",
+      "why": "较弱的基座模型迫使采样更多，而语义聚类只说明程序是否等价，并不说明哪一个是对的，因此 selection 仍是启发式的。",
+      "how": "不再预训练，而是 fine-tune 一个已有的 LLM（Gemini Pro）；fine-tune 一族具有不同超参数、难度等级与 tags 的变体以获得多样性；并训练一个估计正确性的 scoring model，使用 CodeContests v2 加一个高质量数据集。",
+      "detail": "<p>AlphaCode 2 把配方反过来：不再预训练定制模型，而是从已有的 LLM &mdash; <b>Gemini Pro</b>，因为这项工作在 Google 完成 &mdash; 出发，并<b>fine-tune</b> 它，而不仅仅是 prompting。在此之上叠加了三项改动：</p><ul><li><b>通过模型家族实现 diversity：</b>fine-tune 多个具有不同超参数、难度等级与 tags 的 AlphaCode 2 变体，使大规模采样从一组分散的 generator 中抽取。</li><li><b>学习得到的 scoring model：</b>一个 fine-tune 后的 Gemini Pro 产出对正确性的 <b>scoring/reward</b> 估计，用对「什么值得高分」的学习近似，取代启发式的聚类加筛选偏好概念。</li><li><b>数据：</b>fine-tuning 使用开源的 <b>CodeContests v2</b> 加上一个用于训练 scorer 的独立高质量数据集；目标是更好的基座模型与更好的 selection，以削减样本成本。</li></ul>",
+      "terms": [
+        "Gemini Pro",
+        "fine-tuning",
+        "model family",
+        "scoring model",
+        "reward model",
+        "CodeContests v2"
+      ]
+    },
+    {
+      "t": 1636,
+      "title": "AlphaCode 2 训练数据：v2 的分段与策展的 scorer 集合",
+      "problem": "系统需要能产出多样样本的 generator，以及能可靠估计正确性的 scorer，而这两者都无法从单一数据集中自然得出。",
+      "why": "天真地在一个数据集上训练单个 generator 只能带来很少的多样性，而 scorer 需要关于可比问题的偏好数据，同时又不被这些问题污染。",
+      "how": "把 CodeContests v2 分段并打上标签成子集，以 fine-tune 多个 generator 变体，并使用一个单独的、手工策展、人工标注的集合来训练 scorer 输出 0 到 1 之间的正确性概率。",
+      "detail": "<p>训练阶段的细节回答了如何同时获得多样性与一个好的 scorer。</p><ul><li><b>Generator 家族：</b>把 v2 数据集一分为二并分段成不同的带标签子集，每个子集用于 fine-tune 一个不同的 generator 变体，因此从该家族采样能产出更多样的输出。</li><li><b>Scorer 训练：</b>一个单独的<b>手工策展、人工标注</b>数据集教会 scoring model 估计某个代码样本正确的概率，取值在 <b>0 到 1</b> 之间；具体来说，它学习在两个解中更偏好哪一个以及如何对它们排名。</li><li><b>课堂上提出的注意事项：</b>scorer 不应刚好在 generator 的问题上训练（<b>contamination</b>），但它仍然需要 <b>in-distribution</b> 数据。</li><li><b>多阶段的谨慎：</b>在不混入前一版本的情况下依次改变数据质量，会在最后的 fine-tuning 阶段带来 <b>catastrophic forgetting</b> 的风险，这正是该配方被刻意分阶段的原因。</li></ul>",
+      "terms": [
+        "CodeContests v2",
+        "segmentation",
+        "scoring model",
+        "human annotation",
+        "contamination",
+        "catastrophic forgetting"
+      ]
+    },
+    {
+      "t": 1746,
+      "title": "AlphaCode 2 流水线：大规模采样、重排并提交",
+      "problem": "即使有了更好的模型，约 95% 的样本仍无法编译或通不过测试输入，因此大部分算力被花掉又丢弃。",
+      "why": "大规模采样很昂贵，而筛选之后你仍需要一种有原则的方法，为每个想法挑出一个候选，而不是依赖原始频次。",
+      "how": "把采样分散到模型家族上（仅 C++，随机化 temperature 与 metadata），在测试输入上执行，剔除约 95% 只留下大约 50k 个样本，聚合并保留最大的 top 10 簇，然后用 scoring model 重排并为每个簇挑出最佳候选。",
+      "detail": "<p>AlphaCode 2 的流水线升级了原版的每一个阶段：</p><ul><li><b>采样：</b>分散到模型家族上，现在限制为<b>仅 C++</b>（AlphaCode 用了一半 Python、一半 C++），随机化 temperature 与 metadata 以获得多样性。</li><li><b>筛选：</b>每个输出都在测试输入上执行，错误的或无法编译的都被移除 &mdash; 约占样本的 <b>95%</b> &mdash; 留下大约 <b>50k</b> 个候选。</li><li><b>策展：</b>聚合、保留<b>最大的 top 10 簇</b>，然后用 scoring model 的正确性估计进行<b>重排</b>，并为每个簇挑出<b>最佳候选</b>。</li><li><b>评估：</b>选出的候选完全按 AlphaCode 的方式提交与评判，因此比较是同类对同类，能隔离出新基座模型、diversity 与 scorer 的价值。</li></ul>",
+      "terms": [
+        "large scale sampling",
+        "C++",
+        "filtering",
+        "clustering",
+        "reranking",
+        "top-10 clusters"
+      ]
+    },
+    {
+      "t": 1807,
+      "title": "AlphaCode 2 结果：100 个样本媲美过去的一百万",
+      "problem": "在相同的 test-time compute 下，新系统相对 AlphaCode 究竟带来多少收益，尚不清楚。",
+      "why": "更好的基座模型、多样化的 generator 家族以及学习得到的 scorer，各自都应减少达到某一给定 solve rate 所需的样本数。",
+      "how": "比较 solve rate 与采样预算：约 100 个样本时 AlphaCode 2 就能达到 AlphaCode 用 1 百万样本达到的水平，而在 1 百万样本时它达到 43%，AlphaCode 为 25%，在相同预算下大致是 2 倍的提升。",
+      "detail": "<p>把 AlphaCode 2 与 AlphaCode 作比较，横轴为采样预算，纵轴为 solve rate：</p><ul><li><b>Sample efficiency：</b>约 <b>100 个样本</b>时，AlphaCode 2 就达到了 AlphaCode 需要 <b>1 百万样本</b>才能达到的 solve rate。</li><li><b>头条结果：</b>在 1M 样本时 AlphaCode 2 解决 <b>43%</b>，AlphaCode 为 <b>25%</b> &mdash; 在相同预算下接近 <b>2 倍</b>的提升。</li><li><b>收益的来源：</b>更好的基座模型、更多样的解，以及更好的 scoring model，全部叠加进一个系统。</li><li><b>仍在 scaling：</b>solve rate 随更多样本继续提升，因此系统同时受益于更好的建模与更多 test-time compute。</li><li><b>成本注意事项：</b>流水线仍把绝大多数样本作为无法编译或错误而丢弃，这也是算力账单集中的地方。</li></ul>",
+      "terms": [
+        "solve rate",
+        "sampling budget",
+        "sample efficiency",
+        "2x",
+        "scoring model",
+        "test-time compute"
+      ]
+    },
+    {
+      "t": 1888,
+      "title": "问答与实践框架：采样成本、自迭代、RL、production scale",
+      "problem": "一名学生指出，约 95% 的采样算力浪费在无法编译或错误的答案上，并问更好的 prompting 或采样能否减少这种浪费。",
+      "why": "这篇论文没有直接处理该问题，因此课堂退回到课程早先的想法，以及如何构建高效利用 test-time compute 的系统的实际问题。",
+      "how": "在生成的样本之上使用 self-iteration 与 refinement，加入 RL 循环使模型需要更少的 test-time compute，跨样本聚合信息，并记住 production agent 运行的样本数远多于日常 chat 模型。",
+      "detail": "<p>讲师确认这篇论文没有直接攻克这一浪费，随后把它联系到课程早先的想法以及一个更广的实践框架。</p><ul><li><b>Self-iteration：</b>生成解、收集任何可得的反馈，并对其进行精炼 &mdash; 本质上是<b>并行搜索</b>加 refinement；悬而未决的问题是，对于代码而言究竟有哪些反馈可用。</li><li><b>用 RL 取代原始采样：</b>用 RL 循环改进模型可以替代 test-time 的样本量，从而降低推理成本。</li><li><b>聚合：</b>更好的跨采样候选聚合信息的方法，也能减少所需的样本数量。</li><li><b>生产框架：</b>日常推理模型使用几十个样本，而生产环境中的 research agent 可以运行数十万个；真正的难题是<b>构建系统</b>使其推理并闭环，然后把它蒸馏进单个大型推理模型。</li></ul>",
+      "terms": [
+        "self-refinement",
+        "RL loop",
+        "aggregation",
+        "distillation",
+        "test-time compute",
+        "production scale"
+      ]
+    },
+    {
+      "t": 2155,
+      "title": "关于 scoring model 的问答：contamination、in-distribution 数据、forgetting",
+      "problem": "为什么 scoring model 不直接在训练 generator 所用的同一份 CodeContests v2 数据上训练？",
+      "why": "在恰好是 generator 问题的数据上训练的 scorer 有 contamination 风险，但它仍需要来自可比分布的数据才能泛化。",
+      "how": "在一个单独的、策展过的集合上训练 scorer，该集合取自同一分布但不是同一批问题，教给它一种 preference/ranking 信号；谨慎处理多阶段 fine-tuning 以避免 forgetting。",
+      "detail": "<p>讲师把这一答案框定为有意的系统设计，而非疏漏。</p><ul><li><b>Contamination：</b>scorer 不应看到与 generator 完全相同的问题，否则可能被它们污染。</li><li><b>In-distribution 要求：</b>它仍然需要来自相似分布的数据，因此解决办法是一个单独的、针对可比问题的策展集合。</li><li><b>Scorer 学到什么：</b>给定同一问题类别下的两个解，应更偏好哪个、应采用什么排名 &mdash; 这是一种偏好信号，而不是 generator 问题上的原始正确性标签。</li><li><b>多阶段的谨慎：</b>跨阶段混合数据集可行但很微妙；如果你在不混入前一版本的情况下改变数据质量，模型会在最后的 fine-tuning 阶段忘记早先的信息。</li></ul>",
+      "terms": [
+        "scoring model",
+        "contamination",
+        "in-distribution",
+        "preference ranking",
+        "multi-stage fine-tuning",
+        "forgetting"
+      ]
+    },
+    {
+      "t": 2266,
+      "title": "与人类比较的汇总结果、要点，以及两个讨论问题",
+      "problem": "目前不清楚 AlphaCode 2 在总体上（而非仅在个别竞赛上）与人类参赛者相比如何。",
+      "why": "汇总比较需要某一给定得分水平上参赛者的百分位，这为系统层面的增益意味着什么提供了背景。",
+      "how": "报告 normalized score 与人类百分位的关系：约在第 85 百分位，介于 expert 与 candidate/master 水平之间，较 AlphaCode 的 46% 有所提升，若取前两个解则超过约 99.5%。",
+      "detail": "<p>与人类的汇总比较使用某一给定得分上<b>参赛者的百分位</b>：</p><ul><li><b>AlphaCode 2</b> 的表现大约在第 <b>85 百分位</b>，介于 expert 与 candidate/master 水平的参赛者之间，明显比 AlphaCode 更进一步，后者胜过约 <b>46%</b> 的参赛者。</li><li>如果取<b>前两个</b>提交解，AlphaCode 2 将胜过大约 <b>99.5%</b> 的参赛者 &mdash; 这是通过改进系统而非仅仅扩大采样，在一年之内取得的巨大跃升。</li></ul><p>要点：性能以<b>更少的样本</b>得以提升，驱动因素是更好的 foundation model 以及选出最佳候选的 scoring model；但实验仍然昂贵，该方法高度特定于代码，且大量算力浪费在糟糕的语法上。讲座提出了两个讨论问题：如何让这些方法适应<b>task complexity</b>，以及如何把<b>reasoning 直接嵌入</b>模型。</p>",
+      "terms": [
+        "percentile",
+        "normalized score",
+        "top-two solutions",
+        "foundation model",
+        "scoring model",
+        "takeaways"
+      ]
+    },
+    {
+      "t": 2401,
+      "title": "课堂讨论：难度感知的采样",
+      "problem": "流水线是一刀切的：它无法根据问题实际的难度来调整采样预算。",
+      "why": "简单问题用远少于一百万的样本就能达到 coverage，而困难问题需要更多样本或必须被分解，因此固定的百万样本预算很浪费。",
+      "how": "一个 difficulty judge 把每个问题标记为 easy、medium 或 hard，采样集携带这些标签；较简单的问题更多从较容易的题库中抽取并需要更少样本，而困难问题使用 decomposition 与 multi-step search。",
+      "detail": "<p>对于如何适应 task complexity 的问题，课堂提出了一个 <b>difficulty judge</b>：</p><ul><li><b>先打标签：</b>一个单独的模型把每个问题分类为 easy、medium 或 hard，采样数据集携带这些标签。</li><li><b>分配预算：</b>如果问题简单，就从匹配的题库中采样 &mdash; 更简单的问题更可能用更少样本达到 coverage，这与 test-time-compute 几讲相呼应。</li><li><b>尽可能减少样本：</b>要点是避免总是支付一百万样本的代价；较简单的问题可以用一个初始集合加上一些 iterative refinement 来解决。</li><li><b>策略之间的权衡：</b>大规模并行采样换来跨方法的 diversity，而 refinement 试图修正模型已经产出的东西；更难的问题可能需要 <b>decomposition</b> 与 multi-step search。</li></ul>",
+      "terms": [
+        "difficulty judge",
+        "task complexity",
+        "sampling budget",
+        "decomposition",
+        "iterative refinement",
+        "coverage"
+      ]
+    },
+    {
+      "t": 2555,
+      "title": "课堂讨论：把 reasoning 嵌入模型",
+      "problem": "模型没有捕捉程序员写代码之前的思考过程，因此它一次性（one shot）解决难题，而不是朝着解推理。",
+      "why": "只包含最终解的训练数据遗漏了能泛化到新问题的抽象模式与 chain of thought。",
+      "how": "向训练数据加入算法提示与 chain-of-thought，使用 STaR 风格的 hint rationalization，把难题分解为带提示的子部分，运行带 backtracking 的 tree search，并对 out-of-distribution 模式保留 human in the loop。",
+      "detail": "<p>对于如何嵌入 reasoning，课堂与讲师归结出若干机制：</p><ul><li><b>训练数据中的提示：</b>捕捉程序员在写之前所想 &mdash; 算法的种类、模式的更通用版本 &mdash; 使模型学到一种抽象的解题方法，而不只是输出代码。</li><li><b>STaR 风格的 rationalization：</b>生成解，把答案作为提示提供，并要求模型重建推理过程，然后在这个 chain of thought 上训练。</li><li><b>Decomposition：</b>把复杂问题拆成子部分并为每个部分加提示，因为正确的前一步之后可能跟着有缺陷的后一步。</li><li><b>带 backtracking 的 tree search：</b>采样第一步、检查它是否大致正确、采样第二步，并按需回溯 &mdash; 以多步方式闭环。</li><li><b>Human in the loop：</b>真正 out-of-distribution 的模式可能需要 AI-scientist 风格的工作流。</li></ul>",
+      "terms": [
+        "chain of thought",
+        "STaR",
+        "hints",
+        "decomposition",
+        "tree search",
+        "backtracking",
+        "human in the loop"
+      ]
+    },
+    {
+      "t": 2792,
+      "title": "Deep research agent：knowledge cutoff 与 reasoning chain 中的不确定性",
+      "problem": "大型推理模型有固定的 knowledge cutoff，无法知道训练之后发生的事件；当它们遇到知识缺口时，会从权重中猜测，误差随之级联。",
+      "why": "知识缺口在长推理轨迹中表现为不确定性 token（在 GPQA 上可见），因此早期的猜测污染链条的其余部分，最终答案的置信度很低。",
+      "how": "用外部检索来 bootstrap 这些缺口，而不是信任权重，使 deep research agent 成为弥合基座推理模型所不具备知识的一种方式。",
+      "detail": "<p>讲座转向 <b>deep research agent</b>，它构建在大型推理模型之上。这些模型推理能力令人印象深刻，但被冻结在一个 <b>knowledge cutoff</b> 上：如果某件事发生在昨天，模型必须去查找，而不是凭记忆回想。</p><ul><li><b>失败模式：</b>当推理模型缺乏知识时，它们倾向于<b>猜测</b>，而猜测会作为错误传播到链条的其余部分，使最终答案的置信度很低。</li><li><b>诊断信号：</b>在 <b>GPQA</b> 上，诸如 <i>perhaps</i>、<i>alternatively</i> 和 <i>wait</i> 这类不确定性词汇频繁出现在 reasoning chain 中 &mdash; 知识缺口表现为外显的不确定性。</li><li><b>目标：</b>用外部信息 bootstrap 这些缺口，使不确定性不会级联成错误的最终答案。</li><li><b>转折：</b>本讲余下部分对比如何在推理期间而非之前检索并整合这些信息。</li></ul>",
+      "terms": [
+        "deep research agent",
+        "knowledge cutoff",
+        "GPQA",
+        "uncertainty",
+        "reasoning chain",
+        "bootstrap"
+      ]
+    },
+    {
+      "t": 2901,
+      "title": "RAG 与 agentic RAG，以及 Search-o1 的即时查询",
+      "problem": "朴素的 retrieval-augmented generation 在开始时只检索一次，因此每个推理步骤无法请求它实际需要的不同信息。",
+      "why": "一个简单的天气问题可能只需一次搜索，但一个复杂的多部分问题在每个推理步骤后都需要新信息，而事前的检索无法适应。",
+      "how": "agentic RAG 在推理过程中当模型遇到它关心的实体时触发搜索，而 Search-o1 更进一步：模型在知识缺口处即时生成查询，跨越多个迭代，然后分析检索到的文档而不是把它们一股脑塞入。",
+      "detail": "<p>对比了三种方法：</p><ul><li><b>Direct reasoning：</b>模型独自作答，遇到知识缺口时从权重中猜测。</li><li><b>Plain RAG：</b>生成查询、检索文档、放入 prompt、作答。它比 direct reasoning 有改进，但<b>只在开始时检索一次</b>，因此无法在推理中途适应；在复杂的多部分问题上，每个推理步骤需要不同信息，所以它在 multi-step reasoning 上表现不佳。</li><li><b>Agentic RAG：</b>在模型关心某个实体处插入特殊 token，在推理<i>期间</i>触发 search tool call，并把返回的文档插入 reasoning chain &mdash; 实际上是把工具调用作为推理的一部分。</li><li><b>Search-o1 的 refinement：</b>每当模型检测到知识缺口时就<b>即时</b>生成查询，在一次推理会话中发起多次检索迭代，并<b>分析检索到的文档</b>而不是把它们一股脑塞入。</li></ul>",
+      "terms": [
+        "retrieval augmented generation",
+        "agentic rag",
+        "Search-o1",
+        "tool call",
+        "multi-step reasoning",
+        "knowledge gap"
+      ]
+    },
+    {
+      "t": 3040,
+      "title": "在文档内推理：化学示例讲解",
+      "problem": "一道化学题问第三个产物的碳原子数；vanilla reasoning 猜测结构，而 plain retrieval 塞入过多上下文。",
+      "why": "抓取许多相关文档带来的噪声多于信号，因此模型被淹没且仍然答错，而单独一个猜测的结构同样失败。",
+      "how": "Search-o1 搜索不熟悉的化学式，在检索到的文档内推理，只抽取相关的 chunk，把它精炼成一个结构，并干净地整合进 reasoning chain 以得出正确答案。",
+      "detail": "<p>这个化学示例把区别讲得很具体。题目问由一连串反应生成的第三个产物的碳原子数。</p><ul><li><b>Vanilla reasoning：</b>模型遇到一个不熟悉的化学式，不去查找，而是从权重中<b>猜测</b>一个结构；猜测是错的，误差级联，因此最终答案置信度低且不正确。</li><li><b>Agentic RAG：</b>模型发起网络搜索并返回文档，但它塞入了过多上下文。抓取约 <b>10 篇相关文档</b>带来的噪声多于信号，模型被淹没，仍然答错 &mdash; 给出 <b>14</b> 个碳，而正确答案是 <b>10</b> 个。</li><li><b>Search-o1：</b>它搜索该化学式，<b>在检索到的文档内推理</b>，只抽取相关的 chunk，精炼成一个结构，并干净地整合进链条以正确作答。</li><li><b>教训：</b>能在文档内总结并推理，而不是把 prompt 塞满，才是改善最终答案的关键。</li></ul>",
+      "terms": [
+        "Search-o1",
+        "reason in documents",
+        "chunk extraction",
+        "over-retrieval",
+        "context length",
+        "chemistry"
+      ]
+    },
+    {
+      "t": 3300,
+      "title": "Reason-in-documents 机制、context engineering 与 pass@1 结果",
+      "problem": "agentic RAG 仍把原始、冗长、含噪的文档塞进 prompt，而当拼接 10 或 20 篇文档时，long-context reasoning 会退化。",
+      "why": "真正的约束是模型实际能够推理多少相关、非噪声的内容，而不是你能在窗口里塞进多少文本。",
+      "how": "reason-in-documents 结合当前查询与先前推理，分析每篇检索到的文档的相关性并只抽取相关 chunk，然后仅追加这些内容；经验上，Search-o1 的 pass@1 随文档数量上升，而 direct reasoning 与 plain RAG 保持平坦。",
+      "detail": "<p>从机制上看，agentic RAG 与 Search-o1 把检索注入到 token 流中：</p><ul><li><b>特殊 token：</b>生成时模型发出标记搜索查询的特殊 token；检索工具返回文档，这些文档被追加到 reasoning chain 中。</li><li><b>Reason-in-documents 模块：</b>它不塞入原始文档，而是分析每篇文档的相关性并<b>抽取相关 chunk</b>，只追加这些内容 &mdash; 类似于人做笔记，而不是把每一条参考文献都整理进去。</li><li><b>状态假设：</b>一个 memory buffer 跟踪当前查询与先前推理；该结构把这变得显式而非隐式。</li><li><b>Context-engineering 的限制：</b>真正的约束是模型能多好地推理多少内容，这是近期 <i>agentic context engineering</i> 工作所关注的；理想状态是对一切都推理得很好。</li><li><b>证据：</b>把 pass@1 对文档数量作曲线，direct reasoning 与 plain RAG 保持平坦，而 Search-o1 <b>上升</b> &mdash; 这是建立在 chunk 抽取之上的 <b>parallel refinement</b> 轴。</li></ul>",
+      "terms": [
+        "reason in documents",
+        "special tokens",
+        "memory buffer",
+        "agentic context engineering",
+        "pass@1",
+        "parallel refinement"
+      ]
+    },
+    {
+      "t": 3665,
+      "title": "Search-o1 在 GPQA 上对比人类专家，以及化学上的差距",
+      "problem": "目前不清楚 Search-o1 在困难的跨学科科学问题上是否真正能与领域专家竞争。",
+      "why": "GPQA 是一个困难基准，与人类比较需要把正确的专家匹配到正确的领域，而不是使用单一的汇总数字。",
+      "how": "在对角线上比较（物理学家做物理题、化学家做化学题）：Search-o1 在物理上有竞争力，有时更好；在生物上有竞争力；在化学上明显落后，可能是 tokenization 或 out-of-distribution 训练数据拖累了它。",
+      "detail": "<p>在困难的 <b>GPQA</b> 集合上，Search-o1 与人类专家比较，重点关注<b>对角线</b> &mdash; 物理学家做物理题，等等 &mdash; 因为改变领域会改变比较的基线。</p><ul><li><b>物理：</b>Search-o1 有竞争力，有时优于人类专家。</li><li><b>生物：</b>与解题的生物学家几乎不相上下。</li><li><b>化学：</b>明显较弱，仍有提升空间；讲师认为化学可能训练不足或属于 out of distribution，一名学生假设化学式的 tokenization（在子组合之间保持语义）使其更难。</li><li><b>解读：</b>这说明系统在这一类问题上与专家<b>有竞争力</b>，而并非在总体上超越专家。</li><li><b>机制：</b>增加文档数量有帮助，因为架构从每篇文档中抽取相关上下文，而不仅仅是把 prompt 加长。</li></ul>",
+      "terms": [
+        "GPQA",
+        "human experts",
+        "diagonal comparison",
+        "chemistry tokenization",
+        "out-of-distribution",
+        "document scaling"
+      ]
+    },
+    {
+      "t": 3868,
+      "title": "Multi-hop 问答、要点与 Search-R1",
+      "problem": "在 multi-hop 问答上，plain RAG 乃至 agentic RAG 都趋于饱和，因此额外的文档不再有帮助。",
+      "why": "multi-hop 问题需要跨文档串联事实并迭代：识别你不知道什么、精炼，并构造更好的下一次搜索。",
+      "how": "Search-o1 通过减少不确定性的迭代式 multi-turn 循环，在 HotpotQA、2WikiMultihop 与 Bamboo 上达到 state-of-the-art；Search-R1 随后用 RL 而非 prompting 教出同样的行为。",
+      "detail": "<p>在 <b>multi-hop</b> 问答上，标准 RAG 乃至 agentic RAG 的性能都趋于<b>饱和</b>。Search-o1 则不然：在 <b>HotpotQA</b>、<b>2WikiMultihop</b> 和 <b>Bamboo</b> 上，加粗标记的 state-of-the-art 数字都归功于 Search-o1。</p><ul><li><b>为何有效：</b>模型识别出自己不知道什么，跨文档精炼，并运行一个<b>迭代式 multi-turn 循环</b>来构造更好的后续搜索，在每一步减少不确定性。</li><li><b>检索的注意事项（课堂问答）：</b>这一论断假设至少检索到了松散相关的文档；当存在许多松散相关的文档时，要求模型对全部文档进行推理正是 plain 方法失败之处，而 chunk 抽取使其保持可处理。</li><li><b>要点：</b>收益来自<b>减少不确定性</b>、更好的文档质量以及 multi-turn 循环；更大的推理模型往往表现更好。</li><li><b>下一步：</b><b>Search-R1</b> 与 Search-o1 &mdash; Search-o1 通过 <b>prompting</b> 闭环，而 Search-R1 用 <b>RL</b> 循环教模型搜索。</li></ul>",
+      "terms": [
+        "multi-hop",
+        "HotpotQA",
+        "2WikiMultihop",
+        "Bamboo",
+        "iterative loop",
+        "Search-R1"
+      ]
+    },
+    {
+      "t": 4135,
+      "title": "结课问答：calibration、overconfidence 与知道自己知道什么",
+      "problem": "一名学生问，模型赋予某次生成的概率是否与答案实际是否正确相关，包括在 RAG 下。",
+      "why": "模型往往过度自信，因此原始概率的校准很差；对照正确性来衡量，模型可能只有约 50% 正确，却约有 80% 的置信度。",
+      "how": "有意义地聚合 token log-probability（取平均或几何组合），识别过度自信的模式，并使用第二遍置信度估计或 RLHF 进行校准；让模型知道自己知道什么仍是开放研究。",
+      "detail": "<p>结课问答讨论的是：模型自身的概率能否指示正确性。一名学生指出每次生成都带有概率，并问正确答案是否与高概率相关，以及 RAG 是否改变这一点。</p><ul><li><b>聚合：</b>你可以计算输出 token 的 log-probability，但必须有意义地聚合（取平均或几何组合），而不是天真地求和。</li><li><b>Overconfidence：</b>模型往往<b>过度自信</b>；对照正确性进行校准会发现，当模型只有约 <b>50% 正确</b>时，它可能仍约有 <b>80% 的置信度</b>，而且不会轻易改变想法。</li><li><b>相关性模式：</b>如果答案正确，模型很可能既自信又正确；当它错误时，常常是自信地犯错 &mdash; 即 hallucination 失败。</li><li><b>开放问题：</b>相关工作使用第二遍或 RLHF 让模型估计并依据置信度行动；<b>知道自己知道什么</b>仍是一个活跃的研究领域，而第二个问题被布置为作业实验。</li></ul>",
+      "terms": [
+        "calibration",
+        "log-probability",
+        "overconfidence",
+        "hallucination",
+        "RLHF",
+        "knowing what you know"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS329A · Self-Improving AI Agents · 配图讲解 / Illustrated Notes</title>
+<style>
+:root{
+  --bg:#f7f8fb; --panel:#ffffff; --panel2:#f0f2f8; --line:#e2e6f0;
+  --fg:#1b2030; --fg2:#4c5468; --fg3:#8b93a7;
+  --acc:#2f5fd0; --acc2:#0e8a72; --warn:#b06000;
+  --code:#eef1f8; --hit:#fff2b0; --hitfg:#6b4d00;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+[data-theme="dark"]{
+  --bg:#0f1117; --panel:#161a25; --panel2:#1c2030; --line:#2a3042;
+  --fg:#e6e9f2; --fg2:#a9b1c6; --fg3:#6f7793;
+  --acc:#7aa2ff; --acc2:#5ee1c4; --warn:#ffb86b;
+  --code:#1d2233; --hit:#4a3f16; --hitfg:#ffe08a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:15.5px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+code{font:13.5px var(--mono);background:var(--code);padding:1px 5px;border-radius:5px}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));z-index:60}
+
+header.top{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;padding:9px 16px;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;white-space:nowrap}
+.brand small{display:block;font-weight:400;font-size:11px;color:var(--fg3)}
+select#partsel{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:7px 10px;max-width:320px}
+.searchwrap{position:relative;flex:1;max-width:440px;margin-left:auto}
+.searchwrap input{width:100%;padding:8px 34px 8px 34px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--fg);outline:none}
+.searchwrap input:focus{border-color:var(--acc)}
+.searchwrap .ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--fg3)}
+.searchwrap kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font:11px var(--mono);color:var(--fg3);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.tbtn{padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--fg2);font-size:13px;white-space:nowrap}
+.tbtn:hover{color:var(--fg);border-color:var(--acc)}
+.tbtn.on{color:var(--acc);border-color:var(--acc)}
+#btnLang{font-weight:700;min-width:52px}
+
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1400px;margin:0 auto}
+aside{position:sticky;top:56px;align-self:start;height:calc(100vh - 56px);overflow:auto;padding:16px 14px 60px;border-right:1px solid var(--line)}
+aside h4{margin:6px 6px 8px;font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--fg3)}
+.lec{display:flex;gap:9px;width:100%;text-align:left;padding:7px 9px;border-radius:9px;color:var(--fg2);margin-bottom:2px}
+.lec:hover{background:var(--panel2);color:var(--fg)}
+.lec.active{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--fg)}
+.lec b{font:12px var(--mono);color:var(--fg3);padding-top:2px}
+.sec-link{display:block;width:100%;text-align:left;padding:5px 9px;border-radius:7px;color:var(--fg3);
+  font-size:12.8px;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sec-link:hover{color:var(--fg);background:var(--panel2)}
+.sec-link.active{color:var(--acc);border-left-color:var(--acc)}
+.tocwrap{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+
+main{padding:26px 34px 140px;max-width:1020px}
+.lechead h1{margin:0 0 8px;font-size:30px;line-height:1.2;letter-spacing:-.4px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--fg3);font-size:13px;align-items:center;margin-bottom:16px}
+.pill{border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--panel)}
+.summary{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);
+  border-radius:10px;padding:14px 16px;margin-bottom:26px;color:var(--fg2)}
+section.sec{padding:22px 0 10px;border-top:1px solid var(--line);scroll-margin-top:70px}
+section.sec:first-of-type{border-top:0}
+.sec h2{margin:0 0 12px;font-size:22px;line-height:1.3;letter-spacing:-.2px}
+.sec h2 .t{font:12px var(--mono);color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,transparent);
+  border-radius:6px;padding:3px 8px;margin-right:10px;vertical-align:2px}
+.prose{color:var(--fg2);max-width:74ch}
+.prose p{margin:0 0 10px}
+.prose ul{margin:0 0 10px;padding-left:22px}
+.prose li{margin:3px 0}
+.prose b{color:var(--fg)}
+.chain{margin:0 0 14px;display:flex;flex-direction:column;gap:8px}
+.node{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start;background:var(--panel);
+  border:1px solid var(--line);border-left:3px solid var(--fg3);border-radius:9px;padding:10px 13px;color:var(--fg2)}
+.node .tag{font-size:12px;font-weight:700;letter-spacing:.5px;padding-top:1px}
+.node.p{border-left-color:#e05d5d}.node.p .tag{color:#e05d5d}
+.node.w{border-left-color:var(--warn)}.node.w .tag{color:var(--warn)}
+.node.h{border-left-color:var(--acc2)}.node.h .tag{color:var(--acc2)}
+.node b{color:var(--fg)}
+.node code{font-size:13px}
+.terms{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}
+.term{font-size:12px;color:var(--fg3);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 10px}
+.term:hover{color:var(--acc2);border-color:var(--acc2)}
+.figs{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;margin:6px 0 8px}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+figure img{width:100%;display:block;aspect-ratio:16/9;object-fit:contain;background:#0b0d12;cursor:zoom-in}
+figcaption{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;font-size:12px;color:var(--fg3);border-top:1px solid var(--line)}
+figcaption a{font:12px var(--mono)}
+body.ponly .prose,body.ponly .terms,body.ponly .chain{display:none}
+body.ponly .figs{grid-template-columns:repeat(auto-fill,minmax(430px,1fr))}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:70;opacity:0;pointer-events:none;transition:.15s}
+.overlay.open{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;height:100%;width:min(700px,95vw);background:var(--panel);
+  border-left:1px solid var(--line);z-index:80;transform:translateX(102%);transition:.2s;display:flex;flex-direction:column}
+.panel.open{transform:none}
+.panel header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel header h3{margin:0;font-size:16px}
+.panel .body{overflow:auto;padding:14px 16px}
+.close{font-size:20px;color:var(--fg3);margin-left:auto}
+.result{display:block;width:100%;text-align:left;padding:11px 12px;border-radius:9px;margin-bottom:6px}
+.result:hover{background:var(--panel2)}
+.result .rq{font:11.5px var(--mono);color:var(--fg3);margin-bottom:3px}
+.result .rt{color:var(--fg2);font-size:13.5px}
+mark{background:var(--hit);color:var(--hitfg);border-radius:3px;padding:0 2px}
+.nores{color:var(--fg3);padding:16px 4px}
+
+#lightbox{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:24px}
+#lightbox.open{display:flex}
+#lightbox img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 50px rgba(0,0,0,.6)}
+#lightbox .x{position:absolute;top:16px;right:22px;color:#fff;font-size:30px;opacity:.8}
+#lightbox .cap{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:#cfd6e6;font:12.5px var(--mono)}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  main{padding:20px}.brand small{display:none}}
+@media print{header.top,aside,.overlay,.panel,#lightbox,#progress{display:none!important}
+  .layout{display:block}main{max-width:none;padding:0}.figs{grid-template-columns:1fr 1fr}
+  body.ponly .prose,body.ponly .chain{display:block} section.sec{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="top">
+  <div class="brand">CS329A · <span data-i18n="brandMain">配图讲解</span><small>Self-Improving AI Agents · ELI5 for engineers</small></div>
+  <select id="partsel"></select>
+  <div class="searchwrap"><span class="ic">⌕</span>
+    <input id="q" type="search" autocomplete="off"><kbd>/</kbd></div>
+  <button class="tbtn" id="btnPonly" data-i18n="ponly">只看图</button>
+  <button class="tbtn" id="btnLang">EN</button>
+  <button class="tbtn" id="btnTheme" title="theme">◐</button>
+</header>
+
+<div class="layout">
+  <aside>
+    <h4 data-i18n="lectures">讲座</h4><div id="leclist"></div>
+    <div class="tocwrap"><h4 data-i18n="toc">本讲目录</h4><div id="toc"></div></div>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<section class="panel" id="searchPanel">
+  <header><h3 data-i18n="searchTitle">搜索</h3><span id="searchMeta" style="color:var(--fg3);font-size:12.5px"></span><button class="close" data-close>×</button></header>
+  <div class="body" id="searchResults"></div>
+</section>
+
+<div id="lightbox"><span class="x">×</span><img id="lbimg" alt=""><div class="cap" id="lbcap"></div></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const DEFAULT_LANG = /*__LANG__*/"zh";
+const I18N = {
+  zh:{brandMain:"配图讲解", lectures:"讲座", toc:"本讲目录", ponly:"只看图", searchPh:"搜索讲解 / 术语…",
+      original:"原讲座", listen:"听原声/同步播放", sections:"节", figures:"图", searchTitle:"搜索",
+      sectionUnit:"节（全 9 讲）", noMatch:"无匹配。", typeKw:"输入关键词。", figure:"图", summary:"本讲速览",
+      problem:"问题", why:"成因", how:"解法",
+      langBtn:"EN", htmlLang:"zh-CN"},
+  en:{brandMain:"Illustrated Notes", lectures:"Lectures", toc:"On this page", ponly:"Figures only", searchPh:"Search notes / terms…",
+      original:"Original talk", listen:"Audio + slides", sections:"sections", figures:"figures", searchTitle:"Search",
+      sectionUnit:" sections (all 9 lectures)", noMatch:"No match.", typeKw:"Type a keyword.", figure:"Fig",
+      summary:"Overview", problem:"Problem", why:"Why", how:"How",
+      langBtn:"中文", htmlLang:"en"}
+};
+const LANG = (()=>{ try{return localStorage.getItem('cs329a:lang')||DEFAULT_LANG}catch(e){return DEFAULT_LANG} })();
+const T = k => I18N[LANG][k] || k;
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const fmt=s=>{s=Math.max(0,Math.round(s||0));const m=Math.floor(s/60),h=Math.floor(m/60);
+  return (h?h+':'+String(m%60).padStart(2,'0'):m)+':'+String(s%60).padStart(2,'0')};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+const yt=(id,t)=>`https://www.youtube.com/watch?v=${id}&t=${Math.floor(t)}s`;
+const tr=o=>o?o[LANG]||o.en||o.zh:o;
+let part=null;
+
+function boot(){
+  document.documentElement.dataset.theme=LS.get('cs329a:cbtheme','light');
+  document.documentElement.lang=I18N[LANG].htmlLang;
+  document.body.classList.toggle('ponly', !!LS.get('cs329a:ponly',false));
+  $('#btnPonly').classList.toggle('on', document.body.classList.contains('ponly'));
+  $$('[data-i18n]').forEach(e=>{const k=e.dataset.i18n; if(k!=='ponly')e.textContent=T(k);});
+  $('#q').placeholder=T('searchPh'); $('#btnPonly').textContent=T('ponly');
+  $('#partsel').onchange=e=>openPart(+e.target.value);
+  $('#btnLang').onclick=()=>{try{localStorage.setItem('cs329a:lang', LANG==='zh'?'en':'zh')}catch(e){}; location.reload();};
+  const m=location.hash.match(/^#p(\d+)/);
+  openPart(m?+m[1]:1);
+}
+function renderChrome(){
+  $('#partsel').innerHTML=DATA.parts.map(p=>`<option value="${p.n}">${esc(tr(p).title)}</option>`).join('');
+  $('#leclist').innerHTML=DATA.parts.map(p=>
+    `<button class="lec" data-n="${p.n}"><b>${p.n}</b><span>${esc(tr(p).title)}</span></button>`).join('');
+  $$('#leclist .lec').forEach(b=>b.onclick=()=>openPart(+b.dataset.n));
+}
+function openPart(n){
+  part=DATA.parts.find(p=>p.n===n); if(!part)return;
+  renderChrome();
+  $('#partsel').value=n;
+  $$('#leclist .lec').forEach(b=>b.classList.toggle('active',+b.dataset.n===n));
+  const tp=tr(part), figs=part.sections.reduce((a,s)=>a+s.figs.length,0);
+  $('#main').innerHTML=`
+    <div class="lechead">
+      <h1>Part ${part.n} · ${esc(tp.title)}</h1>
+      <div class="meta">
+        <span class="pill">${fmt(part.duration)}</span>
+        <span class="pill">${part.sections.length} ${T('sections')}</span>
+        <span class="pill">${figs} ${T('figures')}</span>
+        <a class="pill" href="${yt(part.id,0)}" target="_blank" rel="noopener">${T('original')} ↗</a>
+        <a class="pill" href="courseware.html#p${part.n}" target="_blank" rel="noopener">${T('listen')} ↗</a>
+      </div>
+    </div>
+    <div class="summary"><b>${T('summary')}：</b>${esc(tp.summary)}</div>
+    ${part.sections.map((s,i)=>secHTML(s,i)).join('')}`;
+  $('#toc').innerHTML=part.sections.map((s,i)=>{
+    const ts=tr(s); return `<button class="sec-link" data-i="${i}" title="${esc(ts.title)}">${fmt(s.t)} · ${esc(ts.title)}</button>`;
+  }).join('');
+  $$('#toc .sec-link').forEach(b=>b.onclick=()=>document.getElementById(`sec-${part.n}-${b.dataset.i}`).scrollIntoView());
+  $$('#main .term').forEach(b=>b.onclick=()=>{const t=b.dataset.term; $('#q').value=t; doSearch(t); openPanel();});
+  $$('#main figure img').forEach(im=>im.onclick=()=>lightbox(im));
+  history.replaceState(null,'',`#p${n}`);
+  setupSpy();
+}
+function secHTML(s,i){
+  const ts=tr(s);
+  const figs=s.figs.map((f,k)=>`
+    <figure>
+      <img loading="lazy" src="${f.file}" alt="Part ${part.n}" data-cap="Part ${part.n} · ${fmt(f.t)}">
+      <figcaption><span>${T('figure')} ${i+1}.${k+1}</span><a href="${yt(part.id,f.t)}" target="_blank" rel="noopener">${fmt(f.t)} ↗</a></figcaption>
+    </figure>`).join('');
+  return `<section class="sec" id="sec-${part.n}-${i}">
+    <h2><span class="t">${fmt(s.t)}</span>${esc(ts.title)}</h2>
+    <div class="chain">
+      <div class="node p"><span class="tag">${T('problem')}</span><div>${ts.problem}</div></div>
+      <div class="node w"><span class="tag">${T('why')}</span><div>${ts.why}</div></div>
+      <div class="node h"><span class="tag">${T('how')}</span><div>${ts.how}</div></div>
+    </div>
+    <div class="prose">${ts.detail}</div>
+    ${ts.terms&&ts.terms.length?`<div class="terms">${ts.terms.map(t=>`<button class="term" data-term="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
+    ${figs?`<div class="figs">${figs}</div>`:''}
+  </section>`;
+}
+let spy;
+function setupSpy(){
+  if(spy)spy.disconnect();
+  const links=$$('#toc .sec-link');
+  spy=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){const i=e.target.id.split('-').pop();
+      links.forEach(l=>l.classList.toggle('active',l.dataset.i===i));}
+  }),{rootMargin:'-64px 0px -72% 0px'});
+  $$('#main section.sec').forEach(s=>spy.observe(s));
+}
+function lightbox(im){$('#lbimg').src=im.src;$('#lbcap').textContent=im.dataset.cap||'';$('#lightbox').classList.add('open');}
+$('#lightbox').onclick=()=>$('#lightbox').classList.remove('open');
+
+let st;
+$('#q').oninput=e=>{clearTimeout(st);st=setTimeout(()=>{doSearch(e.target.value);if(e.target.value.trim())openPanel();},150)};
+function doSearch(q){
+  q=q.trim().toLowerCase();
+  if(!q){$('#searchResults').innerHTML=`<div class="nores">${T('typeKw')}</div>`;$('#searchMeta').textContent='';return;}
+  const out=[];
+  for(const p of DATA.parts) for(const s of p.sections){
+    const ts=tr(s);
+    const hay=(ts.title+' '+ts.problem+' '+ts.why+' '+ts.how+' '+ts.detail.replace(/<[^>]+>/g,' ')).toLowerCase();
+    if(hay.includes(q)) out.push({p,s,ts});
+  }
+  $('#searchMeta').textContent=out.length+T('sectionUnit');
+  if(!out.length){$('#searchResults').innerHTML=`<div class="nores">${T('noMatch')}</div>`;return;}
+  $('#searchResults').innerHTML=out.map(r=>{const t=tr(r.p).title;
+    return `<button class="result" data-n="${r.p.n}" data-i="${r.p.sections.indexOf(r.s)}">
+      <div class="rq">Part ${r.p.n} · ${fmt(r.s.t)} · ${esc(t)}</div>
+      <div class="rt">${esc(r.ts.title)}</div></button>`;}).join('');
+  $$('#searchResults .result').forEach(b=>b.onclick=()=>{
+    closePanel(); const n=+b.dataset.n; if(n!==part.n) openPart(n);
+    setTimeout(()=>document.getElementById(`sec-${n}-${b.dataset.i}`).scrollIntoView(),60);
+  });
+}
+function openPanel(){$('#overlay').classList.add('open');$('#searchPanel').classList.add('open');$('#q').focus();}
+function closePanel(){$('#overlay').classList.remove('open');$('#searchPanel').classList.remove('open');}
+$('#overlay').onclick=closePanel; $$('[data-close]').forEach(b=>b.onclick=closePanel);
+$('#btnPonly').onclick=()=>{const on=!document.body.classList.contains('ponly');
+  document.body.classList.toggle('ponly',on);$('#btnPonly').classList.toggle('on',on);LS.set('cs329a:ponly',on);};
+$('#btnTheme').onclick=()=>{const c=document.documentElement.dataset.theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=c;LS.set('cs329a:cbtheme',c);};
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){if(e.key==='Escape')e.target.blur();return;}
+  if(e.key==='/'){e.preventDefault();openPanel();}
+  if(e.key==='Escape'){closePanel();$('#lightbox').classList.remove('open');}
+});
+addEventListener('scroll',()=>{const h=document.documentElement.scrollHeight-innerHeight;
+  $('#progress').style.width=(h>0?scrollY/h*100:0)+'%';});
+addEventListener('hashchange',()=>{const m=location.hash.match(/^#p(\d+)/);if(m)openPart(+m[1]);});
+$('#btnLang').textContent=T('langBtn');
+boot();
+</script>
+</body>
+</html>

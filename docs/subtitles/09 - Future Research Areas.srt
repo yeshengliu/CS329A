@@ -1,0 +1,7059 @@
+1
+00:00:05,520 --> 00:00:11,560
+Okay, so we will start with
+
+2
+00:00:08,080 --> 00:00:13,200
+with an overview of what we have covered
+
+3
+00:00:11,560 --> 00:00:15,760
+in this quarter.
+
+4
+00:00:13,200 --> 00:00:19,720
+So we started the class with just giving
+
+5
+00:00:15,760 --> 00:00:23,160
+you an overview of LLMs and how over the
+
+6
+00:00:19,720 --> 00:00:24,800
+past year test time scaling and train
+
+7
+00:00:23,160 --> 00:00:26,520
+time scaling using self-improvement
+
+8
+00:00:24,800 --> 00:00:30,560
+techniques where the fundamental loop is
+
+9
+00:00:26,520 --> 00:00:32,040
+driven by verifiers and feedback from
+
+10
+00:00:30,560 --> 00:00:34,080
+running those verifiers and getting
+
+11
+00:00:32,040 --> 00:00:36,440
+rewards and then using reinforcement
+
+12
+00:00:34,080 --> 00:00:39,400
+learning and even search algorithms to
+
+13
+00:00:36,440 --> 00:00:42,320
+to help the models to hill climb on math
+
+14
+00:00:39,400 --> 00:00:44,040
+and coding for example have been a lot
+
+15
+00:00:42,320 --> 00:00:45,240
+of the focus of initial part of the
+
+16
+00:00:44,040 --> 00:00:47,280
+class.
+
+17
+00:00:45,240 --> 00:00:49,080
+From there we started talking about
+
+18
+00:00:47,280 --> 00:00:51,400
+evolutionary strategies so there was a
+
+19
+00:00:49,080 --> 00:00:53,120
+whole class on open-endedness where
+
+20
+00:00:51,400 --> 00:00:56,280
+we're not just um
+
+21
+00:00:53,120 --> 00:00:58,480
+driving self-improvement loop with um
+
+22
+00:00:56,280 --> 00:01:01,160
+rewards we also allow the models to just
+
+23
+00:00:58,480 --> 00:01:03,800
+go explore if the exploration space can
+
+24
+00:01:01,160 --> 00:01:07,120
+be defined and here we discussed
+
+25
+00:01:03,800 --> 00:01:08,640
+Alpha Evolve and similar techniques.
+
+26
+00:01:07,120 --> 00:01:10,760
+Then we moved
+
+27
+00:01:08,640 --> 00:01:13,480
+to to a paradigm where we build
+
+28
+00:01:10,760 --> 00:01:16,520
+end-to-end workflows for agents using
+
+29
+00:01:13,480 --> 00:01:19,680
+tool use and as the models interact with
+
+30
+00:01:16,520 --> 00:01:22,240
+environments and tools you basically are
+
+31
+00:01:19,680 --> 00:01:23,520
+able to drive the workflows end-to-end.
+
+32
+00:01:22,240 --> 00:01:26,800
+And um
+
+33
+00:01:23,520 --> 00:01:28,680
+if you imagine that you have tasks that
+
+34
+00:01:26,800 --> 00:01:30,680
+need to be completed over multiple steps
+
+35
+00:01:28,680 --> 00:01:32,520
+then you do need to have perhaps the
+
+36
+00:01:30,680 --> 00:01:33,880
+ability to look at knowledge bases so
+
+37
+00:01:32,520 --> 00:01:36,880
+that requires
+
+38
+00:01:33,880 --> 00:01:39,960
+retrieval and memory. So basically
+
+39
+00:01:36,880 --> 00:01:42,680
+as we go towards real-world workflows we
+
+40
+00:01:39,960 --> 00:01:44,480
+need better planning and multi-step
+
+41
+00:01:42,680 --> 00:01:45,640
+reasoning in these models so we
+
+42
+00:01:44,480 --> 00:01:48,960
+discussed
+
+43
+00:01:45,640 --> 00:01:51,120
+some works around that and how to really
+
+44
+00:01:48,960 --> 00:01:53,640
+look at evaluations in the next
+
+45
+00:01:51,120 --> 00:01:55,760
+generation of models and what
+
+46
+00:01:53,640 --> 00:01:58,240
+capabilities would drive that. And then
+
+47
+00:01:55,760 --> 00:02:00,640
+we had several guest lectures on post
+
+48
+00:01:58,240 --> 00:02:03,400
+training and multi model agents and
+
+49
+00:02:00,640 --> 00:02:05,040
+robotics and reasoning and so on.
+
+50
+00:02:03,400 --> 00:02:07,400
+Is there anything you would like to add
+
+51
+00:02:05,040 --> 00:02:07,400
+here?
+
+52
+00:02:07,920 --> 00:02:11,800
+>> Yeah, I think I think this sounds good.
+
+53
+00:02:09,320 --> 00:02:15,120
+This was full coverage. I guess so one
+
+54
+00:02:11,800 --> 00:02:15,800
+of our guest speakers also talked about
+
+55
+00:02:15,120 --> 00:02:18,280
+um
+
+56
+00:02:15,800 --> 00:02:20,880
+the symbolic techniques which goes under
+
+57
+00:02:18,280 --> 00:02:23,080
+the umbrella of tool use and how that
+
+58
+00:02:20,880 --> 00:02:25,320
+could add to the synthetic data which is
+
+59
+00:02:23,080 --> 00:02:28,360
+another trend we're seeing.
+
+60
+00:02:25,320 --> 00:02:28,360
+>> Amazing. Thank you.
+
+61
+00:02:29,240 --> 00:02:33,800
+So
+
+62
+00:02:30,240 --> 00:02:35,640
+so I think just to recap and and this uh
+
+63
+00:02:33,800 --> 00:02:37,880
+the class is named as self-improving
+
+64
+00:02:35,640 --> 00:02:40,040
+agents. So it's not just focusing on
+
+65
+00:02:37,880 --> 00:02:43,200
+LLMs, it's focusing on the agent aspect
+
+66
+00:02:40,040 --> 00:02:44,560
+of it. What I roughly if I were to if if
+
+67
+00:02:43,200 --> 00:02:47,600
+you were to remind you of what we
+
+68
+00:02:44,560 --> 00:02:50,720
+discussed in first class um is that what
+
+69
+00:02:47,600 --> 00:02:52,360
+how is an agent a generalization of LLM?
+
+70
+00:02:50,720 --> 00:02:53,760
+It has a goal and it will go and
+
+71
+00:02:52,360 --> 00:02:55,760
+interact with the environment, collect
+
+72
+00:02:53,760 --> 00:02:57,680
+feedback, and use that feedback to
+
+73
+00:02:55,760 --> 00:02:59,920
+correct its steps. So they're basically
+
+74
+00:02:57,680 --> 00:03:01,920
+systems that can direct their own
+
+75
+00:02:59,920 --> 00:03:03,560
+processes, use tools, and then
+
+76
+00:03:01,920 --> 00:03:06,480
+accomplish a goal.
+
+77
+00:03:03,560 --> 00:03:08,800
+And often times in the current paradigm
+
+78
+00:03:06,480 --> 00:03:10,760
+uh the LLMs uh by themselves are not
+
+79
+00:03:08,800 --> 00:03:13,480
+powerful enough to drive towards a full
+
+80
+00:03:10,760 --> 00:03:16,080
+goal. Um they're getting there. So often
+
+81
+00:03:13,480 --> 00:03:18,000
+times we would handwrite these uh
+
+82
+00:03:16,080 --> 00:03:20,280
+systems as workflows where you are
+
+83
+00:03:18,000 --> 00:03:21,880
+orchestrating LLMs and tools. Uh
+
+84
+00:03:20,280 --> 00:03:24,400
+however, in certain
+
+85
+00:03:21,880 --> 00:03:26,480
+certain scenarios like coding agents,
+
+86
+00:03:24,400 --> 00:03:29,160
+you are seeing some of these uh agentic
+
+87
+00:03:26,480 --> 00:03:30,560
+workflows being driven by themselves. So
+
+88
+00:03:29,160 --> 00:03:34,040
+it's an exciting time where we are
+
+89
+00:03:30,560 --> 00:03:36,600
+seeing a lot of progress in this area.
+
+90
+00:03:34,040 --> 00:03:38,720
+And how we construct these workflows uh
+
+91
+00:03:36,600 --> 00:03:40,880
+often times means you're orchestrating
+
+92
+00:03:38,720 --> 00:03:42,519
+LLMs, you're orchestrating verifiers
+
+93
+00:03:40,880 --> 00:03:44,400
+because you need some form of reward.
+
+94
+00:03:42,519 --> 00:03:46,480
+You might have LLMs as judges for
+
+95
+00:03:44,400 --> 00:03:48,440
+verifiers. You might have tool calls.
+
+96
+00:03:46,480 --> 00:03:50,200
+You might have uh search algorithms in
+
+97
+00:03:48,440 --> 00:03:52,480
+there. So you might have parallel uh
+
+98
+00:03:50,200 --> 00:03:54,200
+parallel LLM calls that are going and
+
+99
+00:03:52,480 --> 00:03:56,440
+doing this kind of search, but overall
+
+100
+00:03:54,200 --> 00:03:58,240
+since uh agentic workflow is driving
+
+101
+00:03:56,440 --> 00:04:00,760
+towards a goal, it needs the capability
+
+102
+00:03:58,240 --> 00:04:02,880
+to plan and to
+
+103
+00:04:00,760 --> 00:04:05,000
+reason over multiple steps, correct
+
+104
+00:04:02,880 --> 00:04:08,280
+itself if it were going in the wrong
+
+105
+00:04:05,000 --> 00:04:10,400
+direction, and overall keep improving in
+
+106
+00:04:08,280 --> 00:04:13,800
+its capabilities, which is where the
+
+107
+00:04:10,400 --> 00:04:15,920
+self-improvement aspect comes in. So, in
+
+108
+00:04:13,800 --> 00:04:19,320
+this lecture as we wanted we wanted to
+
+109
+00:04:15,920 --> 00:04:21,880
+cover some future research areas. So,
+
+110
+00:04:19,320 --> 00:04:24,320
+we organized it as key ideas from
+
+111
+00:04:21,880 --> 00:04:26,520
+certain papers that both cover the
+
+112
+00:04:24,320 --> 00:04:28,280
+self-improvement side of things and just
+
+113
+00:04:26,520 --> 00:04:29,560
+generally the
+
+114
+00:04:28,280 --> 00:04:31,919
+efficiency side of things for
+
+115
+00:04:29,560 --> 00:04:34,840
+intelligence, both of which we believe
+
+116
+00:04:31,919 --> 00:04:38,560
+are extremely important directions in
+
+117
+00:04:34,840 --> 00:04:38,560
+the next research areas.
+
+118
+00:04:38,919 --> 00:04:42,680
+So,
+
+119
+00:04:40,120 --> 00:04:44,520
+for the first three papers that I will
+
+120
+00:04:42,680 --> 00:04:46,280
+cover um
+
+121
+00:04:44,520 --> 00:04:48,720
+I'll just present the key ideas, but let
+
+122
+00:04:46,280 --> 00:04:50,640
+me just present what
+
+123
+00:04:48,720 --> 00:04:54,400
+why those papers were chosen and what
+
+124
+00:04:50,640 --> 00:04:56,120
+are the key ideas that they kind of um
+
+125
+00:04:54,400 --> 00:04:58,200
+point in terms of next steps and
+
+126
+00:04:56,120 --> 00:05:00,600
+directions. So, what we learned in the
+
+127
+00:04:58,200 --> 00:05:02,880
+classes a lot about say test time
+
+128
+00:05:00,600 --> 00:05:04,160
+scaling where you could
+
+129
+00:05:02,880 --> 00:05:06,520
+improve
+
+130
+00:05:04,160 --> 00:05:09,320
+by having multiple samples and majority
+
+131
+00:05:06,520 --> 00:05:11,760
+voting and so on. And then train time
+
+132
+00:05:09,320 --> 00:05:15,080
+scaling where you can use that feedback
+
+133
+00:05:11,760 --> 00:05:17,280
+in the inference loop to and get rewards
+
+134
+00:05:15,080 --> 00:05:19,800
+to drive that self-improvement loop.
+
+135
+00:05:17,280 --> 00:05:22,200
+Often times this is still limited to
+
+136
+00:05:19,800 --> 00:05:24,160
+narrow domains like math and coding. So,
+
+137
+00:05:22,200 --> 00:05:25,600
+how do you get generalization across
+
+138
+00:05:24,160 --> 00:05:27,000
+these domains?
+
+139
+00:05:25,600 --> 00:05:28,919
+And how do you generally get those
+
+140
+00:05:27,000 --> 00:05:30,880
+reasoning chains
+
+141
+00:05:28,919 --> 00:05:33,000
+to be diverse enough so that you can
+
+142
+00:05:30,880 --> 00:05:35,800
+continue to drive that self-improvement
+
+143
+00:05:33,000 --> 00:05:38,520
+loop is something that is
+
+144
+00:05:35,800 --> 00:05:41,080
+an important research area even now.
+
+145
+00:05:38,520 --> 00:05:43,240
+An important aspect of
+
+146
+00:05:41,080 --> 00:05:45,200
+building these self-improvement loops
+
+147
+00:05:43,240 --> 00:05:48,560
+continues to be verification. So, how do
+
+148
+00:05:45,200 --> 00:05:50,160
+you have robust verification techniques
+
+149
+00:05:48,560 --> 00:05:51,640
+or meta verification techniques where
+
+150
+00:05:50,160 --> 00:05:54,200
+you verify
+
+151
+00:05:51,640 --> 00:05:55,200
+what was going into the reasoning chain
+
+152
+00:05:54,200 --> 00:05:57,080
+is
+
+153
+00:05:55,200 --> 00:05:59,840
+often quite valuable. So that's another
+
+154
+00:05:57,080 --> 00:06:02,000
+area that the second paper I will
+
+155
+00:05:59,840 --> 00:06:04,120
+present the ideas on will cover. And the
+
+156
+00:06:02,000 --> 00:06:05,640
+third aspect is that
+
+157
+00:06:04,120 --> 00:06:07,080
+even though we talk about train time
+
+158
+00:06:05,640 --> 00:06:09,280
+scaling that
+
+159
+00:06:07,080 --> 00:06:10,640
+the prompts that go into training these
+
+160
+00:06:09,280 --> 00:06:12,920
+models
+
+161
+00:06:10,640 --> 00:06:14,760
+get selected very statically and require
+
+162
+00:06:12,920 --> 00:06:15,960
+humans to select them.
+
+163
+00:06:14,760 --> 00:06:17,040
+So
+
+164
+00:06:15,960 --> 00:06:19,400
+how do you break through the data
+
+165
+00:06:17,040 --> 00:06:22,400
+barriers so that the self-improvement
+
+166
+00:06:19,400 --> 00:06:24,440
+loop can pick the right set of data that
+
+167
+00:06:22,400 --> 00:06:25,840
+drives that loop.
+
+168
+00:06:24,440 --> 00:06:27,200
+So that's going to be the first part of
+
+169
+00:06:25,840 --> 00:06:29,919
+the focus and the second part of the
+
+170
+00:06:27,200 --> 00:06:30,840
+focus will be focused on just what
+
+171
+00:06:29,919 --> 00:06:33,040
+drives
+
+172
+00:06:30,840 --> 00:06:35,800
+efficiency for intelligence. So
+
+173
+00:06:33,040 --> 00:06:37,840
+intelligence per what aspects?
+
+174
+00:06:35,800 --> 00:06:40,080
+So let's take a quick look at some of
+
+175
+00:06:37,840 --> 00:06:42,640
+the ideas that might drive the
+
+176
+00:06:40,080 --> 00:06:45,000
+self-improvement loop further in the
+
+177
+00:06:42,640 --> 00:06:46,840
+next generation of systems and given how
+
+178
+00:06:45,000 --> 00:06:48,520
+fast the field is moving
+
+179
+00:06:46,840 --> 00:06:51,560
+maybe we'll be teaching papers on each
+
+180
+00:06:48,520 --> 00:06:54,080
+of this next time.
+
+181
+00:06:51,560 --> 00:06:55,640
+So the first paper that we cover is
+
+182
+00:06:54,080 --> 00:06:58,400
+coming from multi-agent fine-tuning
+
+183
+00:06:55,640 --> 00:07:00,200
+which focuses on self-improvement with
+
+184
+00:06:58,400 --> 00:07:04,080
+diverse reasoning chains.
+
+185
+00:07:00,200 --> 00:07:05,640
+The key idea of this paper is that
+
+186
+00:07:04,080 --> 00:07:07,880
+pre-training computer and instruction
+
+187
+00:07:05,640 --> 00:07:09,040
+tuning is bottlenecked by
+
+188
+00:07:07,880 --> 00:07:10,720
+so pre-training computers are
+
+189
+00:07:09,040 --> 00:07:12,680
+compression of internet scale data and
+
+190
+00:07:10,720 --> 00:07:14,880
+instruction fine-tuning often requires
+
+191
+00:07:12,680 --> 00:07:17,840
+real human data where you
+
+192
+00:07:14,880 --> 00:07:21,000
+need human preferences to decide what is
+
+193
+00:07:17,840 --> 00:07:24,040
+good model response and bad response
+
+194
+00:07:21,000 --> 00:07:25,520
+bad model response. So an alternative to
+
+195
+00:07:24,040 --> 00:07:27,320
+this is that you can use the data
+
+196
+00:07:25,520 --> 00:07:28,680
+generated by LLMs which is often called
+
+197
+00:07:27,320 --> 00:07:30,760
+a synthetic data and you can do
+
+198
+00:07:28,680 --> 00:07:32,880
+iterative fine-tuning where you
+
+199
+00:07:30,760 --> 00:07:34,360
+generate possible solutions and filter
+
+200
+00:07:32,880 --> 00:07:36,080
+out the incorrect ones. This is called
+
+201
+00:07:34,360 --> 00:07:37,680
+rejection sampling and fine-tune only on
+
+202
+00:07:36,080 --> 00:07:41,760
+the good ones. Now there are many
+
+203
+00:07:37,680 --> 00:07:43,560
+variants star and so on which uh can
+
+204
+00:07:41,760 --> 00:07:45,800
+help drive this loop even better. We
+
+205
+00:07:43,560 --> 00:07:48,200
+covered star in in class. Uh you can
+
+206
+00:07:45,800 --> 00:07:49,360
+even add reasoning chains in in in that
+
+207
+00:07:48,200 --> 00:07:51,360
+process.
+
+208
+00:07:49,360 --> 00:07:53,480
+But, what typically happens is that if
+
+209
+00:07:51,360 --> 00:07:56,920
+you're using a single uh large language
+
+210
+00:07:53,480 --> 00:07:58,960
+model to generate the data, then uh
+
+211
+00:07:56,920 --> 00:08:00,840
+it will generate solutions that will be
+
+212
+00:07:58,960 --> 00:08:02,640
+very similar, and often time the
+
+213
+00:08:00,840 --> 00:08:05,880
+performance increase will start uh will
+
+214
+00:08:02,640 --> 00:08:08,280
+stop uh after a few uh iterations or
+
+215
+00:08:05,880 --> 00:08:10,320
+after tens of iterations. And typically
+
+216
+00:08:08,280 --> 00:08:12,240
+this problem is uh
+
+217
+00:08:10,320 --> 00:08:14,919
+uh comes down to really the notion of
+
+218
+00:08:12,240 --> 00:08:16,760
+lack of diversity. So, when uh you look
+
+219
+00:08:14,919 --> 00:08:18,880
+at model training at the pre-training
+
+220
+00:08:16,760 --> 00:08:21,280
+scale, the data is so diverse because it
+
+221
+00:08:18,880 --> 00:08:23,080
+was generated over such a long time uh
+
+222
+00:08:21,280 --> 00:08:25,800
+by humans, so it
+
+223
+00:08:23,080 --> 00:08:27,800
+it is quite diverse, and that helps to
+
+224
+00:08:25,800 --> 00:08:29,760
+uh helps improve the performance. But,
+
+225
+00:08:27,800 --> 00:08:32,360
+when a single large language model is
+
+226
+00:08:29,760 --> 00:08:34,280
+generating outputs for a set of prompts,
+
+227
+00:08:32,360 --> 00:08:37,039
+it will not have very diverse responses
+
+228
+00:08:34,280 --> 00:08:38,880
+even at high temperatures. And if uh so,
+
+229
+00:08:37,039 --> 00:08:41,520
+the intuitive solution for this often
+
+230
+00:08:38,880 --> 00:08:43,200
+means that you can use multiple agents
+
+231
+00:08:41,520 --> 00:08:44,005
+uh which are specialized in some way,
+
+232
+00:08:43,200 --> 00:08:44,080
+and then
+
+233
+00:08:44,005 --> 00:08:46,160
+>> [snorts]
+
+234
+00:08:44,080 --> 00:08:48,000
+>> use them to uh
+
+235
+00:08:46,160 --> 00:08:50,640
+improve the diversity. So, what this
+
+236
+00:08:48,000 --> 00:08:52,920
+paper proposes, for example, is multiple
+
+237
+00:08:50,640 --> 00:08:55,320
+specialized agents uh for generations
+
+238
+00:08:52,920 --> 00:08:57,680
+that will then produce uh diverse
+
+239
+00:08:55,320 --> 00:09:00,640
+initial solutions. So, they they train
+
+240
+00:08:57,680 --> 00:09:02,600
+generation agents and critic agents. So,
+
+241
+00:09:00,640 --> 00:09:04,360
+um the generation agents will help
+
+242
+00:09:02,600 --> 00:09:06,560
+generate a lot of diverse initial
+
+243
+00:09:04,360 --> 00:09:09,240
+solutions, while the critic agents will
+
+244
+00:09:06,560 --> 00:09:11,600
+evaluate and refine the solutions. Uh
+
+245
+00:09:09,240 --> 00:09:13,960
+so, those are specialists as well. So,
+
+246
+00:09:11,600 --> 00:09:15,520
+if you were to look at um step-by-step
+
+247
+00:09:13,960 --> 00:09:18,200
+process, and we don't need to go through
+
+248
+00:09:15,520 --> 00:09:20,880
+every single uh detail in the algorithm
+
+249
+00:09:18,200 --> 00:09:23,600
+below, uh but uh the generation agent
+
+250
+00:09:20,880 --> 00:09:25,240
+will come up with an initial answer, um
+
+251
+00:09:23,600 --> 00:09:27,240
+and then there will be debate over
+
+252
+00:09:25,240 --> 00:09:29,600
+multiple rounds. So, uh what the
+
+253
+00:09:27,240 --> 00:09:31,240
+generation agent will In the In the
+
+254
+00:09:29,600 --> 00:09:33,200
+initial step, it will just have the
+
+255
+00:09:31,240 --> 00:09:36,280
+initial answer, but in the subsequent
+
+256
+00:09:33,200 --> 00:09:38,640
+steps, it will summarize uh and get a
+
+257
+00:09:36,280 --> 00:09:42,000
+summary of all other agents' responses,
+
+258
+00:09:38,640 --> 00:09:43,600
+and use that also as part of generating
+
+259
+00:09:42,000 --> 00:09:45,320
+the next response.
+
+260
+00:09:43,600 --> 00:09:47,680
+The goal of the critic critic agent is
+
+261
+00:09:45,320 --> 00:09:49,480
+to critique this updated set of answers.
+
+262
+00:09:47,680 --> 00:09:52,320
+So, basically, if you're doing any
+
+263
+00:09:49,480 --> 00:09:55,280
+iterations, there's an initial response
+
+264
+00:09:52,320 --> 00:09:57,200
+from each of the generation agents, then
+
+265
+00:09:55,280 --> 00:09:58,920
+you do a summary across all of these
+
+266
+00:09:57,200 --> 00:10:01,440
+agents, and then the critic agent will
+
+267
+00:09:58,920 --> 00:10:04,240
+critique this updated set of answers.
+
+268
+00:10:01,440 --> 00:10:05,720
+So, it's very similar to what you guys
+
+269
+00:10:04,240 --> 00:10:07,880
+were already familiar with. The main
+
+270
+00:10:05,720 --> 00:10:09,480
+difference here is that instead of
+
+271
+00:10:07,880 --> 00:10:12,520
+getting um
+
+272
+00:10:09,480 --> 00:10:14,280
+uh the critique over a single agent's
+
+273
+00:10:12,520 --> 00:10:16,520
+response, you're actually using multiple
+
+274
+00:10:14,280 --> 00:10:17,920
+agents' responses, and then then
+
+275
+00:10:16,520 --> 00:10:19,960
+specializing
+
+276
+00:10:17,920 --> 00:10:22,960
+uh and summarizing across them. What
+
+277
+00:10:19,960 --> 00:10:25,200
+this enables is that uh you have some
+
+278
+00:10:22,960 --> 00:10:26,760
+form of diversity even at the generation
+
+279
+00:10:25,200 --> 00:10:28,880
+stage before you're critiquing the
+
+280
+00:10:26,760 --> 00:10:31,000
+answers. So, you basically get majority
+
+281
+00:10:28,880 --> 00:10:32,440
+voting for free just by having multiple
+
+282
+00:10:31,000 --> 00:10:33,560
+agents, and
+
+283
+00:10:32,440 --> 00:10:35,760
+uh
+
+284
+00:10:33,560 --> 00:10:37,240
+assuming that these are trained slightly
+
+285
+00:10:35,760 --> 00:10:39,800
+differently, you
+
+286
+00:10:37,240 --> 00:10:42,120
+uh you get diversity for free.
+
+287
+00:10:39,800 --> 00:10:43,839
+So, uh the generation models in this
+
+288
+00:10:42,120 --> 00:10:46,360
+particular case are fine-tuned from the
+
+289
+00:10:43,839 --> 00:10:47,640
+same base models. So, they uh and and
+
+290
+00:10:46,360 --> 00:10:49,960
+the goal there is to produce good
+
+291
+00:10:47,640 --> 00:10:51,440
+answers given a question. So,
+
+292
+00:10:49,960 --> 00:10:53,480
+uh over multiple iterations, what
+
+293
+00:10:51,440 --> 00:10:55,080
+they're doing is they're taking outputs
+
+294
+00:10:53,480 --> 00:10:56,839
+and filtering for a match with the
+
+295
+00:10:55,080 --> 00:10:59,520
+majority vote, and then they're doing a
+
+296
+00:10:56,839 --> 00:11:02,040
+SFT on this list of prompt and response
+
+297
+00:10:59,520 --> 00:11:03,880
+pairs. Um if you were looking at a very
+
+298
+00:11:02,040 --> 00:11:05,360
+naive version of doing this, uh you
+
+299
+00:11:03,880 --> 00:11:06,600
+could just use different models, which
+
+300
+00:11:05,360 --> 00:11:08,960
+is something that
+
+301
+00:11:06,600 --> 00:11:10,880
+uh people do in practice as well. So,
+
+302
+00:11:08,960 --> 00:11:13,120
+they will get very different responses
+
+303
+00:11:10,880 --> 00:11:16,000
+with different prompts. So, that's the
+
+304
+00:11:13,120 --> 00:11:17,440
+poor man's version of doing uh multiple
+
+305
+00:11:16,000 --> 00:11:19,320
+generations.
+
+306
+00:11:17,440 --> 00:11:22,480
+And uh the critic models in this
+
+307
+00:11:19,320 --> 00:11:24,360
+particular paper was proposed as uh
+
+308
+00:11:22,480 --> 00:11:25,400
+The critic models will basically take
+
+309
+00:11:24,360 --> 00:11:26,360
+the
+
+310
+00:11:25,400 --> 00:11:29,000
+uh
+
+311
+00:11:26,360 --> 00:11:30,880
+input uh the updated answer, and then
+
+312
+00:11:29,000 --> 00:11:32,200
+select the best one. So, they are also
+
+313
+00:11:30,880 --> 00:11:34,280
+fine-tuned.
+
+314
+00:11:32,200 --> 00:11:35,760
+Uh and uh these are um
+
+315
+00:11:34,280 --> 00:11:37,840
+fine tuned on a mix of trajectories
+
+316
+00:11:35,760 --> 00:11:39,320
+where answers correct at the start and
+
+317
+00:11:37,840 --> 00:11:42,480
+then it's corrected over a course of
+
+318
+00:11:39,320 --> 00:11:46,160
+debate. So basically the critic model is
+
+319
+00:11:42,480 --> 00:11:49,440
+learning how to uh contrast the um
+
+320
+00:11:46,160 --> 00:11:52,040
+correct and the incorrect answer.
+
+321
+00:11:49,440 --> 00:11:54,440
+So to summarize the whole process, um
+
+322
+00:11:52,040 --> 00:11:56,680
+there is end generation models and
+
+323
+00:11:54,440 --> 00:11:58,680
+they're all each producing an output.
+
+324
+00:11:56,680 --> 00:12:00,600
+The summarization happens. So you can
+
+325
+00:11:58,680 --> 00:12:02,480
+imagine that either you summarize it
+
+326
+00:12:00,600 --> 00:12:04,280
+with a model or you can just concatenate
+
+327
+00:12:02,480 --> 00:12:06,120
+the responses of all the
+
+328
+00:12:04,280 --> 00:12:09,120
+uh models. Then there is a
+
+329
+00:12:06,120 --> 00:12:12,640
+um critic critique process on that and
+
+330
+00:12:09,120 --> 00:12:14,440
+that's uh added to the um input uh and
+
+331
+00:12:12,640 --> 00:12:16,560
+then then you do a second round where
+
+332
+00:12:14,440 --> 00:12:18,600
+all of the models generates
+
+333
+00:12:16,560 --> 00:12:20,880
+outputs, updated answers, and then then
+
+334
+00:12:18,600 --> 00:12:23,680
+you do uh majority voting on top of that
+
+335
+00:12:20,880 --> 00:12:25,920
+and again summarize the responses and
+
+336
+00:12:23,680 --> 00:12:28,520
+you can continue this process in form of
+
+337
+00:12:25,920 --> 00:12:30,120
+a debate in some ways. So uh those
+
+338
+00:12:28,520 --> 00:12:33,120
+trajectories can then be used to fine
+
+339
+00:12:30,120 --> 00:12:35,120
+tune different um different uh critiques
+
+340
+00:12:33,120 --> 00:12:37,960
+as well.
+
+341
+00:12:35,120 --> 00:12:40,280
+So how does this help? Um why did we
+
+342
+00:12:37,960 --> 00:12:42,280
+discuss this? So I think the key metric
+
+343
+00:12:40,280 --> 00:12:43,040
+that we're looking for is that
+
+344
+00:12:42,280 --> 00:12:45,600
+uh
+
+345
+00:12:43,040 --> 00:12:47,120
+on the x-axis you're looking at uh how
+
+346
+00:12:45,600 --> 00:12:49,680
+many iterations of fine tuning it has
+
+347
+00:12:47,120 --> 00:12:51,360
+gone through and on the y-axis you
+
+348
+00:12:49,680 --> 00:12:53,560
+either have the negative log likelihood
+
+349
+00:12:51,360 --> 00:12:55,520
+or you have the embedding uh
+
+350
+00:12:53,560 --> 00:12:57,400
+dissimilarity. Uh the negative log
+
+351
+00:12:55,520 --> 00:12:59,240
+likelihood is just uh a proxy for
+
+352
+00:12:57,400 --> 00:13:00,839
+performance and the embedding
+
+353
+00:12:59,240 --> 00:13:02,800
+dissimilarity the
+
+354
+00:13:00,839 --> 00:13:05,720
+higher the
+
+355
+00:13:02,800 --> 00:13:08,560
+higher uh the value, uh the more um
+
+356
+00:13:05,720 --> 00:13:11,160
+diverse it is. So what we see on the
+
+357
+00:13:08,560 --> 00:13:13,000
+left is for two open source models uh
+
+358
+00:13:11,160 --> 00:13:14,560
+when they go and do fine tuning, they're
+
+359
+00:13:13,000 --> 00:13:16,080
+actually able to continue to increase
+
+360
+00:13:14,560 --> 00:13:18,800
+performance when they do this
+
+361
+00:13:16,080 --> 00:13:20,839
+multi-agent fine tuning. So um and Llama
+
+362
+00:13:18,800 --> 00:13:23,000
+3 seems more responsive to this
+
+363
+00:13:20,839 --> 00:13:24,680
+technique. Um I think the right side is
+
+364
+00:13:23,000 --> 00:13:25,560
+more interesting as to
+
+365
+00:13:24,680 --> 00:13:27,280
+uh
+
+366
+00:13:25,560 --> 00:13:29,520
+as they're going through this process,
+
+367
+00:13:27,280 --> 00:13:32,120
+uh the responses continue to stay quite
+
+368
+00:13:29,520 --> 00:13:33,760
+diverse. And this is over math as a
+
+369
+00:13:32,120 --> 00:13:36,480
+dataset.
+
+370
+00:13:33,760 --> 00:13:38,480
+And overall, they tried this
+
+371
+00:13:36,480 --> 00:13:40,960
+again in math over three open-source
+
+372
+00:13:38,480 --> 00:13:42,280
+models. Uh and since they were going
+
+373
+00:13:40,960 --> 00:13:44,680
+with fine-tuning, they had to stick with
+
+374
+00:13:42,280 --> 00:13:46,400
+open-source models, but with multi-agent
+
+375
+00:13:44,680 --> 00:13:49,320
+techniques, they were able to continue
+
+376
+00:13:46,400 --> 00:13:51,520
+to see improvements even over multiple
+
+377
+00:13:49,320 --> 00:13:53,880
+steps of fine-tuning. While for
+
+378
+00:13:51,520 --> 00:13:56,680
+single-agent fine-tuning,
+
+379
+00:13:53,880 --> 00:13:58,680
+the accuracy collapses or doesn't
+
+380
+00:13:56,680 --> 00:14:01,400
+continue to improve.
+
+381
+00:13:58,680 --> 00:14:04,640
+And uh they also show that
+
+382
+00:14:01,400 --> 00:14:06,720
+not just in domain, which is math, in
+
+383
+00:14:04,640 --> 00:14:09,160
+adjacent domains like GSM8K, this is a
+
+384
+00:14:06,720 --> 00:14:11,240
+slightly older piece of work, so
+
+385
+00:14:09,160 --> 00:14:14,080
+the numbers are not that high, but in
+
+386
+00:14:11,240 --> 00:14:16,520
+even in adjacent domains like GSM8K, the
+
+387
+00:14:14,080 --> 00:14:18,360
+model the fine-tuned agents actually
+
+388
+00:14:16,520 --> 00:14:20,760
+show higher performance.
+
+389
+00:14:18,360 --> 00:14:21,960
+Uh so this technique actually does help
+
+390
+00:14:20,760 --> 00:14:24,200
+even it
+
+391
+00:14:21,960 --> 00:14:26,240
+So it generalizes beyond just the
+
+392
+00:14:24,200 --> 00:14:27,720
+in-domain uh datasets that it's trained
+
+393
+00:14:26,240 --> 00:14:30,640
+on.
+
+394
+00:14:27,720 --> 00:14:32,360
+So that's first set of comments. Um
+
+395
+00:14:30,640 --> 00:14:34,920
+So what that roughly says is that if we
+
+396
+00:14:32,360 --> 00:14:37,040
+want self-improvement, the reasoning
+
+397
+00:14:34,920 --> 00:14:39,080
+chains that are provided to the model to
+
+398
+00:14:37,040 --> 00:14:41,120
+drive those need to be diverse in some
+
+399
+00:14:39,080 --> 00:14:42,640
+way, and how you do generate that, one
+
+400
+00:14:41,120 --> 00:14:44,360
+technique could be based on having
+
+401
+00:14:42,640 --> 00:14:46,960
+multiple models or multiple agents
+
+402
+00:14:44,360 --> 00:14:49,960
+generate those kind of chains.
+
+403
+00:14:46,960 --> 00:14:51,920
+A second problem that's very challenging
+
+404
+00:14:49,960 --> 00:14:53,880
+and we covered actually in
+
+405
+00:14:51,920 --> 00:14:55,600
+the first few lectures is around
+
+406
+00:14:53,880 --> 00:14:57,040
+verification. So it's quite hard to
+
+407
+00:14:55,600 --> 00:14:58,600
+verify
+
+408
+00:14:57,040 --> 00:15:01,520
+model outputs.
+
+409
+00:14:58,600 --> 00:15:02,560
+And typically, you would just look at
+
+410
+00:15:01,520 --> 00:15:04,880
+the
+
+411
+00:15:02,560 --> 00:15:07,960
+outcome. So if you have a math problem
+
+412
+00:15:04,880 --> 00:15:09,480
+or a theorem proving uh
+
+413
+00:15:07,960 --> 00:15:11,400
+a theorem proof, what you will look at
+
+414
+00:15:09,480 --> 00:15:13,120
+is the final outcome, and then you have
+
+415
+00:15:11,400 --> 00:15:14,520
+an outcome reward model. So does that
+
+416
+00:15:13,120 --> 00:15:16,800
+match the ground truth? And then you
+
+417
+00:15:14,520 --> 00:15:18,880
+will say that this verifies. One of the
+
+418
+00:15:16,800 --> 00:15:19,960
+questions that we discussed
+
+419
+00:15:18,880 --> 00:15:21,560
+in the
+
+420
+00:15:19,960 --> 00:15:23,080
+verification lecture is that what
+
+421
+00:15:21,560 --> 00:15:25,520
+happens if the reasoning chains are
+
+422
+00:15:23,080 --> 00:15:28,040
+wrong and will that lead the model
+
+423
+00:15:25,520 --> 00:15:30,480
+astray and or or will that
+
+424
+00:15:28,040 --> 00:15:32,320
+cause uh some performance gap uh at the
+
+425
+00:15:30,480 --> 00:15:34,080
+end. And
+
+426
+00:15:32,320 --> 00:15:36,360
+we also realized that process reward
+
+427
+00:15:34,080 --> 00:15:38,400
+models are quite hard to build. So,
+
+428
+00:15:36,360 --> 00:15:40,400
+DeepSeek-Math V2 is a recent paper that
+
+429
+00:15:38,400 --> 00:15:42,360
+came out which tries to show that at
+
+430
+00:15:40,400 --> 00:15:44,200
+least in the theorem proving domain, it
+
+431
+00:15:42,360 --> 00:15:46,240
+is possible to build uh
+
+432
+00:15:44,200 --> 00:15:48,560
+self-verification loops uh which are
+
+433
+00:15:46,240 --> 00:15:50,720
+automated. So, uh that's a very
+
+434
+00:15:48,560 --> 00:15:51,960
+interesting uh concept.
+
+435
+00:15:50,720 --> 00:15:54,200
+Um
+
+436
+00:15:51,960 --> 00:15:55,440
+just to remind you on what I was saying,
+
+437
+00:15:54,200 --> 00:15:57,760
+the current reinforcement learning
+
+438
+00:15:55,440 --> 00:16:00,600
+approach assumes that final answer will
+
+439
+00:15:57,760 --> 00:16:02,280
+match the ground truth and that's how uh
+
+440
+00:16:00,600 --> 00:16:04,040
+you're basically creating the rewards.
+
+441
+00:16:02,280 --> 00:16:07,040
+So, this has enabled saturation of
+
+442
+00:16:04,040 --> 00:16:08,800
+multiple benchmarks like AMIE or uh
+
+443
+00:16:07,040 --> 00:16:11,200
+other math-related benchmarks, but often
+
+444
+00:16:08,800 --> 00:16:12,520
+times uh even when you have the correct
+
+445
+00:16:11,200 --> 00:16:14,400
+answer, you might not have the correct
+
+446
+00:16:12,520 --> 00:16:16,320
+reasoning. And if you are actually
+
+447
+00:16:14,400 --> 00:16:18,440
+trying to get the models to do better in
+
+448
+00:16:16,320 --> 00:16:20,880
+theorem proving, you do require rigorous
+
+449
+00:16:18,440 --> 00:16:23,520
+step-by-step derivation which um the
+
+450
+00:16:20,880 --> 00:16:25,839
+final output doesn't quite give you.
+
+451
+00:16:23,520 --> 00:16:27,320
+Now, the interesting aspect is that uh
+
+452
+00:16:25,839 --> 00:16:29,880
+the large language models are often
+
+453
+00:16:27,320 --> 00:16:31,800
+trained on quantitative reasoning. So,
+
+454
+00:16:29,880 --> 00:16:34,120
+the proofs that they might generate are
+
+455
+00:16:31,800 --> 00:16:37,120
+mathematically invalid. And
+
+456
+00:16:34,120 --> 00:16:39,080
+uh if you ask them to uh verify, they
+
+457
+00:16:37,120 --> 00:16:41,360
+will claim that the incorrect proofs are
+
+458
+00:16:39,080 --> 00:16:43,920
+valid. So, LLM as a judge technique
+
+459
+00:16:41,360 --> 00:16:46,160
+doesn't quite work uh here. But, if you
+
+460
+00:16:43,920 --> 00:16:47,880
+actually have expert humans look look at
+
+461
+00:16:46,160 --> 00:16:49,720
+these proofs, um
+
+462
+00:16:47,880 --> 00:16:52,240
+they will be able to look at the proof
+
+463
+00:16:49,720 --> 00:16:53,560
+and and kind of uh reason about the fact
+
+464
+00:16:52,240 --> 00:16:55,600
+that they know this area, they can
+
+465
+00:16:53,560 --> 00:16:57,520
+reason about the fact and say that,
+
+466
+00:16:55,600 --> 00:16:59,960
+"Okay, this proof has issues. It's just
+
+467
+00:16:57,520 --> 00:17:02,200
+um not making sense because uh this next
+
+468
+00:16:59,960 --> 00:17:04,400
+step is not following from the last step
+
+469
+00:17:02,200 --> 00:17:07,680
+or there's reasoning gaps in the
+
+470
+00:17:04,400 --> 00:17:10,720
+reference in the proof uh solution."
+
+471
+00:17:07,680 --> 00:17:14,839
+So, uh what uh DeepSeek-Math V2 proposes
+
+472
+00:17:10,720 --> 00:17:17,480
+is that instead of uh just training uh
+
+473
+00:17:14,839 --> 00:17:19,720
+the reward models, they train uh
+
+474
+00:17:17,480 --> 00:17:22,319
+verifiers, so meta verifiers basically.
+
+475
+00:17:19,720 --> 00:17:23,640
+So, they get humans to identify issues
+
+476
+00:17:22,319 --> 00:17:26,600
+in the proofs
+
+477
+00:17:23,640 --> 00:17:29,000
+without any reference solutions, and
+
+478
+00:17:26,600 --> 00:17:32,520
+based on that they train LLMs to
+
+479
+00:17:29,000 --> 00:17:35,760
+identify issues in the proof and
+
+480
+00:17:32,520 --> 00:17:38,120
+improve upon those. And then if you will
+
+481
+00:17:35,760 --> 00:17:40,000
+find that there So, you basically have
+
+482
+00:17:38,120 --> 00:17:41,840
+trained a model which can now critique
+
+483
+00:17:40,000 --> 00:17:42,880
+the proofs themselves.
+
+484
+00:17:41,840 --> 00:17:44,440
+So,
+
+485
+00:17:42,880 --> 00:17:46,440
+what the final architecture for
+
+486
+00:17:44,440 --> 00:17:47,920
+DeepSeek-Math V2 looks like. You folks
+
+487
+00:17:46,440 --> 00:17:49,760
+are already familiar with the fact that
+
+488
+00:17:47,920 --> 00:17:51,640
+there's a generator and a verifier
+
+489
+00:17:49,760 --> 00:17:52,920
+typically in the in the loop for
+
+490
+00:17:51,640 --> 00:17:55,080
+building
+
+491
+00:17:52,920 --> 00:17:56,880
+chain time scaling systems. So, you are
+
+492
+00:17:55,080 --> 00:18:00,320
+you have one model that is producing
+
+493
+00:17:56,880 --> 00:18:01,920
+proofs and another model that is uh
+
+494
+00:18:00,320 --> 00:18:04,240
+perhaps verifying things. So, it's
+
+495
+00:18:01,920 --> 00:18:06,800
+identifying issues. What DeepSeek-Math
+
+496
+00:18:04,240 --> 00:18:08,880
+V2 adds is this notion of meta verifier.
+
+497
+00:18:06,800 --> 00:18:10,720
+So, you have
+
+498
+00:18:08,880 --> 00:18:13,200
+a meta verifier that will review the
+
+499
+00:18:10,720 --> 00:18:14,600
+verifier's analysis for whether it makes
+
+500
+00:18:13,200 --> 00:18:16,040
+sense or whether there are issues with
+
+501
+00:18:14,600 --> 00:18:18,200
+the proofs. And then the verifier is
+
+502
+00:18:16,040 --> 00:18:19,720
+trained to
+
+503
+00:18:18,200 --> 00:18:23,680
+take these issues and then score the
+
+504
+00:18:19,720 --> 00:18:25,920
+proofs on a scale of 0.5 and 1.
+
+505
+00:18:23,680 --> 00:18:27,520
+So, the verifier will then go improve
+
+506
+00:18:25,920 --> 00:18:29,680
+the generator and the generator will
+
+507
+00:18:27,520 --> 00:18:31,240
+produce harder proofs which will then go
+
+508
+00:18:29,680 --> 00:18:33,680
+improve the verifier. So, there's this
+
+509
+00:18:31,240 --> 00:18:35,360
+basically this ends up being a loop in
+
+510
+00:18:33,680 --> 00:18:37,520
+some way.
+
+511
+00:18:35,360 --> 00:18:39,680
+And the other interesting aspect here is
+
+512
+00:18:37,520 --> 00:18:41,840
+that because
+
+513
+00:18:39,680 --> 00:18:44,080
+once you seed the data for
+
+514
+00:18:41,840 --> 00:18:46,160
+finding incorrect proofs, then you can
+
+515
+00:18:44,080 --> 00:18:47,760
+actually automate that kind of labeling.
+
+516
+00:18:46,160 --> 00:18:49,600
+So, you don't have to just rely on
+
+517
+00:18:47,760 --> 00:18:51,960
+humans identifying issues in the proofs
+
+518
+00:18:49,600 --> 00:18:55,000
+once the model once the meta verifier
+
+519
+00:18:51,960 --> 00:18:55,000
+starts to learn this.
+
+520
+00:18:55,040 --> 00:18:58,200
+So,
+
+521
+00:18:56,200 --> 00:19:00,040
+this notion of meta verification is
+
+522
+00:18:58,200 --> 00:19:02,800
+generally quite interesting in that
+
+523
+00:19:00,040 --> 00:19:04,680
+verifiers can get correct score
+
+524
+00:19:02,800 --> 00:19:06,160
+when the reasoning chains are incorrect.
+
+525
+00:19:04,680 --> 00:19:08,360
+For example,
+
+526
+00:19:06,160 --> 00:19:10,680
+they might come up with fabricated
+
+527
+00:19:08,360 --> 00:19:13,600
+errors. So, meta verification has
+
+528
+00:19:10,680 --> 00:19:15,840
+evaluation of this analysis to these
+
+529
+00:19:13,600 --> 00:19:17,960
+issues that the
+
+530
+00:19:15,840 --> 00:19:19,280
+that the verifier a verifier here is LLM
+
+531
+00:19:17,960 --> 00:19:21,120
+as a judge uh
+
+532
+00:19:19,280 --> 00:19:23,720
+do these identified issues actually
+
+533
+00:19:21,120 --> 00:19:25,360
+exist? Does the score follow from the
+
+534
+00:19:23,720 --> 00:19:26,960
+issues? So, they're basically analyzing
+
+535
+00:19:25,360 --> 00:19:29,480
+whether the verifier did a good job or
+
+536
+00:19:26,960 --> 00:19:32,560
+not. And then they have experts annotate
+
+537
+00:19:29,480 --> 00:19:34,840
+the quality of this evaluation. And just
+
+538
+00:19:32,560 --> 00:19:36,240
+by adding this additional block, they
+
+539
+00:19:34,840 --> 00:19:38,560
+are able to improve the quality. So,
+
+540
+00:19:36,240 --> 00:19:41,120
+it's almost like you had reasoning
+
+541
+00:19:38,560 --> 00:19:42,760
+chains and then now you have um the
+
+542
+00:19:41,120 --> 00:19:44,200
+verifier
+
+543
+00:19:42,760 --> 00:19:46,520
+over those reasoning chains, which is
+
+544
+00:19:44,200 --> 00:19:50,280
+basically saying that is this evaluation
+
+545
+00:19:46,520 --> 00:19:52,200
+correct or not? Um so,
+
+546
+00:19:50,280 --> 00:19:53,880
+it there is an LLM as a judge, which is
+
+547
+00:19:52,200 --> 00:19:55,840
+identifying the issues in this reasoning
+
+548
+00:19:53,880 --> 00:19:57,560
+chain and then
+
+549
+00:19:55,840 --> 00:20:01,800
+do those issues exist or not is what
+
+550
+00:19:57,560 --> 00:20:01,800
+meta verification is uh looking for.
+
+551
+00:20:02,400 --> 00:20:06,480
+If you look at the results here,
+
+552
+00:20:05,360 --> 00:20:08,760
+um
+
+553
+00:20:06,480 --> 00:20:10,640
+just with this iterative optimization,
+
+554
+00:20:08,760 --> 00:20:12,640
+uh I think all of those are familiar
+
+555
+00:20:10,640 --> 00:20:15,880
+that a lot of the RL loop uh
+
+556
+00:20:12,640 --> 00:20:17,120
+often uh is built on top of GRPO. Um in
+
+557
+00:20:15,880 --> 00:20:20,320
+this particular case, they're building
+
+558
+00:20:17,120 --> 00:20:22,800
+on top of DeepSeek V3 base models. So,
+
+559
+00:20:20,320 --> 00:20:26,880
+just the verification generation loop
+
+560
+00:20:22,800 --> 00:20:29,880
+now um benchmarked on IMO problems and
+
+561
+00:20:26,880 --> 00:20:31,720
+CNML problems. Um this was present like
+
+562
+00:20:29,880 --> 00:20:32,680
+the Gemini version of that was presented
+
+563
+00:20:31,720 --> 00:20:34,480
+by
+
+564
+00:20:32,680 --> 00:20:35,960
+uh one of our guest lecturers, but this
+
+565
+00:20:34,480 --> 00:20:37,840
+is an open-source version that was
+
+566
+00:20:35,960 --> 00:20:40,360
+released uh recently.
+
+567
+00:20:37,840 --> 00:20:43,080
+Uh they are able to show that in
+
+568
+00:20:40,360 --> 00:20:45,240
+eight iterations, um just with positive
+
+569
+00:20:43,080 --> 00:20:47,480
+one, the proof score continues to climb
+
+570
+00:20:45,240 --> 00:20:50,160
+just with that iterative loop. And then
+
+571
+00:20:47,480 --> 00:20:52,520
+if you have best at 32, best at 32 means
+
+572
+00:20:50,160 --> 00:20:55,160
+you pick the best solution out of 32
+
+573
+00:20:52,520 --> 00:20:58,440
+generated proofs. Um there you are
+
+574
+00:20:55,160 --> 00:21:02,280
+almost getting to 42% in uh proof score
+
+575
+00:20:58,440 --> 00:21:04,400
+uh for IMO short list of 2024. So, this
+
+576
+00:21:02,280 --> 00:21:06,960
+is quite promising as a hill climbing
+
+577
+00:21:04,400 --> 00:21:09,440
+technique, which can suggests that there
+
+578
+00:21:06,960 --> 00:21:10,800
+is some promise if you can identify the
+
+579
+00:21:09,440 --> 00:21:12,600
+issues in the reasoning chains and
+
+580
+00:21:10,800 --> 00:21:15,760
+actually push the model or nudge the
+
+581
+00:21:12,600 --> 00:21:18,040
+model towards correcting them.
+
+582
+00:21:15,760 --> 00:21:20,120
+So, overall um
+
+583
+00:21:18,040 --> 00:21:22,360
+the insights here are that
+
+584
+00:21:20,120 --> 00:21:25,120
+the best proofs will achieve higher
+
+585
+00:21:22,360 --> 00:21:27,400
+verification scores and the generator
+
+586
+00:21:25,120 --> 00:21:29,240
+can learn to differentiate higher
+
+587
+00:21:27,400 --> 00:21:32,480
+quality proofs from flawed proofs and
+
+588
+00:21:29,240 --> 00:21:35,240
+the self-verification as a result can uh
+
+589
+00:21:32,480 --> 00:21:37,400
+basically uh have this better
+
+590
+00:21:35,240 --> 00:21:39,240
+improvement loop. So, verification can
+
+591
+00:21:37,400 --> 00:21:41,600
+be a bottleneck and this is one way to
+
+592
+00:21:39,240 --> 00:21:44,240
+break that bottleneck.
+
+593
+00:21:41,600 --> 00:21:46,080
+Overall, I think if you were to try to
+
+594
+00:21:44,240 --> 00:21:48,200
+generalize this technique in other
+
+595
+00:21:46,080 --> 00:21:50,720
+areas, what you're basically looking for
+
+596
+00:21:48,200 --> 00:21:53,160
+is you're if you have LLM-based
+
+597
+00:21:50,720 --> 00:21:55,160
+verifiers, you need need to find a way
+
+598
+00:21:53,160 --> 00:21:56,720
+to get them to identify issues without
+
+599
+00:21:55,160 --> 00:21:59,520
+reference solutions. That's what this
+
+600
+00:21:56,720 --> 00:22:01,040
+paper is relying on. Then you need some
+
+601
+00:21:59,520 --> 00:22:04,120
+form of an additional block which is
+
+602
+00:22:01,040 --> 00:22:06,600
+meta meta verification so that it can
+
+603
+00:22:04,120 --> 00:22:08,840
+reduce the chance of hallucinated issues
+
+604
+00:22:06,600 --> 00:22:09,880
+that were identified by the verifier.
+
+605
+00:22:08,840 --> 00:22:11,960
+And
+
+606
+00:22:09,880 --> 00:22:15,360
+then you add an additional incentive for
+
+607
+00:22:11,960 --> 00:22:17,160
+the generator to maximize
+
+608
+00:22:15,360 --> 00:22:18,360
+quality through deliberate reasoning.
+
+609
+00:22:17,160 --> 00:22:20,760
+So, you're basically improving the
+
+610
+00:22:18,360 --> 00:22:22,200
+quality of the model responses here.
+
+611
+00:22:20,760 --> 00:22:24,840
+So, overall, this notion of
+
+612
+00:22:22,200 --> 00:22:27,520
+self-verification is introduced by our
+
+613
+00:22:24,840 --> 00:22:28,840
+Deep Seek Deep Seek Math V2 and it
+
+614
+00:22:27,520 --> 00:22:31,120
+starts to
+
+615
+00:22:28,840 --> 00:22:32,280
+break the bottleneck in in verification
+
+616
+00:22:31,120 --> 00:22:34,920
+if you can
+
+617
+00:22:32,280 --> 00:22:38,120
+make that more automated end-to-end.
+
+618
+00:22:34,920 --> 00:22:40,880
+Uh of course, this is still limited by
+
+619
+00:22:38,120 --> 00:22:42,240
+uh by domains where verification is
+
+620
+00:22:40,880 --> 00:22:45,360
+easier
+
+621
+00:22:42,240 --> 00:22:45,360
+uh rather than more difficult.
+
+622
+00:22:46,160 --> 00:22:50,280
+Okay.
+
+623
+00:22:47,120 --> 00:22:52,240
+So, we covered through um
+
+624
+00:22:50,280 --> 00:22:57,120
+what is the diversity in reasoning
+
+625
+00:22:52,240 --> 00:22:58,880
+chains and we discussed a bit about um
+
+626
+00:22:57,120 --> 00:23:01,880
+the verification bottleneck in the
+
+627
+00:22:58,880 --> 00:23:03,640
+models where oftentimes um
+
+628
+00:23:01,880 --> 00:23:06,080
+to get the models to
+
+629
+00:23:03,640 --> 00:23:08,600
+uh, get over the bottleneck of, uh,
+
+630
+00:23:06,080 --> 00:23:10,600
+verification, you need some form of meta
+
+631
+00:23:08,600 --> 00:23:13,160
+verification techniques and N Deep Seek
+
+632
+00:23:10,600 --> 00:23:15,280
+Math V2, uh, publishes that in open
+
+633
+00:23:13,160 --> 00:23:18,320
+source. A third problem that you have to
+
+634
+00:23:15,280 --> 00:23:22,040
+solve is this notion of, um,
+
+635
+00:23:18,320 --> 00:23:24,440
+what data or what prompts, uh, should I
+
+636
+00:23:22,040 --> 00:23:26,880
+train on? Um, so there's this very
+
+637
+00:23:24,440 --> 00:23:29,280
+interesting paper that has not, um,
+
+638
+00:23:26,880 --> 00:23:31,440
+uh, seen, uh, much, uh, um,
+
+639
+00:23:29,280 --> 00:23:34,080
+use yet, but is quite promising and
+
+640
+00:23:31,440 --> 00:23:36,360
+interesting is that, um,
+
+641
+00:23:34,080 --> 00:23:38,240
+you basically, uh, have the models
+
+642
+00:23:36,360 --> 00:23:41,080
+propose the set of tasks that they
+
+643
+00:23:38,240 --> 00:23:43,440
+should go train on that are just, um, at
+
+644
+00:23:41,080 --> 00:23:44,680
+the edge of, uh, what they have learned.
+
+645
+00:23:43,440 --> 00:23:46,920
+So,
+
+646
+00:23:44,680 --> 00:23:49,520
+to remind you, typically in the current
+
+647
+00:23:46,920 --> 00:23:51,280
+AI training stack, um, you are either
+
+648
+00:23:49,520 --> 00:23:53,880
+using human curated re- reasoning
+
+649
+00:23:51,280 --> 00:23:56,040
+traces, so that's for the supervised
+
+650
+00:23:53,880 --> 00:23:58,280
+learning stage, or for reinforcement
+
+651
+00:23:56,040 --> 00:24:00,760
+learning with verifiable rewards, you
+
+652
+00:23:58,280 --> 00:24:03,000
+are expecting some experts to curate the
+
+653
+00:24:00,760 --> 00:24:04,720
+question-answer pairs, but that that
+
+654
+00:24:03,000 --> 00:24:07,840
+basically requires that if you're
+
+655
+00:24:04,720 --> 00:24:09,920
+constructing such, uh, model in, um,
+
+656
+00:24:07,840 --> 00:24:11,840
+math, then you need math experts. If
+
+657
+00:24:09,920 --> 00:24:14,360
+it's an IMO problems, then you need IMO
+
+658
+00:24:11,840 --> 00:24:17,240
+experts, or if it is in coding, then you
+
+659
+00:24:14,360 --> 00:24:18,160
+need, um, strong software coders. Uh,
+
+660
+00:24:17,240 --> 00:24:21,400
+so,
+
+661
+00:24:18,160 --> 00:24:23,840
+as, uh, the models continue to surpass
+
+662
+00:24:21,400 --> 00:24:25,240
+human intelligence, um, the
+
+663
+00:24:23,840 --> 00:24:27,640
+the ability to find more and more
+
+664
+00:24:25,240 --> 00:24:30,440
+experts and more and more such tasks
+
+665
+00:24:27,640 --> 00:24:33,360
+starts to be, uh, limiting.
+
+666
+00:24:30,440 --> 00:24:35,520
+So, what this, uh, paper proposes, um,
+
+667
+00:24:33,360 --> 00:24:38,360
+and this idea is still very new, is that
+
+668
+00:24:35,520 --> 00:24:40,320
+a single model can both propose tasks
+
+669
+00:24:38,360 --> 00:24:42,160
+and then solve them, so it
+
+670
+00:24:40,320 --> 00:24:44,320
+it's almost goes to the other extreme of
+
+671
+00:24:42,160 --> 00:24:46,720
+like, we should not really need an
+
+672
+00:24:44,320 --> 00:24:48,760
+external, um,
+
+673
+00:24:46,720 --> 00:24:50,600
+external source of data. So, basically,
+
+674
+00:24:48,760 --> 00:24:52,560
+we don't should not need human
+
+675
+00:24:50,600 --> 00:24:55,680
+generated, um,
+
+676
+00:24:52,560 --> 00:24:57,480
+uh, prompts uh, to help climb on. The
+
+677
+00:24:55,680 --> 00:25:00,000
+model itself will propose the tasks and
+
+678
+00:24:57,480 --> 00:25:01,960
+then then it will go solve them and uh,
+
+679
+00:25:00,000 --> 00:25:03,080
+so that's a very interesting set of
+
+680
+00:25:01,960 --> 00:25:04,640
+ideas
+
+681
+00:25:03,080 --> 00:25:06,440
+and uh
+
+682
+00:25:04,640 --> 00:25:08,640
+it is feasible in certain domains. So
+
+683
+00:25:06,440 --> 00:25:10,520
+they focus more on coding as a domain
+
+684
+00:25:08,640 --> 00:25:12,520
+and they
+
+685
+00:25:10,520 --> 00:25:13,880
+effectively construct three types of
+
+686
+00:25:12,520 --> 00:25:16,240
+tasks
+
+687
+00:25:13,880 --> 00:25:18,440
+abduction deduction and induction and I
+
+688
+00:25:16,240 --> 00:25:20,680
+will explain this diagram in the
+
+689
+00:25:18,440 --> 00:25:22,560
+subsequent slides but effectively what
+
+690
+00:25:20,680 --> 00:25:23,800
+this is saying is that in the proposal
+
+691
+00:25:22,560 --> 00:25:25,000
+stage
+
+692
+00:25:23,800 --> 00:25:27,600
+they will
+
+693
+00:25:25,000 --> 00:25:30,240
+construct the tasks based on this task
+
+694
+00:25:27,600 --> 00:25:32,960
+types and then come up with a reward to
+
+695
+00:25:30,240 --> 00:25:35,560
+select which tasks make sense and in the
+
+696
+00:25:32,960 --> 00:25:37,280
+solution stage they will verify
+
+697
+00:25:35,560 --> 00:25:40,240
+and then have an accuracy reward and
+
+698
+00:25:37,280 --> 00:25:43,240
+then that can help give a joint update
+
+699
+00:25:40,240 --> 00:25:45,440
+on the model itself as opposed to
+
+700
+00:25:43,240 --> 00:25:46,680
+just one sided updates.
+
+701
+00:25:45,440 --> 00:25:48,360
+So
+
+702
+00:25:46,680 --> 00:25:50,240
+what is the proposer? How is the
+
+703
+00:25:48,360 --> 00:25:52,240
+proposer proposing tasks? That's quite
+
+704
+00:25:50,240 --> 00:25:54,040
+interesting. So it's effectively based
+
+705
+00:25:52,240 --> 00:25:55,880
+on code coding paradigm so it's
+
+706
+00:25:54,040 --> 00:25:58,720
+effectively saying that
+
+707
+00:25:55,880 --> 00:26:02,760
+you have deduction tasks where
+
+708
+00:25:58,720 --> 00:26:03,480
+you are generating program and input um
+
+709
+00:26:02,760 --> 00:26:05,800
+and the
+
+710
+00:26:03,480 --> 00:26:07,960
+environment is executing to get get
+
+711
+00:26:05,800 --> 00:26:09,160
+output. So this is your usual
+
+712
+00:26:07,960 --> 00:26:11,240
+um
+
+713
+00:26:09,160 --> 00:26:13,280
+come up with a program and an input pair
+
+714
+00:26:11,240 --> 00:26:15,240
+and then the environment will execute to
+
+715
+00:26:13,280 --> 00:26:17,000
+get outputs.
+
+716
+00:26:15,240 --> 00:26:19,360
+Abduction tasks they're similar to
+
+717
+00:26:17,000 --> 00:26:20,880
+deduction you're generating the program
+
+718
+00:26:19,360 --> 00:26:22,760
+and inputs and
+
+719
+00:26:20,880 --> 00:26:24,320
+environment again computes outputs but
+
+720
+00:26:22,760 --> 00:26:26,600
+induction tasks are different. It
+
+721
+00:26:24,320 --> 00:26:29,320
+samples an existing program and then
+
+722
+00:26:26,600 --> 00:26:30,960
+generates a new inputs for it
+
+723
+00:26:29,320 --> 00:26:33,360
+plus a natural language message
+
+724
+00:26:30,960 --> 00:26:35,720
+describing the function and the
+
+725
+00:26:33,360 --> 00:26:38,360
+environment then goes and executes and
+
+726
+00:26:35,720 --> 00:26:40,160
+and kind of decides whether this um
+
+727
+00:26:38,360 --> 00:26:41,320
+this is going in the right direction or
+
+728
+00:26:40,160 --> 00:26:43,080
+not.
+
+729
+00:26:41,320 --> 00:26:44,840
+So
+
+730
+00:26:43,080 --> 00:26:46,520
+what I and another interesting bit that
+
+731
+00:26:44,840 --> 00:26:49,080
+I should mention here is that the
+
+732
+00:26:46,520 --> 00:26:50,320
+proposer will be conditioned on past
+
+733
+00:26:49,080 --> 00:26:52,560
+here. So
+
+734
+00:26:50,320 --> 00:26:54,680
+I'll cover that in a later slide because
+
+735
+00:26:52,560 --> 00:26:56,960
+otherwise it will get confusing, but it
+
+736
+00:26:54,680 --> 00:26:58,960
+will be basically conditioned on past
+
+737
+00:26:56,960 --> 00:27:00,400
+generated examples that are explicitly
+
+738
+00:26:58,960 --> 00:27:02,520
+prompted
+
+739
+00:27:00,400 --> 00:27:05,320
+so that they're basically added to
+
+740
+00:27:02,520 --> 00:27:08,440
+promote diversity.
+
+741
+00:27:05,320 --> 00:27:11,760
+So how do you how do you select tasks?
+
+742
+00:27:08,440 --> 00:27:15,480
+The proposal will get a reward based on
+
+743
+00:27:11,760 --> 00:27:17,760
+optimizing for task difficulty. So if
+
+744
+00:27:15,480 --> 00:27:19,440
+when the solver so
+
+745
+00:27:17,760 --> 00:27:21,000
+each of the tasks that are generated are
+
+746
+00:27:19,440 --> 00:27:23,840
+passed to the solver
+
+747
+00:27:21,000 --> 00:27:26,440
+and success rate is um
+
+748
+00:27:23,840 --> 00:27:27,080
+zero, then you get a zero reward and if
+
+749
+00:27:26,440 --> 00:27:28,640
+the
+
+750
+00:27:27,080 --> 00:27:30,720
+success rate is non-zero, then you
+
+751
+00:27:28,640 --> 00:27:33,240
+basically get one minus average success
+
+752
+00:27:30,720 --> 00:27:35,120
+rate and the kind of tasks that you want
+
+753
+00:27:33,240 --> 00:27:36,600
+to select are
+
+754
+00:27:35,120 --> 00:27:38,400
+the [snorts] ones that are not trivial
+
+755
+00:27:36,600 --> 00:27:40,160
+and the ones that are not impossible, so
+
+756
+00:27:38,400 --> 00:27:42,720
+there is some ability to continue to
+
+757
+00:27:40,160 --> 00:27:44,760
+learn. So you end up selecting tasks
+
+758
+00:27:42,720 --> 00:27:46,600
+that are of moderate difficulty where
+
+759
+00:27:44,760 --> 00:27:49,200
+solver will sometimes succeed and
+
+760
+00:27:46,600 --> 00:27:51,320
+sometimes fail and this will generally
+
+761
+00:27:49,200 --> 00:27:54,080
+help with uh
+
+762
+00:27:51,320 --> 00:27:55,720
+getting the model to learn. So that's
+
+763
+00:27:54,080 --> 00:27:57,480
+the goal of the
+
+764
+00:27:55,720 --> 00:27:59,360
+proposer is to
+
+765
+00:27:57,480 --> 00:28:02,200
+generate tasks for optimal task
+
+766
+00:27:59,360 --> 00:28:03,920
+difficulty at a current set of model
+
+767
+00:28:02,200 --> 00:28:06,080
+weights and as the model becomes more
+
+768
+00:28:03,920 --> 00:28:08,800
+capable, then the proposal should learn
+
+769
+00:28:06,080 --> 00:28:11,120
+to propose harder problems.
+
+770
+00:28:08,800 --> 00:28:13,360
+Um of course, if you generate tasks,
+
+771
+00:28:11,120 --> 00:28:15,600
+then you need to somehow make sure that
+
+772
+00:28:13,360 --> 00:28:17,720
+these are valid tasks. So in the coding
+
+773
+00:28:15,600 --> 00:28:19,560
+abstraction, one can run program
+
+774
+00:28:17,720 --> 00:28:21,320
+integrity, so you can actually execute
+
+775
+00:28:19,560 --> 00:28:23,560
+these tasks and see whether there are
+
+776
+00:28:21,320 --> 00:28:25,760
+any errors. You can do safety checks.
+
+777
+00:28:23,560 --> 00:28:28,200
+You can also make sure that if you run
+
+778
+00:28:25,760 --> 00:28:30,200
+these inputs multiple times, you get
+
+779
+00:28:28,200 --> 00:28:32,400
+exactly same outputs because in code
+
+780
+00:28:30,200 --> 00:28:34,320
+that's possible. So
+
+781
+00:28:32,400 --> 00:28:36,520
+the proposed tasks before it goes into
+
+782
+00:28:34,320 --> 00:28:38,800
+the training pipeline is validated. So
+
+783
+00:28:36,520 --> 00:28:39,560
+that's one way to make sure that
+
+784
+00:28:38,800 --> 00:28:43,240
+um
+
+785
+00:28:39,560 --> 00:28:45,440
+the proposal doesn't just um hack and
+
+786
+00:28:43,240 --> 00:28:46,920
+come up with garbage tasks.
+
+787
+00:28:45,440 --> 00:28:49,480
+And in terms of
+
+788
+00:28:46,920 --> 00:28:50,520
+there's a buffer that is kept. So,
+
+789
+00:28:49,480 --> 00:28:52,240
+for
+
+790
+00:28:50,520 --> 00:28:55,200
+every seat triplet like there's an
+
+791
+00:28:52,240 --> 00:28:58,320
+identifying like basically the the
+
+792
+00:28:55,200 --> 00:29:00,480
+input, output, and the program for each
+
+793
+00:28:58,320 --> 00:29:03,000
+of those triplet tasks, you're adding
+
+794
+00:29:00,480 --> 00:29:04,920
+them to the task buffer and the proposer
+
+795
+00:29:03,000 --> 00:29:06,640
+can sample references from the our
+
+796
+00:29:04,920 --> 00:29:08,280
+buffer. So,
+
+797
+00:29:06,640 --> 00:29:09,560
+there's some sort of a buffer that is
+
+798
+00:29:08,280 --> 00:29:13,160
+kept
+
+799
+00:29:09,560 --> 00:29:13,160
+along with how
+
+800
+00:29:13,240 --> 00:29:16,720
+how many times the model is succeeding
+
+801
+00:29:15,440 --> 00:29:18,800
+or failing on this. So, this is
+
+802
+00:29:16,720 --> 00:29:20,400
+basically leading to this idea of
+
+803
+00:29:18,800 --> 00:29:22,160
+curriculum learning that is evolving
+
+804
+00:29:20,400 --> 00:29:23,360
+over time.
+
+805
+00:29:22,160 --> 00:29:25,520
+And
+
+806
+00:29:23,360 --> 00:29:28,120
+why is this exciting or interesting? I
+
+807
+00:29:25,520 --> 00:29:30,800
+mean, on coding benchmarks, this notion
+
+808
+00:29:28,120 --> 00:29:33,240
+starts to let you hill climb despite
+
+809
+00:29:30,800 --> 00:29:35,520
+having much human curated data,
+
+810
+00:29:33,240 --> 00:29:37,480
+which you know, human humans can
+
+811
+00:29:35,520 --> 00:29:39,920
+generate a lot of coding data, but that
+
+812
+00:29:37,480 --> 00:29:42,480
+after a while synthetic data or some
+
+813
+00:29:39,920 --> 00:29:44,600
+This is almost a play on synthetic data
+
+814
+00:29:42,480 --> 00:29:47,080
+in some ways, but it's um
+
+815
+00:29:44,600 --> 00:29:49,720
+generating that in the loop at the task
+
+816
+00:29:47,080 --> 00:29:51,520
+level as as well. So, what they show is
+
+817
+00:29:49,720 --> 00:29:53,000
+that they're able to get state of the
+
+818
+00:29:51,520 --> 00:29:55,760
+art on coding benchmarks even though
+
+819
+00:29:53,000 --> 00:29:58,000
+they didn't have any human curated data
+
+820
+00:29:55,760 --> 00:30:00,280
+on the prompt side, and they are able to
+
+821
+00:29:58,000 --> 00:30:02,640
+outperform models trained on tens of
+
+822
+00:30:00,280 --> 00:30:04,600
+thousands of expert examples. Some
+
+823
+00:30:02,640 --> 00:30:06,840
+emerging behaviors that they show are
+
+824
+00:30:04,600 --> 00:30:08,760
+that the complexity metrics increase
+
+825
+00:30:06,840 --> 00:30:11,360
+over time. So, that can be expected if
+
+826
+00:30:08,760 --> 00:30:13,640
+the proposer is continuing to increase
+
+827
+00:30:11,360 --> 00:30:16,120
+the difficulty of what it's learning.
+
+828
+00:30:13,640 --> 00:30:17,840
+And another aspect is that the diversity
+
+829
+00:30:16,120 --> 00:30:20,000
+of programs and answers when the loop is
+
+830
+00:30:17,840 --> 00:30:23,800
+set up correctly is is improving and the
+
+831
+00:30:20,000 --> 00:30:26,160
+proposer is actually increasingly
+
+832
+00:30:23,800 --> 00:30:27,440
+generating more and more difficult tasks
+
+833
+00:30:26,160 --> 00:30:29,120
+as it's
+
+834
+00:30:27,440 --> 00:30:30,760
+as the training is progressing. So, in
+
+835
+00:30:29,120 --> 00:30:33,160
+in some ways it's almost like game
+
+836
+00:30:30,760 --> 00:30:35,560
+theory where the proposer and solver are
+
+837
+00:30:33,160 --> 00:30:37,200
+slightly adversarial, but overall
+
+838
+00:30:35,560 --> 00:30:38,600
+they're helping each other improve in
+
+839
+00:30:37,200 --> 00:30:40,080
+some ways.
+
+840
+00:30:38,600 --> 00:30:42,560
+So, this is solving through the
+
+841
+00:30:40,080 --> 00:30:44,000
+bottleneck of which tasks to go uh train
+
+842
+00:30:42,560 --> 00:30:46,320
+the models on.
+
+843
+00:30:44,000 --> 00:30:48,800
+So, if you were to uh look at takeaways
+
+844
+00:30:46,320 --> 00:30:50,920
+here, I think it's it's basically going
+
+845
+00:30:48,800 --> 00:30:53,120
+down the path of like the the task
+
+846
+00:30:50,920 --> 00:30:55,480
+selection problem on which these models
+
+847
+00:30:53,120 --> 00:30:57,160
+um run their self-improvement loop
+
+848
+00:30:55,480 --> 00:30:59,320
+should not get bottlenecked on human
+
+849
+00:30:57,160 --> 00:31:01,600
+data because otherwise you are very
+
+850
+00:30:59,320 --> 00:31:03,000
+bottlenecked on which human experts as
+
+851
+00:31:01,600 --> 00:31:04,560
+long as you can have some form of
+
+852
+00:31:03,000 --> 00:31:06,920
+verification there.
+
+853
+00:31:04,560 --> 00:31:09,720
+And uh you need some form of uh ability
+
+854
+00:31:06,920 --> 00:31:11,640
+to do curriculum learning. So,
+
+855
+00:31:09,720 --> 00:31:14,480
+uh this particular technique definitely
+
+856
+00:31:11,640 --> 00:31:15,960
+relies on that. And uh even though they
+
+857
+00:31:14,480 --> 00:31:18,080
+only
+
+858
+00:31:15,960 --> 00:31:20,640
+hill climb on self-proposed code tasks,
+
+859
+00:31:18,080 --> 00:31:23,200
+they actually see strong performance on
+
+860
+00:31:20,640 --> 00:31:25,160
+both coding and math math benchmarks.
+
+861
+00:31:23,200 --> 00:31:26,920
+So, that's actually surprising that they
+
+862
+00:31:25,160 --> 00:31:28,440
+are also seeing strong performance on
+
+863
+00:31:26,920 --> 00:31:29,800
+math benchmarks, but one can explain
+
+864
+00:31:28,440 --> 00:31:31,920
+that from other results that have been
+
+865
+00:31:29,800 --> 00:31:33,800
+seen in the field. And overall, larger
+
+866
+00:31:31,920 --> 00:31:35,600
+models get bigger gains relative to
+
+867
+00:31:33,800 --> 00:31:38,120
+smaller models. So,
+
+868
+00:31:35,600 --> 00:31:40,320
+uh this is another uh idea in the space
+
+869
+00:31:38,120 --> 00:31:43,000
+of uh improving the self-improvement
+
+870
+00:31:40,320 --> 00:31:44,880
+loop that uh seems quite promising and
+
+871
+00:31:43,000 --> 00:31:46,560
+uh continuing to hill climb in that
+
+872
+00:31:44,880 --> 00:31:49,040
+area.
+
+873
+00:31:46,560 --> 00:31:51,520
+>> Uh can I add something on on the
+
+874
+00:31:49,040 --> 00:31:53,360
+previous? So, I feel like we are seeing
+
+875
+00:31:51,520 --> 00:31:55,480
+the same thing. Like, we learned about
+
+876
+00:31:53,360 --> 00:31:57,920
+Swirl, the step-by-step RL with
+
+877
+00:31:55,480 --> 00:32:00,160
+synthetic data. Like, I feel like the
+
+878
+00:31:57,920 --> 00:32:02,600
+findings here and there really kind of
+
+879
+00:32:00,160 --> 00:32:05,840
+resonate with each other in the sense
+
+880
+00:32:02,600 --> 00:32:09,360
+that uh synthetic data, like model
+
+881
+00:32:05,840 --> 00:32:12,040
+generating its own training data, can
+
+882
+00:32:09,360 --> 00:32:14,080
+improve the model not only on the
+
+883
+00:32:12,040 --> 00:32:15,880
+the task that the generation is
+
+884
+00:32:14,080 --> 00:32:18,720
+happening on, but also in
+
+885
+00:32:15,880 --> 00:32:21,680
+transferability. Like, in Swirl, it was
+
+886
+00:32:18,720 --> 00:32:23,880
+on us to a multi-hop question answering
+
+887
+00:32:21,680 --> 00:32:25,920
+with retrieval, but then as more
+
+888
+00:32:23,880 --> 00:32:27,720
+synthetic data was generated and RL
+
+889
+00:32:25,920 --> 00:32:30,640
+training was done, the model was getting
+
+890
+00:32:27,720 --> 00:32:33,040
+better at other tool calling, like
+
+891
+00:32:30,640 --> 00:32:35,840
+calling a Python and solving math
+
+892
+00:32:33,040 --> 00:32:38,560
+problems and vice versa. So, it seems
+
+893
+00:32:35,840 --> 00:32:40,880
+like there is this like clear kind of
+
+894
+00:32:38,560 --> 00:32:42,680
+repeated trend that we are seeing in
+
+895
+00:32:40,880 --> 00:32:45,080
+terms of synthetic data generation by
+
+896
+00:32:42,680 --> 00:32:46,760
+the model and generalization. And the
+
+897
+00:32:45,080 --> 00:32:47,720
+other piece that's interesting again
+
+898
+00:32:46,760 --> 00:32:50,160
+that
+
+899
+00:32:47,720 --> 00:32:53,760
+kind of is the same kind of observation
+
+900
+00:32:50,160 --> 00:32:56,120
+is that larger models seems to be better
+
+901
+00:32:53,760 --> 00:32:58,800
+at absorbing this kind of data flywheel
+
+902
+00:32:56,120 --> 00:33:01,400
+and also generalizing through that.
+
+903
+00:32:58,800 --> 00:33:03,440
+Uh especially when it comes to in swirl
+
+904
+00:33:01,400 --> 00:33:05,240
+at least on the RL optimization side,
+
+905
+00:33:03,440 --> 00:33:07,320
+which is like an interesting
+
+906
+00:33:05,240 --> 00:33:09,240
+observation.
+
+907
+00:33:07,320 --> 00:33:10,720
+>> Great. Great.
+
+908
+00:33:09,240 --> 00:33:11,760
+Uh where where would you take it from
+
+909
+00:33:10,720 --> 00:33:13,920
+here
+
+910
+00:33:11,760 --> 00:33:15,200
+from what you learn in swirl, right? So,
+
+911
+00:33:13,920 --> 00:33:17,760
+I was going to summarize then you can
+
+912
+00:33:15,200 --> 00:33:18,320
+add more bullet points. I I think to me
+
+913
+00:33:17,760 --> 00:33:19,920
+uh
+
+914
+00:33:18,320 --> 00:33:22,040
+to achieve true generalization and
+
+915
+00:33:19,920 --> 00:33:24,080
+reasoning, we really need that notion of
+
+916
+00:33:22,040 --> 00:33:25,600
+diversity um
+
+917
+00:33:24,080 --> 00:33:27,600
+in the reasoning chain. So, that that
+
+918
+00:33:25,600 --> 00:33:30,120
+was the first set of comments I was
+
+919
+00:33:27,600 --> 00:33:32,400
+making and how we achieve that um
+
+920
+00:33:30,120 --> 00:33:34,720
+continues to be an open problem. Uh we
+
+921
+00:33:32,400 --> 00:33:37,400
+need better verification and the more we
+
+922
+00:33:34,720 --> 00:33:39,840
+can break that verifier loop in a way
+
+923
+00:33:37,400 --> 00:33:42,920
+where uh we are not bottlenecked by
+
+924
+00:33:39,840 --> 00:33:45,720
+humans or or tasks that are uh
+
+925
+00:33:42,920 --> 00:33:47,440
+verified only through human experts, uh
+
+926
+00:33:45,720 --> 00:33:48,600
+the better off we are in some ways.
+
+927
+00:33:47,440 --> 00:33:49,920
+Like, building reward models is
+
+928
+00:33:48,600 --> 00:33:50,960
+challenging.
+
+929
+00:33:49,920 --> 00:33:53,080
+And then I think the third is the
+
+930
+00:33:50,960 --> 00:33:55,280
+selection of data itself. Um
+
+931
+00:33:53,080 --> 00:33:57,560
+there's only so much uh
+
+932
+00:33:55,280 --> 00:33:59,560
+data that can be curated by humans for
+
+933
+00:33:57,560 --> 00:34:01,640
+what prompts go in. Uh so, that breaking
+
+934
+00:33:59,560 --> 00:34:03,200
+that barrier is also quite important in
+
+935
+00:34:01,640 --> 00:34:05,960
+next generation of
+
+936
+00:34:03,200 --> 00:34:08,360
+uh self-improving models. What else do
+
+937
+00:34:05,960 --> 00:34:10,040
+you would add there?
+
+938
+00:34:08,360 --> 00:34:12,520
+>> Yeah, I think uh
+
+939
+00:34:10,040 --> 00:34:14,520
+one just uh based on these kind of
+
+940
+00:34:12,520 --> 00:34:15,800
+existing work
+
+941
+00:34:14,520 --> 00:34:16,720
+uh
+
+942
+00:34:15,800 --> 00:34:18,120
+uh
+
+943
+00:34:16,720 --> 00:34:21,040
+something that would be interesting is
+
+944
+00:34:18,120 --> 00:34:23,720
+that how much we can push the front here
+
+945
+00:34:21,040 --> 00:34:26,560
+of the self-improvement just
+
+946
+00:34:23,720 --> 00:34:28,480
+only be based on the verifiable domains
+
+947
+00:34:26,560 --> 00:34:30,520
+that we can generate synthetic data and
+
+948
+00:34:28,480 --> 00:34:33,600
+bring it back to the model
+
+949
+00:34:30,520 --> 00:34:35,639
+on diverse task on diverse verifiable
+
+950
+00:34:33,600 --> 00:34:38,600
+task, how much that pushes the
+
+951
+00:34:35,639 --> 00:34:41,560
+performance and generalizes to other
+
+952
+00:34:38,600 --> 00:34:43,800
+domains where we don't have uh
+
+953
+00:34:41,560 --> 00:34:45,919
+automated verification. Like, can we
+
+954
+00:34:43,800 --> 00:34:48,879
+generally make the model smarter and
+
+955
+00:34:45,919 --> 00:34:50,399
+smarter in areas that we can verify
+
+956
+00:34:48,879 --> 00:34:51,760
+verify
+
+957
+00:34:50,399 --> 00:34:54,919
+and
+
+958
+00:34:51,760 --> 00:34:58,400
+uh minimize or
+
+959
+00:34:54,919 --> 00:35:00,000
+remove the need for label data in on
+
+960
+00:34:58,400 --> 00:35:02,000
+non-verifiable
+
+961
+00:35:00,000 --> 00:35:04,840
+domains based on that. So, I think that
+
+962
+00:35:02,000 --> 00:35:07,760
+would be an interesting kind of research
+
+963
+00:35:04,840 --> 00:35:10,680
+area, of course, a very compute-heavy
+
+964
+00:35:07,760 --> 00:35:12,480
+research experiment.
+
+965
+00:35:10,680 --> 00:35:14,240
+>> Uh there are there are some questions
+
+966
+00:35:12,480 --> 00:35:16,280
+that people are asking. Uh what are some
+
+967
+00:35:14,240 --> 00:35:20,400
+other applications of AI that don't fall
+
+968
+00:35:16,280 --> 00:35:20,400
+into verifiable problems?
+
+969
+00:35:20,640 --> 00:35:24,480
+>> So, it
+
+970
+00:35:21,600 --> 00:35:25,040
+So, it comes in I I can just think about
+
+971
+00:35:24,480 --> 00:35:29,320
+uh
+
+972
+00:35:25,040 --> 00:35:30,560
+some uh areas that verification is very
+
+973
+00:35:29,320 --> 00:35:34,000
+slow.
+
+974
+00:35:30,560 --> 00:35:36,640
+Uh like, scientific discovery, running a
+
+975
+00:35:34,000 --> 00:35:38,960
+very slow simulation in chip design that
+
+976
+00:35:36,640 --> 00:35:42,520
+takes like a few days to run it to run
+
+977
+00:35:38,960 --> 00:35:44,760
+to collect one kind of reward signal, or
+
+978
+00:35:42,520 --> 00:35:47,680
+running this chemical experiment that
+
+979
+00:35:44,760 --> 00:35:50,640
+you actually need to like go to a wet
+
+980
+00:35:47,680 --> 00:35:53,400
+lab and run things and see like what the
+
+981
+00:35:50,640 --> 00:35:54,760
+output, the quality, or the reward is.
+
+982
+00:35:53,400 --> 00:35:58,360
+Those are the domains that the
+
+983
+00:35:54,760 --> 00:36:02,240
+verification is really hard because
+
+984
+00:35:58,360 --> 00:36:04,760
+in RL fine-tuning, we need or in test
+
+985
+00:36:02,240 --> 00:36:06,880
+time scaling, we need these verifiers to
+
+986
+00:36:04,760 --> 00:36:08,840
+be almost instant, right? Or we can wait
+
+987
+00:36:06,880 --> 00:36:11,800
+a little bit. Maybe we can wait minutes.
+
+988
+00:36:08,840 --> 00:36:14,360
+Maybe we can allow like 1 hour, but if
+
+989
+00:36:11,800 --> 00:36:16,080
+this in this RL training route we RL
+
+990
+00:36:14,360 --> 00:36:18,840
+training, we need like hundreds or
+
+991
+00:36:16,080 --> 00:36:21,640
+thousands of steps of iteration,
+
+992
+00:36:18,840 --> 00:36:24,400
+we can't wait like days
+
+993
+00:36:21,640 --> 00:36:27,640
+uh or like someone a human in the loop
+
+994
+00:36:24,400 --> 00:36:31,000
+to collect the reward for us.
+
+995
+00:36:27,640 --> 00:36:32,960
+So those are the non verifiable domains.
+
+996
+00:36:31,000 --> 00:36:35,560
+Those are some examples of non non
+
+997
+00:36:32,960 --> 00:36:37,440
+verifiable domains.
+
+998
+00:36:35,560 --> 00:36:40,160
+>> I think truly non verifiable also comes
+
+999
+00:36:37,440 --> 00:36:41,960
+from creativity or any metrics that
+
+1000
+00:36:40,160 --> 00:36:44,400
+where where there's subjectivity in some
+
+1001
+00:36:41,960 --> 00:36:44,400
+ways.
+
+1002
+00:36:44,480 --> 00:36:48,120
+>> Like creative writing, right? It's like
+
+1003
+00:36:46,600 --> 00:36:50,840
+a
+
+1004
+00:36:48,120 --> 00:36:52,680
+designing an exact reward function for
+
+1005
+00:36:50,840 --> 00:36:54,440
+that is hard.
+
+1006
+00:36:52,680 --> 00:36:58,040
+But of course we can always model that,
+
+1007
+00:36:54,440 --> 00:36:59,920
+but then you you can the RL or the agent
+
+1008
+00:36:58,040 --> 00:37:01,440
+can do reward hacking if the model is
+
+1009
+00:36:59,920 --> 00:37:04,280
+slightly off
+
+1010
+00:37:01,440 --> 00:37:05,840
+off base, yeah.
+
+1011
+00:37:04,280 --> 00:37:08,800
+>> Any other questions from the class on
+
+1012
+00:37:05,840 --> 00:37:08,800
+those aspects?
+
+1013
+00:37:11,160 --> 00:37:13,800
+>> Yeah, we have one question. Can you hear
+
+1014
+00:37:12,440 --> 00:37:15,720
+us?
+
+1015
+00:37:13,800 --> 00:37:16,920
+>> Yes, we can hear you.
+
+1016
+00:37:15,720 --> 00:37:18,880
+>> Uh
+
+1017
+00:37:16,920 --> 00:37:22,480
+you mentioned
+
+1018
+00:37:18,880 --> 00:37:25,640
+the harder areas to verify. Like how are
+
+1019
+00:37:22,480 --> 00:37:28,160
+people attempting to
+
+1020
+00:37:25,640 --> 00:37:30,520
+uh solve that?
+
+1021
+00:37:28,160 --> 00:37:31,600
+Like for example, like chip design or
+
+1022
+00:37:30,520 --> 00:37:33,760
+like
+
+1023
+00:37:31,600 --> 00:37:36,640
+like bio
+
+1024
+00:37:33,760 --> 00:37:36,640
+discoveries.
+
+1025
+00:37:37,040 --> 00:37:45,760
+>> Um so one way to to go about it is to
+
+1026
+00:37:43,400 --> 00:37:48,600
+train a model like a separate reward
+
+1027
+00:37:45,760 --> 00:37:51,000
+model that can predict the outcome of a
+
+1028
+00:37:48,600 --> 00:37:54,440
+simulation. So instead of actually
+
+1029
+00:37:51,000 --> 00:37:57,320
+running those expensive uh simulations
+
+1030
+00:37:54,440 --> 00:38:00,400
+or emulations or true experiment, you
+
+1031
+00:37:57,320 --> 00:38:02,880
+collect a lot of data on them offline
+
+1032
+00:38:00,400 --> 00:38:05,280
+and then you train a reward model that
+
+1033
+00:38:02,880 --> 00:38:07,800
+for a given input it can predict the
+
+1034
+00:38:05,280 --> 00:38:11,240
+quality of the output and you use this
+
+1035
+00:38:07,800 --> 00:38:13,320
+reward model as your verification
+
+1036
+00:38:11,240 --> 00:38:15,760
+object like uh
+
+1037
+00:38:13,320 --> 00:38:19,000
+in the loop of RL optimization and so
+
+1038
+00:38:15,760 --> 00:38:20,760
+on. But of course the generality of the
+
+1039
+00:38:19,000 --> 00:38:22,640
+reward model is a function of how much
+
+1040
+00:38:20,760 --> 00:38:23,480
+data you have and
+
+1041
+00:38:22,640 --> 00:38:24,760
+um
+
+1042
+00:38:23,480 --> 00:38:26,760
+it can
+
+1043
+00:38:24,760 --> 00:38:28,720
+uh can be inaccurate and that can cause
+
+1044
+00:38:26,760 --> 00:38:30,640
+problems.
+
+1045
+00:38:28,720 --> 00:38:32,360
+So that's that's one area. Akanksha, do
+
+1046
+00:38:30,640 --> 00:38:33,240
+you have any?
+
+1047
+00:38:32,360 --> 00:38:35,080
+>> So
+
+1048
+00:38:33,240 --> 00:38:37,000
+I think we talked about chip design and
+
+1049
+00:38:35,080 --> 00:38:38,560
+so on, right? But even even before going
+
+1050
+00:38:37,000 --> 00:38:40,560
+to chip design, just the kernel bench
+
+1051
+00:38:38,560 --> 00:38:41,640
+stuff that was done at Stanford in your
+
+1052
+00:38:40,560 --> 00:38:44,560
+lab.
+
+1053
+00:38:41,640 --> 00:38:47,080
+Even there, for example, um
+
+1054
+00:38:44,560 --> 00:38:48,520
+get get you get compiler execution, so
+
+1055
+00:38:47,080 --> 00:38:49,960
+you can see that did you generate the
+
+1056
+00:38:48,520 --> 00:38:51,600
+right code or not? You can get some
+
+1057
+00:38:49,960 --> 00:38:53,200
+metrics, but
+
+1058
+00:38:51,600 --> 00:38:55,280
+there's a class project that is actually
+
+1059
+00:38:53,200 --> 00:38:57,720
+trying to read performance profiles as
+
+1060
+00:38:55,280 --> 00:39:00,720
+you make things more complex and that's
+
+1061
+00:38:57,720 --> 00:39:01,920
+a harder problem. So you basically
+
+1062
+00:39:00,720 --> 00:39:03,640
+even though you might be able to do
+
+1063
+00:39:01,920 --> 00:39:05,480
+design optimized kernels for simple
+
+1064
+00:39:03,640 --> 00:39:07,320
+enough things, but if you actually
+
+1065
+00:39:05,480 --> 00:39:08,840
+concatenate all of these things together
+
+1066
+00:39:07,320 --> 00:39:11,440
+and you want to
+
+1067
+00:39:08,840 --> 00:39:13,560
+performance profile and and change parts
+
+1068
+00:39:11,440 --> 00:39:15,840
+of the code that are
+
+1069
+00:39:13,560 --> 00:39:18,480
+not optimized, that's a harder problem
+
+1070
+00:39:15,840 --> 00:39:20,040
+in general in some ways and often times
+
+1071
+00:39:18,480 --> 00:39:22,600
+the way people will go about solving it
+
+1072
+00:39:20,040 --> 00:39:25,320
+is okay, the models can
+
+1073
+00:39:22,600 --> 00:39:27,400
+solve maybe kernel optimization problem,
+
+1074
+00:39:25,320 --> 00:39:29,920
+so maybe I break down the problem into
+
+1075
+00:39:27,400 --> 00:39:32,120
+sub parts and then then get the model to
+
+1076
+00:39:29,920 --> 00:39:33,920
+look at each part and then have some
+
+1077
+00:39:32,120 --> 00:39:36,280
+reference solutions to look at a
+
+1078
+00:39:33,920 --> 00:39:38,160
+knowledge base. I'm literally describing
+
+1079
+00:39:36,280 --> 00:39:40,920
+a class project right now. So what I'm
+
+1080
+00:39:38,160 --> 00:39:43,080
+trying to say here is that it's
+
+1081
+00:39:40,920 --> 00:39:44,720
+because of this being a hard enough
+
+1082
+00:39:43,080 --> 00:39:46,960
+problem and the models not being at that
+
+1083
+00:39:44,720 --> 00:39:49,520
+capability, often it requires breaking
+
+1084
+00:39:46,960 --> 00:39:53,640
+down the problem in interesting ways to
+
+1085
+00:39:49,520 --> 00:39:53,640
+what what the models are able to do now.
+
+1086
+00:39:58,280 --> 00:40:01,400
+Okay.
+
+1087
+00:39:59,680 --> 00:40:03,640
+Let's move to
+
+1088
+00:40:01,400 --> 00:40:05,680
+more along the lines of okay, we can do
+
+1089
+00:40:03,640 --> 00:40:08,120
+the self-improvement, but you're now
+
+1090
+00:40:05,680 --> 00:40:10,760
+doing a lot more inference and there's a
+
+1091
+00:40:08,120 --> 00:40:12,680
+cost to this intelligence. So Azalia
+
+1092
+00:40:10,760 --> 00:40:14,280
+will cover more on how to get efficiency
+
+1093
+00:40:12,680 --> 00:40:17,040
+there.
+
+1094
+00:40:14,280 --> 00:40:19,200
+>> Sounds good. Should I I, uh, present
+
+1095
+00:40:17,040 --> 00:40:20,560
+myself or would you like scroll? Like
+
+1096
+00:40:19,200 --> 00:40:23,120
+how what would
+
+1097
+00:40:20,560 --> 00:40:24,360
+>> Uh, whatever is fastest. I can continue
+
+1098
+00:40:23,120 --> 00:40:24,840
+to if you just tell me next I'll
+
+1099
+00:40:24,360 --> 00:40:26,720
+continue to this.
+
+1100
+00:40:24,840 --> 00:40:28,560
+>> Okay. Okay. Sounds good. So, next,
+
+1101
+00:40:26,720 --> 00:40:31,360
+please.
+
+1102
+00:40:28,560 --> 00:40:34,240
+Um, so this is a recent work, uh, that
+
+1103
+00:40:31,360 --> 00:40:37,240
+we did, uh, in collaboration with uh,
+
+1104
+00:40:34,240 --> 00:40:40,840
+Professor Ray and uh, Professor John
+
+1105
+00:40:37,240 --> 00:40:43,560
+Hennessy and a large team of uh,
+
+1106
+00:40:40,840 --> 00:40:46,640
+great collaborators. Um, so in this
+
+1107
+00:40:43,560 --> 00:40:48,760
+project we're what we're looking for is
+
+1108
+00:40:46,640 --> 00:40:51,520
+like looking into the the trends that
+
+1109
+00:40:48,760 --> 00:40:54,360
+are happening on the model side and also
+
+1110
+00:40:51,520 --> 00:40:58,520
+on the hardware accelerator side and
+
+1111
+00:40:54,360 --> 00:41:00,320
+we're what we are interested in, uh, in
+
+1112
+00:40:58,520 --> 00:41:02,120
+kind of like
+
+1113
+00:41:00,320 --> 00:41:04,760
+uh, thinking about the future and
+
+1114
+00:41:02,120 --> 00:41:06,280
+thinking about how the workloads and AI
+
+1115
+00:41:04,760 --> 00:41:07,360
+inference,
+
+1116
+00:41:06,280 --> 00:41:09,120
+uh,
+
+1117
+00:41:07,360 --> 00:41:11,800
+uh, is going to look like in terms of
+
+1118
+00:41:09,120 --> 00:41:14,240
+like the type of the size of the models
+
+1119
+00:41:11,800 --> 00:41:16,640
+and the type of accelerators that we're
+
+1120
+00:41:14,240 --> 00:41:19,080
+going to need to serve them. Uh, next,
+
+1121
+00:41:16,640 --> 00:41:19,080
+please.
+
+1122
+00:41:20,720 --> 00:41:24,400
+So, uh,
+
+1123
+00:41:22,280 --> 00:41:29,160
+right now we call we are in the
+
+1124
+00:41:24,400 --> 00:41:30,280
+mainframe uh, era meaning that uh,
+
+1125
+00:41:29,160 --> 00:41:31,480
+the
+
+1126
+00:41:30,280 --> 00:41:34,080
+the
+
+1127
+00:41:31,480 --> 00:41:37,440
+LLMs that we're running using ChatGPT,
+
+1128
+00:41:34,080 --> 00:41:38,920
+Gemini, uh, a lot of these uh, larger
+
+1129
+00:41:37,440 --> 00:41:42,720
+models that we're running, all of them
+
+1130
+00:41:38,920 --> 00:41:44,360
+are being run on cloud, uh,
+
+1131
+00:41:42,720 --> 00:41:46,920
+we don't we don't run them locally
+
+1132
+00:41:44,360 --> 00:41:48,640
+because these models are large. Uh, some
+
+1133
+00:41:46,920 --> 00:41:50,320
+of them we even don't have access to
+
+1134
+00:41:48,640 --> 00:41:52,240
+them, they're proprietary and the even
+
+1135
+00:41:50,320 --> 00:41:54,400
+the open source one for the larger
+
+1136
+00:41:52,240 --> 00:41:55,880
+models we're still using cloud to run
+
+1137
+00:41:54,400 --> 00:41:57,840
+these models.
+
+1138
+00:41:55,880 --> 00:42:00,040
+Uh, and at the same time what the
+
+1139
+00:41:57,840 --> 00:42:01,560
+observation is that the demand for
+
+1140
+00:42:00,040 --> 00:42:03,960
+compute
+
+1141
+00:42:01,560 --> 00:42:07,120
+as a result is exploding like Google
+
+1142
+00:42:03,960 --> 00:42:11,240
+Cloud uh, had grew in something in the
+
+1143
+00:42:07,120 --> 00:42:14,480
+order of 1200x in the last 12 20 months
+
+1144
+00:42:11,240 --> 00:42:18,080
+in terms of the compute serving in video
+
+1145
+00:42:14,480 --> 00:42:20,400
+had a 10x year over year kind of growth
+
+1146
+00:42:18,080 --> 00:42:22,680
+growth. And this is like crazy, right?
+
+1147
+00:42:20,400 --> 00:42:26,920
+These numbers are
+
+1148
+00:42:22,680 --> 00:42:28,200
+explicitly driven by AI and as a result
+
+1149
+00:42:26,920 --> 00:42:31,960
+you're going to need something in the
+
+1150
+00:42:28,200 --> 00:42:33,440
+order of 250 gigabyte gigawatt of data
+
+1151
+00:42:31,960 --> 00:42:35,560
+centers
+
+1152
+00:42:33,440 --> 00:42:38,200
+to be able to serve this demand right
+
+1153
+00:42:35,560 --> 00:42:41,040
+now and again this is exploding. So that
+
+1154
+00:42:38,200 --> 00:42:44,360
+means you're going to need more and more
+
+1155
+00:42:41,040 --> 00:42:45,520
+energy kind of supply for these data
+
+1156
+00:42:44,360 --> 00:42:47,320
+centers.
+
+1157
+00:42:45,520 --> 00:42:49,320
+On the right side we are this we are
+
+1158
+00:42:47,320 --> 00:42:50,920
+showing this graph of the number of
+
+1159
+00:42:49,320 --> 00:42:52,880
+tokens
+
+1160
+00:42:50,920 --> 00:42:55,840
+that are kind of like
+
+1161
+00:42:52,880 --> 00:42:58,320
+from from on the Google side has been
+
+1162
+00:42:55,840 --> 00:43:01,520
+processed. So in the February of last
+
+1163
+00:42:58,320 --> 00:43:04,000
+year it was 160 trillion and in October
+
+1164
+00:43:01,520 --> 00:43:06,280
+of this year it was 1.3
+
+1165
+00:43:04,000 --> 00:43:08,520
+quadrillion.
+
+1166
+00:43:06,280 --> 00:43:10,640
+So this is like one of the fastest
+
+1167
+00:43:08,520 --> 00:43:12,760
+growing compute demands that we are
+
+1168
+00:43:10,640 --> 00:43:15,140
+seeing in history.
+
+1169
+00:43:12,760 --> 00:43:15,400
+Next please.
+
+1170
+00:43:15,140 --> 00:43:18,080
+>> [clears throat]
+
+1171
+00:43:15,400 --> 00:43:21,120
+>> At the same time so we looked into like
+
+1172
+00:43:18,080 --> 00:43:24,040
+what kind of workloads are or the type
+
+1173
+00:43:21,120 --> 00:43:26,680
+of activities or AI serving
+
+1174
+00:43:24,040 --> 00:43:28,680
+demand that we are observing and there
+
+1175
+00:43:26,680 --> 00:43:31,760
+from this
+
+1176
+00:43:28,680 --> 00:43:34,400
+data set this very large scale data set
+
+1177
+00:43:31,760 --> 00:43:36,960
+of chat GPT users it turns out that
+
+1178
+00:43:34,400 --> 00:43:41,720
+something in the order of 77%
+
+1179
+00:43:36,960 --> 00:43:44,160
+of requests are for task like practical
+
+1180
+00:43:41,720 --> 00:43:47,120
+guidance, information,
+
+1181
+00:43:44,160 --> 00:43:49,600
+like asking for information or writing
+
+1182
+00:43:47,120 --> 00:43:51,720
+and a lot of these task
+
+1183
+00:43:49,600 --> 00:43:54,840
+it turns out that we don't need the very
+
+1184
+00:43:51,720 --> 00:43:59,280
+best frontier models to ask to to answer
+
+1185
+00:43:54,840 --> 00:44:02,440
+them correctly. Rather small smaller and
+
+1186
+00:43:59,280 --> 00:44:04,280
+local models can be used to address to
+
+1187
+00:44:02,440 --> 00:44:06,760
+address them. So on the right side you
+
+1188
+00:44:04,280 --> 00:44:09,880
+are seeing this kind of like categories
+
+1189
+00:44:06,760 --> 00:44:14,880
+of user queries, the type of user
+
+1190
+00:44:09,880 --> 00:44:16,840
+queries that exist and over time and
+
+1191
+00:44:14,880 --> 00:44:18,800
+what is interesting here is that of
+
+1192
+00:44:16,840 --> 00:44:21,600
+course users are going to ask more and
+
+1193
+00:44:18,800 --> 00:44:23,640
+more complex problems from the chatbots
+
+1194
+00:44:21,600 --> 00:44:26,400
+over time because the chatbots are
+
+1195
+00:44:23,640 --> 00:44:29,440
+getting better, but still it's kind of
+
+1196
+00:44:26,400 --> 00:44:32,320
+like the vast majority of the type of
+
+1197
+00:44:29,440 --> 00:44:36,680
+queries that are being asked are on the
+
+1198
+00:44:32,320 --> 00:44:39,520
+on the side of again the simpler side of
+
+1199
+00:44:36,680 --> 00:44:42,200
+complexity that can be addressed by
+
+1200
+00:44:39,520 --> 00:44:44,720
+smaller models rather than
+
+1201
+00:44:42,200 --> 00:44:47,440
+large proprietary models.
+
+1202
+00:44:44,720 --> 00:44:48,400
+Next, please.
+
+1203
+00:44:47,440 --> 00:44:50,600
+Um
+
+1204
+00:44:48,400 --> 00:44:54,320
+another trend that is happening right
+
+1205
+00:44:50,600 --> 00:44:57,040
+now is the improvements in local
+
+1206
+00:44:54,320 --> 00:45:00,840
+inference accelerators. So, the graph on
+
+1207
+00:44:57,040 --> 00:45:03,160
+the right what it shows is us since 2012
+
+1208
+00:45:00,840 --> 00:45:06,600
+up until now uh
+
+1209
+00:45:03,160 --> 00:45:09,800
+we we saw something like 126x
+
+1210
+00:45:06,600 --> 00:45:13,360
+improvement in the GPU memory of the
+
+1211
+00:45:09,800 --> 00:45:16,640
+local accelerators and right now
+
+1212
+00:45:13,360 --> 00:45:17,640
+we have laptops that our MacBooks could
+
+1213
+00:45:16,640 --> 00:45:19,760
+have
+
+1214
+00:45:17,640 --> 00:45:23,240
+something in the order of 100 GB of
+
+1215
+00:45:19,760 --> 00:45:26,040
+memory and that means that we can fit
+
+1216
+00:45:23,240 --> 00:45:27,400
+very very large model
+
+1217
+00:45:26,040 --> 00:45:28,880
+if we
+
+1218
+00:45:27,400 --> 00:45:31,920
+especially if you serve the model in
+
+1219
+00:45:28,880 --> 00:45:34,000
+quantized versions like in eight and so
+
+1220
+00:45:31,920 --> 00:45:36,120
+the larger some of the largest models
+
+1221
+00:45:34,000 --> 00:45:38,280
+that are out there we can take them and
+
+1222
+00:45:36,120 --> 00:45:41,080
+serve them locally. This is like a very
+
+1223
+00:45:38,280 --> 00:45:42,840
+interesting trend that is following this
+
+1224
+00:45:41,080 --> 00:45:46,360
+other trend that
+
+1225
+00:45:42,840 --> 00:45:48,200
+a lot of user queries are addressable by
+
+1226
+00:45:46,360 --> 00:45:50,640
+smaller models.
+
+1227
+00:45:48,200 --> 00:45:52,080
+Next, please.
+
+1228
+00:45:50,640 --> 00:45:54,440
+So, the question that we wanted to
+
+1229
+00:45:52,080 --> 00:45:55,240
+answer here is that
+
+1230
+00:45:54,440 --> 00:45:59,640
+uh
+
+1231
+00:45:55,240 --> 00:46:01,200
+what role can local inference play in
+
+1232
+00:45:59,640 --> 00:46:03,120
+re-redistributing
+
+1233
+00:46:01,200 --> 00:46:06,040
+the inference demand? So, we have all
+
+1234
+00:46:03,120 --> 00:46:08,520
+this traffic right now that pretty much
+
+1235
+00:46:06,040 --> 00:46:10,480
+all of it is going to cloud.
+
+1236
+00:46:08,520 --> 00:46:14,480
+Pretty much all of it is going is going
+
+1237
+00:46:10,480 --> 00:46:19,400
+to these accelerators like H100s and
+
+1238
+00:46:14,480 --> 00:46:21,320
+TPUs and GP200s, GP300s. But,
+
+1239
+00:46:19,400 --> 00:46:22,720
+the trends right now are suggesting that
+
+1240
+00:46:21,320 --> 00:46:27,440
+maybe we can do something different
+
+1241
+00:46:22,720 --> 00:46:30,040
+here. And so, let's see the next slide.
+
+1242
+00:46:27,440 --> 00:46:33,160
+Uh so, in order to look into this more
+
+1243
+00:46:30,040 --> 00:46:34,000
+systematically, we first did did
+
+1244
+00:46:33,160 --> 00:46:37,840
+uh
+
+1245
+00:46:34,000 --> 00:46:40,240
+define this new metric that looks into
+
+1246
+00:46:37,840 --> 00:46:43,200
+not only the capability or the way the
+
+1247
+00:46:40,240 --> 00:46:46,080
+models are the accuracy of the models,
+
+1248
+00:46:43,200 --> 00:46:48,760
+but also on the efficiency side. So, on
+
+1249
+00:46:46,080 --> 00:46:51,480
+the capability side, we are looking in
+
+1250
+00:46:48,760 --> 00:46:54,240
+this metric that I'm about to define
+
+1251
+00:46:51,480 --> 00:46:57,120
+called intelligence per watt is looking
+
+1252
+00:46:54,240 --> 00:47:00,400
+into the percentage of
+
+1253
+00:46:57,120 --> 00:47:03,920
+uh of the queries that are being uh are
+
+1254
+00:47:00,400 --> 00:47:06,280
+that are addressable by the model in in
+
+1255
+00:47:03,920 --> 00:47:09,000
+for the single turn and reasoning uh
+
+1256
+00:47:06,280 --> 00:47:10,560
+type of queries. And when I say local
+
+1257
+00:47:09,000 --> 00:47:13,240
+models right now, at least in this
+
+1258
+00:47:10,560 --> 00:47:15,880
+study, we considered those are the
+
+1259
+00:47:13,240 --> 00:47:18,480
+models that are 20 have 20 billion
+
+1260
+00:47:15,880 --> 00:47:21,280
+active parameters or less.
+
+1261
+00:47:18,480 --> 00:47:22,680
+Um and on the efficiency side is how
+
+1262
+00:47:21,280 --> 00:47:25,080
+much uh
+
+1263
+00:47:22,680 --> 00:47:28,200
+useful compute we can get from these uh
+
+1264
+00:47:25,080 --> 00:47:31,240
+per watt from running these models on
+
+1265
+00:47:28,200 --> 00:47:34,120
+our local hardware. So, in short, the
+
+1266
+00:47:31,240 --> 00:47:36,840
+definition of intelligence per watt is
+
+1267
+00:47:34,120 --> 00:47:40,160
+the average task accuracy divided by the
+
+1268
+00:47:36,840 --> 00:47:43,440
+average power draw to uh
+
+1269
+00:47:40,160 --> 00:47:46,200
+to to solve this task by the model.
+
+1270
+00:47:43,440 --> 00:47:49,040
+Uh next, please.
+
+1271
+00:47:46,200 --> 00:47:52,040
+And we looked into a variety of uh
+
+1272
+00:47:49,040 --> 00:47:54,360
+models, hardware, work uh type of tasks,
+
+1273
+00:47:52,040 --> 00:47:57,120
+and uh evaluation metrics.
+
+1274
+00:47:54,360 --> 00:48:00,760
+Uh we looked into more than 20 local
+
+1275
+00:47:57,120 --> 00:48:02,120
+models and like quant, GPTQ, llama 3,
+
+1276
+00:48:00,760 --> 00:48:04,160
+and so on.
+
+1277
+00:48:02,120 --> 00:48:07,600
+Uh we looked into both enterprise
+
+1278
+00:48:04,160 --> 00:48:08,240
+accelerators and local accelerators.
+
+1279
+00:48:07,600 --> 00:48:10,440
+Uh
+
+1280
+00:48:08,240 --> 00:48:12,600
+the type of workloads we looked into, as
+
+1281
+00:48:10,440 --> 00:48:14,760
+you can see here, were there were 1
+
+1282
+00:48:12,600 --> 00:48:16,440
+million queries from sourced from chat
+
+1283
+00:48:14,760 --> 00:48:18,600
+GPT
+
+1284
+00:48:16,440 --> 00:48:20,960
+and other reasoning
+
+1285
+00:48:18,600 --> 00:48:24,320
+benchmarks such as natural reasoning,
+
+1286
+00:48:20,960 --> 00:48:26,200
+MMLU Pro, and Super GPQA.
+
+1287
+00:48:24,320 --> 00:48:28,280
+Um and we also looked into the
+
+1288
+00:48:26,200 --> 00:48:30,160
+evaluation metrics such as accuracy,
+
+1289
+00:48:28,280 --> 00:48:32,920
+energy, latency,
+
+1290
+00:48:30,160 --> 00:48:35,520
+uh the compute used, and so on. And all
+
+1291
+00:48:32,920 --> 00:48:37,720
+of this data, so this massive data we
+
+1292
+00:48:35,520 --> 00:48:39,440
+used it to up to understand the trends,
+
+1293
+00:48:37,720 --> 00:48:41,560
+but we are also
+
+1294
+00:48:39,440 --> 00:48:44,120
+uh open-sourcing all of these kind of
+
+1295
+00:48:41,560 --> 00:48:45,160
+different metrics across different
+
+1296
+00:48:44,120 --> 00:48:47,400
+uh
+
+1297
+00:48:45,160 --> 00:48:49,520
+uh type of on the underlying model and
+
+1298
+00:48:47,400 --> 00:48:51,680
+hardware substrates.
+
+1299
+00:48:49,520 --> 00:48:54,280
+Next, please.
+
+1300
+00:48:51,680 --> 00:48:58,760
+So, here is our find our findings.
+
+1301
+00:48:54,280 --> 00:49:01,800
+Uh it turns out that local models are
+
+1302
+00:48:58,760 --> 00:49:04,400
+not only are very very good already, but
+
+1303
+00:49:01,800 --> 00:49:08,680
+the trend of their improvement is also
+
+1304
+00:49:04,400 --> 00:49:11,200
+very interesting. So, since 2023,
+
+1305
+00:49:08,680 --> 00:49:14,080
+um there was a 3.1x
+
+1306
+00:49:11,200 --> 00:49:17,040
+improvement in the accuracy or the
+
+1307
+00:49:14,080 --> 00:49:19,560
+portion of the chat queries that they
+
+1308
+00:49:17,040 --> 00:49:21,960
+could add they could solve.
+
+1309
+00:49:19,560 --> 00:49:24,800
+Um this is very very fast, and this
+
+1310
+00:49:21,960 --> 00:49:27,160
+happened in only 2 years. Um and right
+
+1311
+00:49:24,800 --> 00:49:29,440
+now they could among the queries that I
+
+1312
+00:49:27,160 --> 00:49:31,000
+described in the previous slide, they
+
+1313
+00:49:29,440 --> 00:49:33,120
+could address something in the order of
+
+1314
+00:49:31,000 --> 00:49:35,960
+88.7%
+
+1315
+00:49:33,120 --> 00:49:38,520
+of all these queries. Uh this is a very
+
+1316
+00:49:35,960 --> 00:49:41,280
+very large number number.
+
+1317
+00:49:38,520 --> 00:49:44,040
+Um another observation, which is like
+
+1318
+00:49:41,280 --> 00:49:46,840
+kind of not very surprising, is that
+
+1319
+00:49:44,040 --> 00:49:49,480
+local accelerators, in terms of their
+
+1320
+00:49:46,840 --> 00:49:50,600
+efficiency, they lag behind enterprise
+
+1321
+00:49:49,480 --> 00:49:54,840
+chips.
+
+1322
+00:49:50,600 --> 00:49:57,480
+Uh for example, an Apple M4 Max, uh,
+
+1323
+00:49:54,840 --> 00:49:58,720
+it delivers 1 and 1/2,
+
+1324
+00:49:57,480 --> 00:50:01,760
+uh,
+
+1325
+00:49:58,720 --> 00:50:04,440
+X lower intelligence per watt than a
+
+1326
+00:50:01,760 --> 00:50:06,840
+B200. And the reason for that is that
+
+1327
+00:50:04,440 --> 00:50:10,080
+these B200s are extremely, like,
+
+1328
+00:50:06,840 --> 00:50:12,560
+optimized to run language model
+
+1329
+00:50:10,080 --> 00:50:14,400
+workloads, whereas an Apple M4, of
+
+1330
+00:50:12,560 --> 00:50:16,560
+course, is optimized to run these AI
+
+1331
+00:50:14,400 --> 00:50:18,840
+metrics, but there are other metrics,
+
+1332
+00:50:16,560 --> 00:50:20,800
+other other kind of workloads that are
+
+1333
+00:50:18,840 --> 00:50:23,840
+out there that, uh, they're optimized
+
+1334
+00:50:20,800 --> 00:50:26,160
+for. And in general, while designing
+
+1335
+00:50:23,840 --> 00:50:27,680
+these chips, the understanding wasn't
+
+1336
+00:50:26,160 --> 00:50:30,400
+that
+
+1337
+00:50:27,680 --> 00:50:31,920
+the LLMs are going to be running
+
+1338
+00:50:30,400 --> 00:50:34,200
+locally.
+
+1339
+00:50:31,920 --> 00:50:36,600
+That's why, like, the majority of focus
+
+1340
+00:50:34,200 --> 00:50:39,240
+of chip designers are on this cloud
+
+1341
+00:50:36,600 --> 00:50:40,400
+cloud scale uh, chips for running these
+
+1342
+00:50:39,240 --> 00:50:42,320
+workloads.
+
+1343
+00:50:40,400 --> 00:50:44,480
+And lastly,
+
+1344
+00:50:42,320 --> 00:50:47,080
+there is this other very important
+
+1345
+00:50:44,480 --> 00:50:49,440
+observation that the intelligence
+
+1346
+00:50:47,080 --> 00:50:52,040
+efficiency, like, or the improvement in
+
+1347
+00:50:49,440 --> 00:50:55,880
+this IQ EW metric, is something in the
+
+1348
+00:50:52,040 --> 00:50:59,280
+order of 5.3X over the last 2 years. So,
+
+1349
+00:50:55,880 --> 00:51:01,960
+3.1X of it is coming from better models,
+
+1350
+00:50:59,280 --> 00:51:04,680
+and another 1.7X of it is coming from
+
+1351
+00:51:01,960 --> 00:51:06,400
+the improvement in the hardware, and the
+
+1352
+00:51:04,680 --> 00:51:09,840
+how the hardware is becoming more and
+
+1353
+00:51:06,400 --> 00:51:12,880
+more efficient. So, both of these, uh,
+
+1354
+00:51:09,840 --> 00:51:15,240
+so the the all of these, uh,
+
+1355
+00:51:12,880 --> 00:51:17,360
+both of these trends, one is that local
+
+1356
+00:51:15,240 --> 00:51:18,880
+models are, like, becoming better and
+
+1357
+00:51:17,360 --> 00:51:21,600
+better. They can
+
+1358
+00:51:18,880 --> 00:51:23,440
+solve problems, uh, that they couldn't
+
+1359
+00:51:21,600 --> 00:51:27,040
+solve before at this, like, very
+
+1360
+00:51:23,440 --> 00:51:29,800
+accelerated rate. At the same time,
+
+1361
+00:51:27,040 --> 00:51:31,720
+uh, model efficiency is becoming better,
+
+1362
+00:51:29,800 --> 00:51:34,360
+and hardware efficiency is becoming
+
+1363
+00:51:31,720 --> 00:51:36,840
+better. This suggests that we're heading
+
+1364
+00:51:34,360 --> 00:51:40,040
+towards this future that more and more
+
+1365
+00:51:36,840 --> 00:51:42,800
+of this traffic can be addressed or can
+
+1366
+00:51:40,040 --> 00:51:44,800
+be solved by models that we can run on
+
+1367
+00:51:42,800 --> 00:51:48,160
+our edge device, for example, on our
+
+1368
+00:51:44,800 --> 00:51:49,480
+laptop or on our, uh, phone device in
+
+1369
+00:51:48,160 --> 00:51:52,440
+the future.
+
+1370
+00:51:49,480 --> 00:51:55,160
+Uh next, please.
+
+1371
+00:51:52,440 --> 00:51:58,680
+Um so, uh
+
+1372
+00:51:55,160 --> 00:52:00,320
+let's just go to the next slide. Uh
+
+1373
+00:51:58,680 --> 00:52:02,080
+so,
+
+1374
+00:52:00,320 --> 00:52:04,400
+with that, uh
+
+1375
+00:52:02,080 --> 00:52:07,080
+I get back to the IPW and the future
+
+1376
+00:52:04,400 --> 00:52:09,440
+directions for that in a second, but
+
+1377
+00:52:07,080 --> 00:52:11,360
+given this observation and everything
+
+1378
+00:52:09,440 --> 00:52:12,880
+else that we have kind of learned in
+
+1379
+00:52:11,360 --> 00:52:16,000
+this class,
+
+1380
+00:52:12,880 --> 00:52:18,000
+there are a few directions that are
+
+1381
+00:52:16,000 --> 00:52:20,000
+remain like open. There are a lot of
+
+1382
+00:52:18,000 --> 00:52:22,320
+interesting research questions around it
+
+1383
+00:52:20,000 --> 00:52:24,520
+that can be that are not addressed yet,
+
+1384
+00:52:22,320 --> 00:52:25,600
+and it's going to be interesting to work
+
+1385
+00:52:24,520 --> 00:52:28,000
+on.
+
+1386
+00:52:25,600 --> 00:52:30,880
+Uh one is the the fund foundational
+
+1387
+00:52:28,000 --> 00:52:33,320
+principles in test time scaling,
+
+1388
+00:52:30,880 --> 00:52:37,000
+um and learning from this like
+
+1389
+00:52:33,320 --> 00:52:38,840
+new kind of era of synthetic data and
+
+1390
+00:52:37,000 --> 00:52:40,680
+synthetic data flywheel that these
+
+1391
+00:52:38,840 --> 00:52:43,080
+models are creating.
+
+1392
+00:52:40,680 --> 00:52:45,200
+Uh right now, the way we are approaching
+
+1393
+00:52:43,080 --> 00:52:46,840
+it is through RL, through collecting
+
+1394
+00:52:45,200 --> 00:52:48,160
+this data, and then fine-tuning the
+
+1395
+00:52:46,840 --> 00:52:50,240
+models.
+
+1396
+00:52:48,160 --> 00:52:51,920
+Uh but, it kind of like suggests that
+
+1397
+00:52:50,240 --> 00:52:53,880
+there is more here, like our
+
+1398
+00:52:51,920 --> 00:52:55,960
+understanding of
+
+1399
+00:52:53,880 --> 00:52:55,960
+um
+
+1400
+00:52:56,080 --> 00:53:01,240
+First of all, why is why are we seeing
+
+1401
+00:52:58,280 --> 00:53:03,520
+this kind of property? Like, what does
+
+1402
+00:53:01,240 --> 00:53:06,200
+it suggest from the model that as they
+
+1403
+00:53:03,520 --> 00:53:08,400
+ask the model a question over and over
+
+1404
+00:53:06,200 --> 00:53:10,480
+again through test time scaling, what is
+
+1405
+00:53:08,400 --> 00:53:12,240
+happening that these correct answers are
+
+1406
+00:53:10,480 --> 00:53:15,960
+coming out? Like, what are the best
+
+1407
+00:53:12,240 --> 00:53:18,040
+practices to kind of distill these
+
+1408
+00:53:15,960 --> 00:53:19,120
+successful trajectories back to the
+
+1409
+00:53:18,040 --> 00:53:21,640
+model.
+
+1410
+00:53:19,120 --> 00:53:24,160
+Um these are still open questions, and
+
+1411
+00:53:21,640 --> 00:53:26,320
+there is a very clear segway from this
+
+1412
+00:53:24,160 --> 00:53:29,280
+synthetic data flywheel
+
+1413
+00:53:26,320 --> 00:53:30,440
+uh kind of phenomenon back to continual
+
+1414
+00:53:29,280 --> 00:53:31,480
+learning.
+
+1415
+00:53:30,440 --> 00:53:34,280
+Um
+
+1416
+00:53:31,480 --> 00:53:36,480
+something that is that seems like maybe
+
+1417
+00:53:34,280 --> 00:53:39,560
+it's not really we haven't gotten it
+
+1418
+00:53:36,480 --> 00:53:43,480
+right yet is the following. Like, us
+
+1419
+00:53:39,560 --> 00:53:46,480
+humans, like as we solve tasks, as we
+
+1420
+00:53:43,480 --> 00:53:49,120
+uh solve problems and study and do new
+
+1421
+00:53:46,480 --> 00:53:51,760
+things, there is this continual kind of
+
+1422
+00:53:49,120 --> 00:53:54,240
+progress in how our brain develops and
+
+1423
+00:53:51,760 --> 00:53:56,800
+how we become more and more skillful.
+
+1424
+00:53:54,240 --> 00:53:59,240
+Whereas for the models, it seems like
+
+1425
+00:53:56,800 --> 00:54:00,240
+mostly there's this offline process of
+
+1426
+00:53:59,240 --> 00:54:03,360
+like
+
+1427
+00:54:00,240 --> 00:54:05,800
+here is like some agent take up uh kind
+
+1428
+00:54:03,360 --> 00:54:08,280
+of experiences that are generated and
+
+1429
+00:54:05,800 --> 00:54:10,440
+then maybe after some time there's like
+
+1430
+00:54:08,280 --> 00:54:12,120
+this fine-tuning process of
+
+1431
+00:54:10,440 --> 00:54:15,000
+of the model.
+
+1432
+00:54:12,120 --> 00:54:16,240
+Uh it is not something that happens on
+
+1433
+00:54:15,000 --> 00:54:18,840
+the go.
+
+1434
+00:54:16,240 --> 00:54:20,640
+Uh and there is this kind of a mismatch
+
+1435
+00:54:18,840 --> 00:54:23,400
+between
+
+1436
+00:54:20,640 --> 00:54:25,880
+human behavior and model behavior that's
+
+1437
+00:54:23,400 --> 00:54:28,720
+a concept like continual learning could
+
+1438
+00:54:25,880 --> 00:54:31,520
+potentially answer. Like, what are the
+
+1439
+00:54:28,720 --> 00:54:34,440
+new practices that we can bring in model
+
+1440
+00:54:31,520 --> 00:54:36,520
+development that we can kind of like
+
+1441
+00:54:34,440 --> 00:54:38,760
+bring these
+
+1442
+00:54:36,520 --> 00:54:41,440
+uh positive experiences and learning
+
+1443
+00:54:38,760 --> 00:54:43,280
+from negative experiences and type of
+
+1444
+00:54:41,440 --> 00:54:46,840
+problem-solving that the model do back
+
+1445
+00:54:43,280 --> 00:54:49,000
+into the model in a more natural way
+
+1446
+00:54:46,840 --> 00:54:50,480
+uh that is different from the current
+
+1447
+00:54:49,000 --> 00:54:52,960
+like
+
+1448
+00:54:50,480 --> 00:54:55,360
+asynchronous like data generation and on
+
+1449
+00:54:52,960 --> 00:54:57,520
+and fine-tuning paradigm.
+
+1450
+00:54:55,360 --> 00:55:01,240
+Um
+
+1451
+00:54:57,520 --> 00:55:03,360
+Uh the last piece is the infra for the
+
+1452
+00:55:01,240 --> 00:55:07,200
+high-throughput low latency test time
+
+1453
+00:55:03,360 --> 00:55:08,760
+scaling. So, again, a a very
+
+1454
+00:55:07,200 --> 00:55:11,200
+um
+
+1455
+00:55:08,760 --> 00:55:13,520
+the way we do test time scaling, whether
+
+1456
+00:55:11,200 --> 00:55:16,240
+it's repeated sampling, whether it's uh
+
+1457
+00:55:13,520 --> 00:55:18,120
+these kind of like back and forth in
+
+1458
+00:55:16,240 --> 00:55:20,120
+terms of uh
+
+1459
+00:55:18,120 --> 00:55:21,920
+up updates that we do to the previous
+
+1460
+00:55:20,120 --> 00:55:23,880
+generations, we do tool calling, we do
+
+1461
+00:55:21,920 --> 00:55:25,160
+this and that. That is very different
+
+1462
+00:55:23,880 --> 00:55:27,720
+from the
+
+1463
+00:55:25,160 --> 00:55:30,320
+current mainstream chatbot usage, which
+
+1464
+00:55:27,720 --> 00:55:32,120
+is uh just like kind of mostly
+
+1465
+00:55:30,320 --> 00:55:33,360
+single-turn back and forth with the
+
+1466
+00:55:32,120 --> 00:55:35,560
+model.
+
+1467
+00:55:33,360 --> 00:55:38,280
+And that what that means is that there
+
+1468
+00:55:35,560 --> 00:55:41,640
+are very a lot of opportunities for
+
+1469
+00:55:38,280 --> 00:55:42,640
+doing systems and inference optimization
+
+1470
+00:55:41,640 --> 00:55:45,760
+work
+
+1471
+00:55:42,640 --> 00:55:48,040
+uh for these type of test time scaling.
+
+1472
+00:55:45,760 --> 00:55:50,720
+Uh my lab did some of this work like
+
+1473
+00:55:48,040 --> 00:55:53,160
+works like hydrogen, Tokamak
+
+1474
+00:55:50,720 --> 00:55:56,320
+uh and these things are going to matter
+
+1475
+00:55:53,160 --> 00:55:58,120
+again a lot more in the future because
+
+1476
+00:55:56,320 --> 00:56:00,320
+uh these methods are becoming more and
+
+1477
+00:55:58,120 --> 00:56:03,240
+more mainstream. So, that means we need
+
+1478
+00:56:00,320 --> 00:56:05,720
+to have uh specific ways to deal or
+
+1479
+00:56:03,240 --> 00:56:08,880
+optimize the systems and the underlying
+
+1480
+00:56:05,720 --> 00:56:10,680
+compute for them. So, overall, it seems
+
+1481
+00:56:08,880 --> 00:56:12,840
+like pre-training
+
+1482
+00:56:10,680 --> 00:56:15,040
+uh looking at the the figure on the
+
+1483
+00:56:12,840 --> 00:56:17,240
+bottom of the slide, pre-training a lot
+
+1484
+00:56:15,040 --> 00:56:20,320
+of interesting work in there. This
+
+1485
+00:56:17,240 --> 00:56:22,960
+course or our series of lectures touched
+
+1486
+00:56:20,320 --> 00:56:26,120
+less on that even though uh Akanksha is
+
+1487
+00:56:22,960 --> 00:56:29,600
+an expert on pre-training, but we mostly
+
+1488
+00:56:26,120 --> 00:56:33,200
+focused on post-training and the test
+
+1489
+00:56:29,600 --> 00:56:36,320
+time scaling methods. And there is this
+
+1490
+00:56:33,200 --> 00:56:39,200
+new kind of on unleashed area of like
+
+1491
+00:56:36,320 --> 00:56:41,520
+synthetic data flywheel and continual
+
+1492
+00:56:39,200 --> 00:56:44,200
+learning that is happening in this kind
+
+1493
+00:56:41,520 --> 00:56:45,760
+of connection between the fine-tuning
+
+1494
+00:56:44,200 --> 00:56:48,560
+and online learning and test time
+
+1495
+00:56:45,760 --> 00:56:50,640
+scaling that we hope that all of you
+
+1496
+00:56:48,560 --> 00:56:52,480
+learned a ton about it, but there's also
+
+1497
+00:56:50,640 --> 00:56:55,240
+a lot of interesting unsolved challenges
+
+1498
+00:56:52,480 --> 00:56:58,320
+that you can address going forward. Uh
+
+1499
+00:56:55,240 --> 00:56:58,320
+next slide, please.
+
+1500
+00:56:58,680 --> 00:57:03,080
+Um
+
+1501
+00:57:00,080 --> 00:57:05,720
+uh going back to the IPW metric and the
+
+1502
+00:57:03,080 --> 00:57:09,600
+observation about the shift the possible
+
+1503
+00:57:05,720 --> 00:57:11,480
+shift from everything on cloud to a lot
+
+1504
+00:57:09,600 --> 00:57:12,120
+more locally
+
+1505
+00:57:11,480 --> 00:57:14,920
+uh
+
+1506
+00:57:12,120 --> 00:57:16,360
+also suggests new direction in terms of
+
+1507
+00:57:14,920 --> 00:57:19,320
+inference
+
+1508
+00:57:16,360 --> 00:57:23,600
+uh serving engines that are hybrid
+
+1509
+00:57:19,320 --> 00:57:26,640
+uh that we we can kind of smoothly route
+
+1510
+00:57:23,600 --> 00:57:29,560
+traffic between our local and cloud kind
+
+1511
+00:57:26,640 --> 00:57:32,680
+of uh models and accelerators depending
+
+1512
+00:57:29,560 --> 00:57:34,560
+on the need and the complexity of
+
+1513
+00:57:32,680 --> 00:57:36,080
+uh of the resources.
+
+1514
+00:57:34,560 --> 00:57:39,000
+Um
+
+1515
+00:57:36,080 --> 00:57:42,000
+The other direction here again is new
+
+1516
+00:57:39,000 --> 00:57:44,040
+model architectures and kernels that we
+
+1517
+00:57:42,000 --> 00:57:46,520
+can use for any energy-efficient
+
+1518
+00:57:44,040 --> 00:57:48,320
+inference, especially on the local
+
+1519
+00:57:46,520 --> 00:57:50,040
+accelerators that we have, which is like
+
+1520
+00:57:48,320 --> 00:57:52,400
+a which is like a
+
+1521
+00:57:50,040 --> 00:57:55,520
+area that has much less
+
+1522
+00:57:52,400 --> 00:57:58,400
+uh kind of focus on compared to the
+
+1523
+00:57:55,520 --> 00:58:00,560
+cloud cloud accelerators.
+
+1524
+00:57:58,400 --> 00:58:03,240
+Um and the other important piece is that
+
+1525
+00:58:00,560 --> 00:58:06,120
+energy is going to be the most like kind
+
+1526
+00:58:03,240 --> 00:58:08,760
+of uh valuable resource that we have
+
+1527
+00:58:06,120 --> 00:58:11,520
+going forward. Uh and
+
+1528
+00:58:08,760 --> 00:58:14,280
+uh metrics such as intelligence per watt
+
+1529
+00:58:11,520 --> 00:58:17,040
+and better ways of our understanding of
+
+1530
+00:58:14,280 --> 00:58:20,200
+measuring energy and watt and power
+
+1531
+00:58:17,040 --> 00:58:22,840
+usage and optimizing for that again is
+
+1532
+00:58:20,200 --> 00:58:26,480
+going to be very very important. And
+
+1533
+00:58:22,840 --> 00:58:27,360
+that is an area that
+
+1534
+00:58:26,480 --> 00:58:29,760
+uh
+
+1535
+00:58:27,360 --> 00:58:32,600
+is less focused on right now in terms of
+
+1536
+00:58:29,760 --> 00:58:35,840
+like the metric of the target metric of
+
+1537
+00:58:32,600 --> 00:58:37,600
+optimization, but we expect that it's um
+
+1538
+00:58:35,840 --> 00:58:38,880
+it becomes more mainstream and more
+
+1539
+00:58:37,600 --> 00:58:41,280
+popular
+
+1540
+00:58:38,880 --> 00:58:42,920
+uh going forward.
+
+1541
+00:58:41,280 --> 00:58:44,760
+And
+
+1542
+00:58:42,920 --> 00:58:48,120
+I think that's the last slide on the
+
+1543
+00:58:44,760 --> 00:58:48,120
+future directions.
+
+1544
+00:58:52,200 --> 00:58:56,000
+Um Akanksha, you're muted.
+
+1545
+00:58:58,000 --> 00:59:01,400
+Okay, there's some some things in chat.
+
+1546
+00:59:00,040 --> 00:59:03,120
+So,
+
+1547
+00:59:01,400 --> 00:59:05,600
+um
+
+1548
+00:59:03,120 --> 00:59:08,240
+I'll start with the first question here.
+
+1549
+00:59:05,600 --> 00:59:09,920
+Do you think this is more pertaining
+
+1550
+00:59:08,240 --> 00:59:11,200
+This is more pertaining to memory
+
+1551
+00:59:09,920 --> 00:59:15,040
+systems
+
+1552
+00:59:11,200 --> 00:59:15,040
+or the LLMs themselves?
+
+1553
+00:59:15,440 --> 00:59:19,320
+I'm guessing uh So, whoever asked this
+
+1554
+00:59:17,560 --> 00:59:21,320
+question, can you ask it real time
+
+1555
+00:59:19,320 --> 00:59:23,040
+perhaps to uh put a little bit more
+
+1556
+00:59:21,320 --> 00:59:25,720
+context there? Otherwise, we're guessing
+
+1557
+00:59:23,040 --> 00:59:28,000
+the question.
+
+1558
+00:59:25,720 --> 00:59:28,760
+>> Yeah, happy to.
+
+1559
+00:59:28,000 --> 00:59:30,760
+Uh
+
+1560
+00:59:28,760 --> 00:59:33,480
+yeah, I was just referring to a few
+
+1561
+00:59:30,760 --> 00:59:35,560
+slides back when you were talking about
+
+1562
+00:59:33,480 --> 00:59:38,200
+that continual learning like from
+
+1563
+00:59:35,560 --> 00:59:40,000
+failures and success. Um
+
+1564
+00:59:38,200 --> 00:59:41,760
+Do you think that we're going to see
+
+1565
+00:59:40,000 --> 00:59:43,400
+more of that in
+
+1566
+00:59:41,760 --> 00:59:45,560
+you know, long-term memory systems and
+
+1567
+00:59:43,400 --> 00:59:48,080
+architectures or the you know, what's
+
+1568
+00:59:45,560 --> 00:59:50,760
+designed around an LLM or the models
+
+1569
+00:59:48,080 --> 00:59:50,760
+themselves?
+
+1570
+00:59:50,880 --> 00:59:54,160
+In terms of what's improved and what's
+
+1571
+00:59:52,760 --> 00:59:55,720
+worked on.
+
+1572
+00:59:54,160 --> 00:59:58,520
+>> So, I think the continual learning idea
+
+1573
+00:59:55,720 --> 01:00:00,800
+that might pertain to long-term memory
+
+1574
+00:59:58,520 --> 01:00:03,520
+systems with that's that would be the
+
+1575
+01:00:00,800 --> 01:00:07,520
+human analog of it, but if you're trying
+
+1576
+01:00:03,520 --> 01:00:09,680
+to but but before we even go there,
+
+1577
+01:00:07,520 --> 01:00:11,320
+get even in multi-step reasoning
+
+1578
+01:00:09,680 --> 01:00:13,880
+learning from success or failures or
+
+1579
+01:00:11,320 --> 01:00:16,920
+getting the model to keep that skill set
+
+1580
+01:00:13,880 --> 01:00:19,640
+and update things in the weights the or
+
+1581
+01:00:16,920 --> 01:00:23,280
+in subset of weights in a useful way
+
+1582
+01:00:19,640 --> 01:00:26,120
+like can you learn a new skill? Can you
+
+1583
+01:00:23,280 --> 01:00:28,400
+learn how to learn is is an important
+
+1584
+01:00:26,120 --> 01:00:30,800
+capability that we basically don't have
+
+1585
+01:00:28,400 --> 01:00:32,960
+right now.
+
+1586
+01:00:30,800 --> 01:00:35,440
+Like if you can watch videos robots try
+
+1587
+01:00:32,960 --> 01:00:37,200
+this when can you watch videos of how to
+
+1588
+01:00:35,440 --> 01:00:38,760
+do something and and learn how to do it
+
+1589
+01:00:37,200 --> 01:00:40,720
+as opposed to
+
+1590
+01:00:38,760 --> 01:00:43,640
+uh being given a lot of task
+
+1591
+01:00:40,720 --> 01:00:43,640
+demonstrations.
+
+1592
+01:00:45,720 --> 01:00:49,120
+Sorry, do you have more to add there?
+
+1593
+01:00:49,440 --> 01:00:55,280
+You're muted if you're
+
+1594
+01:00:52,120 --> 01:00:55,280
+Yeah, I think um
+
+1595
+01:00:55,320 --> 01:00:59,480
+um
+
+1596
+01:00:56,840 --> 01:01:02,400
+Yeah, I think there are other ways also
+
+1597
+01:00:59,480 --> 01:01:04,520
+to bring this knowledge like obviously
+
+1598
+01:01:02,400 --> 01:01:07,000
+in context learning
+
+1599
+01:01:04,520 --> 01:01:09,520
+is one way to enable continual learning.
+
+1600
+01:01:07,000 --> 01:01:12,200
+Imagine like one way I think about is
+
+1601
+01:01:09,520 --> 01:01:14,760
+that imagine we had an infinite context
+
+1602
+01:01:12,200 --> 01:01:17,680
+that the model could perfectly have
+
+1603
+01:01:14,760 --> 01:01:19,880
+access to every piece of it and could
+
+1604
+01:01:17,680 --> 01:01:21,880
+learn from everything in it. We don't
+
+1605
+01:01:19,880 --> 01:01:24,960
+have that, but if we had that, maybe
+
+1606
+01:01:21,880 --> 01:01:26,760
+that was one solution to like
+
+1607
+01:01:24,960 --> 01:01:28,720
+continual learning, right? Because we
+
+1608
+01:01:26,760 --> 01:01:30,560
+could put everything positive and
+
+1609
+01:01:28,720 --> 01:01:32,400
+negative in the context and the model
+
+1610
+01:01:30,560 --> 01:01:34,400
+could just remember all of that at the
+
+1611
+01:01:32,400 --> 01:01:35,600
+same time and reason over all of that at
+
+1612
+01:01:34,400 --> 01:01:37,640
+the same time.
+
+1613
+01:01:35,600 --> 01:01:40,120
+But, we don't have that. And we go
+
+1614
+01:01:37,640 --> 01:01:43,000
+through right now even a million or a
+
+1615
+01:01:40,120 --> 01:01:47,680
+few million, the models like kind of uh
+
+1616
+01:01:43,000 --> 01:01:51,960
+keep ability to reason over its ICL or
+
+1617
+01:01:47,680 --> 01:01:54,040
+in context uh kind of data diminishes.
+
+1618
+01:01:51,960 --> 01:01:56,400
+Um and there are other ways like we
+
+1619
+01:01:54,040 --> 01:01:59,360
+learned about cartridge in this tape in
+
+1620
+01:01:56,400 --> 01:02:01,840
+this uh in the span of our lectures. So,
+
+1621
+01:01:59,360 --> 01:02:05,000
+that's one other way that
+
+1622
+01:02:01,840 --> 01:02:07,560
+to be our enabling this long context and
+
+1623
+01:02:05,000 --> 01:02:09,280
+in context learning without changing the
+
+1624
+01:02:07,560 --> 01:02:11,520
+weights of the model, without fine
+
+1625
+01:02:09,280 --> 01:02:14,320
+fine-tuning it fine-tuning the model,
+
+1626
+01:02:11,520 --> 01:02:16,720
+but instead bringing them into the
+
+1627
+01:02:14,320 --> 01:02:20,320
+activations or in this case into the KB
+
+1628
+01:02:16,720 --> 01:02:22,040
+caches of the model. So, um
+
+1629
+01:02:20,320 --> 01:02:24,920
+all I'm saying here is that there are
+
+1630
+01:02:22,040 --> 01:02:28,240
+other ways to think about like continual
+
+1631
+01:02:24,920 --> 01:02:30,520
+learning uh without model
+
+1632
+01:02:28,240 --> 01:02:32,880
+without model fine-tuning. One could be
+
+1633
+01:02:30,520 --> 01:02:37,240
+by just increasing the effe- effective
+
+1634
+01:02:32,880 --> 01:02:41,360
+context length uh massively. Um
+
+1635
+01:02:37,240 --> 01:02:44,360
+and that could be another approach to
+
+1636
+01:02:41,360 --> 01:02:47,400
+memory like long-term memory and uh and
+
+1637
+01:02:44,360 --> 01:02:47,400
+continual learning.
+
+1638
+01:02:48,000 --> 01:02:50,800
+>> As a as a sort of follow-up to that,
+
+1639
+01:02:49,800 --> 01:02:52,960
+like
+
+1640
+01:02:50,800 --> 01:02:54,680
+in in practice, like in implementation,
+
+1641
+01:02:52,960 --> 01:02:57,040
+like do you think you know, what what
+
+1642
+01:02:54,680 --> 01:02:58,840
+would be easier to do? Like, you know,
+
+1643
+01:02:57,040 --> 01:03:01,840
+constantly updating the model's weights
+
+1644
+01:02:58,840 --> 01:03:03,040
+or uh you know, updating a memory store,
+
+1645
+01:03:01,840 --> 01:03:04,800
+right?
+
+1646
+01:03:03,040 --> 01:03:07,000
+>> So, I I I think it depends on the
+
+1647
+01:03:04,800 --> 01:03:09,720
+application, right? I mean, uh of course
+
+1648
+01:03:07,000 --> 01:03:10,720
+you can argue that updating the memory
+
+1649
+01:03:09,720 --> 01:03:13,520
+store
+
+1650
+01:03:10,720 --> 01:03:15,920
+would would be easier. Um if it's a
+
+1651
+01:03:13,520 --> 01:03:18,120
+knowledge base, if what you're I mean,
+
+1652
+01:03:15,920 --> 01:03:20,080
+the simplest and naive version of that
+
+1653
+01:03:18,120 --> 01:03:22,280
+is that if I could keep a database that
+
+1654
+01:03:20,080 --> 01:03:23,720
+the LM could learn to look at, then I
+
+1655
+01:03:22,280 --> 01:03:25,880
+should just go update the database,
+
+1656
+01:03:23,720 --> 01:03:28,480
+right? But what you're really trying to
+
+1657
+01:03:25,880 --> 01:03:31,400
+teach the LM is to the ability to reason
+
+1658
+01:03:28,480 --> 01:03:33,320
+over new domains, and and oftentimes
+
+1659
+01:03:31,400 --> 01:03:35,240
+having a side memory system doesn't
+
+1660
+01:03:33,320 --> 01:03:36,720
+quite achieve that. So that's where
+
+1661
+01:03:35,240 --> 01:03:39,000
+updating the weights does the job
+
+1662
+01:03:36,720 --> 01:03:42,240
+better. And the example that I was
+
+1663
+01:03:39,000 --> 01:03:44,480
+giving in robotics actually is very
+
+1664
+01:03:42,240 --> 01:03:46,120
+very pertinent there as to like no
+
+1665
+01:03:44,480 --> 01:03:49,160
+matter how much
+
+1666
+01:03:46,120 --> 01:03:50,240
+memory systems you add, the robot which
+
+1667
+01:03:49,160 --> 01:03:52,160
+has learned, I mean, the
+
+1668
+01:03:50,240 --> 01:03:54,320
+cross-embodiment generalization that you
+
+1669
+01:03:52,160 --> 01:03:56,640
+were looking at on the lecture on
+
+1670
+01:03:54,320 --> 01:03:58,360
+Monday, for example, that doesn't happen
+
+1671
+01:03:56,640 --> 01:04:01,800
+if you don't update the LM weights just
+
+1672
+01:03:58,360 --> 01:04:03,320
+by by having memory systems, right? So
+
+1673
+01:04:01,800 --> 01:04:04,640
+that's more of a skills transfer
+
+1674
+01:04:03,320 --> 01:04:08,440
+problem.
+
+1675
+01:04:04,640 --> 01:04:08,440
+>> Okay, makes sense. Yeah, thanks so much.
+
+1676
+01:04:09,000 --> 01:04:12,680
+>> Okay, there's one more question, I think
+
+1677
+01:04:11,800 --> 01:04:15,640
+from
+
+1678
+01:04:12,680 --> 01:04:17,880
+What he's saying is that in the zero in
+
+1679
+01:04:15,640 --> 01:04:18,960
+the absolute zero paper, the environment
+
+1680
+01:04:17,880 --> 01:04:20,840
+seems like the data used for
+
+1681
+01:04:18,960 --> 01:04:23,360
+post-training is in the paper for agents
+
+1682
+01:04:20,840 --> 01:04:25,600
+to self-create environments.
+
+1683
+01:04:23,360 --> 01:04:27,480
+So um
+
+1684
+01:04:25,600 --> 01:04:30,200
+I mean, if you go back to the worlds
+
+1685
+01:04:27,480 --> 01:04:31,280
+where there was narrow intelligence,
+
+1686
+01:04:30,200 --> 01:04:33,320
+right?
+
+1687
+01:04:31,280 --> 01:04:37,200
+There you could basically create
+
+1688
+01:04:33,320 --> 01:04:38,880
+simulations for games. So
+
+1689
+01:04:37,200 --> 01:04:40,320
+and those were used as environments for
+
+1690
+01:04:38,880 --> 01:04:41,280
+toy tasks.
+
+1691
+01:04:40,320 --> 01:04:43,120
+The
+
+1692
+01:04:41,280 --> 01:04:44,920
+The reason environments matter in the
+
+1693
+01:04:43,120 --> 01:04:47,680
+current generation are that they are
+
+1694
+01:04:44,920 --> 01:04:49,440
+proxies for real-world tasks. So it's
+
+1695
+01:04:47,680 --> 01:04:51,360
+not so much that there's a paper for
+
+1696
+01:04:49,440 --> 01:04:53,360
+agents to self-create environments, it's
+
+1697
+01:04:51,360 --> 01:04:54,280
+more along the lines of what is the set
+
+1698
+01:04:53,360 --> 01:04:55,800
+of tasks that you're trying to
+
+1699
+01:04:54,280 --> 01:04:57,560
+represent. Um
+
+1700
+01:04:55,800 --> 01:04:59,320
+if there is an easy way to simulate
+
+1701
+01:04:57,560 --> 01:05:01,360
+them, then
+
+1702
+01:04:59,320 --> 01:05:03,240
+whether you use agents to create that or
+
+1703
+01:05:01,360 --> 01:05:05,320
+software to create that, that's fairly
+
+1704
+01:05:03,240 --> 01:05:06,960
+straightforward, but is it a reasonable
+
+1705
+01:05:05,320 --> 01:05:09,080
+proxy of
+
+1706
+01:05:06,960 --> 01:05:10,960
+how the model will interact with the
+
+1707
+01:05:09,080 --> 01:05:12,440
+real world to get feedback.
+
+1708
+01:05:10,960 --> 01:05:13,600
+And for gaming
+
+1709
+01:05:12,440 --> 01:05:17,400
+it's
+
+1710
+01:05:13,600 --> 01:05:19,600
+kind of a finite space to explore, so
+
+1711
+01:05:17,400 --> 01:05:22,640
+it's easier to represent that in code
+
+1712
+01:05:19,600 --> 01:05:22,640
+and have simulations.
+
+1713
+01:05:22,960 --> 01:05:29,640
+>> Okay, thank you.
+
+1714
+01:05:25,600 --> 01:05:29,640
+>> Uh more questions from the class?
+
+1715
+01:05:41,400 --> 01:05:44,000
+You were saying something?
+
+1716
+01:05:42,760 --> 01:05:46,480
+>> I was saying
+
+1717
+01:05:44,000 --> 01:05:48,080
+no questions.
+
+1718
+01:05:46,480 --> 01:05:48,680
+>> Okay, we can't hear you, Jared. You have
+
+1719
+01:05:48,080 --> 01:05:50,960
+to speak up.
+
+1720
+01:05:48,680 --> 01:05:52,080
+>> I I think he said there are no further
+
+1721
+01:05:50,960 --> 01:05:53,280
+questions.
+
+1722
+01:05:52,080 --> 01:05:55,480
+>> Okay, awesome.
+
+1723
+01:05:53,280 --> 01:05:57,720
+>> Uh okay, cool.
+
+1724
+01:05:55,480 --> 01:06:00,240
+>> Okay, so let's start by let's end by
+
+1725
+01:05:57,720 --> 01:06:03,240
+thanking the class. It's been a It's
+
+1726
+01:06:00,240 --> 01:06:05,320
+been a real pleasure teaching you all
+
+1727
+01:06:03,240 --> 01:06:07,440
+and creating the content for this class
+
+1728
+01:06:05,320 --> 01:06:09,160
+so that you can learn about the latest
+
+1729
+01:06:07,440 --> 01:06:11,480
+and greatest set of techniques in the
+
+1730
+01:06:09,160 --> 01:06:14,800
+self-improving agents
+
+1731
+01:06:11,480 --> 01:06:17,720
+area. It's a evolving area, so anything
+
+1732
+01:06:14,800 --> 01:06:20,080
+that we teach now starts to be history
+
+1733
+01:06:17,720 --> 01:06:22,840
+by the next time the class rolls around,
+
+1734
+01:06:20,080 --> 01:06:25,440
+so and yet the basic techniques that
+
+1735
+01:06:22,840 --> 01:06:28,760
+you're learning um are extremely
+
+1736
+01:06:25,440 --> 01:06:31,360
+valuable over time because a lot of the
+
+1737
+01:06:28,760 --> 01:06:33,160
+new stuff still builds on top of the
+
+1738
+01:06:31,360 --> 01:06:35,720
+basic techniques.
+
+1739
+01:06:33,160 --> 01:06:37,800
+So, really grateful to have worked with
+
+1740
+01:06:35,720 --> 01:06:40,040
+you all and looking forward to what you
+
+1741
+01:06:37,800 --> 01:06:43,120
+do in your projects and in your posters.
+
+1742
+01:06:40,040 --> 01:06:46,960
+And let Azalia also thank the class.
+
+1743
+01:06:43,120 --> 01:06:49,360
+>> Yes, thank you so much for
+
+1744
+01:06:46,960 --> 01:06:51,920
+uh kind of
+
+1745
+01:06:49,360 --> 01:06:54,720
+the way we created this class is that we
+
+1746
+01:06:51,920 --> 01:06:57,120
+were also learning about a lot of things
+
+1747
+01:06:54,720 --> 01:06:58,680
+as we were creating the slides and we
+
+1748
+01:06:57,120 --> 01:07:00,600
+were preparing the course material
+
+1749
+01:06:58,680 --> 01:07:03,960
+because a lot of these topics are just
+
+1750
+01:07:00,600 --> 01:07:06,040
+like so fresh and so new and we were
+
+1751
+01:07:03,960 --> 01:07:08,480
+excited about them and we wanted you to
+
+1752
+01:07:06,040 --> 01:07:10,680
+also be aware of them. So,
+
+1753
+01:07:08,480 --> 01:07:13,400
+thanks for like kind of accompanying us
+
+1754
+01:07:10,680 --> 01:07:16,240
+in this journey journey and we're very
+
+1755
+01:07:13,400 --> 01:07:17,600
+grateful to you and we hope that you
+
+1756
+01:07:16,240 --> 01:07:18,560
+learned
+
+1757
+01:07:17,600 --> 01:07:20,840
+uh
+
+1758
+01:07:18,560 --> 01:07:22,680
+you learned some new skills, you got
+
+1759
+01:07:20,840 --> 01:07:26,040
+inspired in some new direction
+
+1760
+01:07:22,680 --> 01:07:28,040
+directions and we really hope that this
+
+1761
+01:07:26,040 --> 01:07:30,800
+is just the beginning for you to do to
+
+1762
+01:07:28,040 --> 01:07:32,600
+go ahead and do so so many more amazing
+
+1763
+01:07:30,800 --> 01:07:34,960
+work in your research projects, in your
+
+1764
+01:07:32,600 --> 01:07:37,960
+jobs, and in the future in general. So,
+
+1765
+01:07:34,960 --> 01:07:37,960
+thank you so much.

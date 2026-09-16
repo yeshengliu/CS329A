@@ -1,0 +1,259 @@
+{
+  "n": 6,
+  "title": "训练时扩展与 Scaling RL",
+  "summary": "本节讲座把 test-time scaling 到 train-time scaling 的闭环补全：让模型从自身输出中学习，巧妙地过滤这些输出，再把存活下来的样本作为训练数据回灌。讲座围绕三篇论文展开。STaR 通过保留最终答案正确的 rationale、并针对失败样本从已知答案反向构造 rationale 来引导（bootstrap）推理，代价是 off-policy 且性能会进入平台期。DeepSeek-Math 先用精心筛选的 Common Crawl 数学数据对代码预训练模型做 priming，再用 GRPO 扩展 RL——一种无需 critic、组归一化的 advantage，把 MATH 从 46.8 提升到 51.7。DAPO 把 GRPO 未明确说明的 RL 实现细节逐一写清楚——非对称裁剪、动态采样、token 级损失、软性超长惩罚——并在 Qwen 32B 上把 AIME 从 30 提升到 50，且未发生 entropy 崩溃。反复出现的主题：可验证奖励、奖励分布与爬山（hill-climbing）信号、KL 正则化、把 entropy 视为探索，以及 RL 提升的是 majority@k 而非 pass@k。",
+  "sections": [
+    {
+      "t": 5,
+      "title": "讲座框架：补全从 test-time 到 train-time scaling 的闭环",
+      "problem": "此前的讲座优化的是冻结模型在推理阶段的使用方式——反馈循环、工具与代码的使用、鲁棒验证——但从未改变权重，因此从验证回灌到模型内部的闭环始终是断开的。",
+      "why": "如果模型能够从自身经过滤的输出中学习，那么能力就能在预训练与偏好调优之后继续提升；本课程正是围绕这些自我改进机制构建的。",
+      "how": "三篇论文构成本讲的结构：STaR（用 rationale 引导推理）、DeepSeek-Math（筛选数学数据做 priming 加 GRPO）、DAPO（为长推理链稳定大规模 RL）。",
+      "detail": "<p>CS329A 第 6 讲的开场框架，<b>Train-Time Scaling and Scaling RL</b>。</p><ul><li>课程到目前为止覆盖了 <b>test-time scaling</b>、使用工具与代码的反馈，以及 <b>robust verification</b>——全部都是针对固定模型的推理期技术。</li><li>今天要补全闭环：模型的输出经过滤后用于改进模型自身，这正是本课程被称为 <b>self-improving AI agents</b> 的原因。</li><li>三篇论文：<code>STaR</code>（Stanford），把 rationale 放入问题以增强推理；<code>DeepSeek-Math</code>，关于语言模型中的数学推理（提出 GRPO）；以及第三篇关于在推理链变长时稳定 RL 的论文（DAPO）。</li><li>贯穿主线：可验证性（verifiability）把生成的 trace 转化为训练信号，而 train-time compute 的数量可以替代参数量。</li></ul>",
+      "terms": ["训练时扩展（train-time scaling）", "测试时扩展（test-time scaling）", "鲁棒验证（robust verification）", "self-improving agents", "STaR", "DeepSeek-Math", "DAPO"]
+    },
+    {
+      "t": 71,
+      "title": "AIME 与小模型的意外表现",
+      "problem": "参数扩展的叙事预测模型越大越准确，但在困难数学任务上，经过推理调优的小模型却大幅超越规模大得多的非推理模型。",
+      "why": "如果 7B 模型能在 AIME 上击败 175B 模型，那么能力就不只取决于参数量——模型如何基于自身输出进行训练同样重要。",
+      "how": "作为切入点的基准是 AIME 2024/2025（MATH 已饱和且被污染）。GPT-3.5 约为 5%；DeepSeek-Math 7B 达到 51.7%，加上额外技巧可达 60%；DAPO 在 Qwen 32B 上达到 50%。",
+      "detail": "<p>讲座把这几篇论文锚定在 <b>AIME 2024/2025</b> 上，选择它是因为旧的 MATH 基准已饱和且被污染（大多数模型都在其上训练过）。</p><ul><li><b>GPT-3.5</b> 据信约有 <b>175B</b> 参数，在 AIME 上得分约 <b>5%</b>。</li><li><b>DeepSeek-Math</b> 是一个使用 train-time scaling 的 <b>7B</b> 模型，达到 <b>51.7%</b>，加上额外技巧可达 <b>60%</b>。</li><li>第三篇论文 <b>DAPO</b> 在 <b>Qwen 32B</b> 模型上达到 <b>50%</b>。</li><li>与第 1 讲的矛盾：那里扩大参数量提升了基准准确率；这里小得多的模型因为 train-time 技术而表现极佳。</li></ul><p>讲座要回答的关键问题：这些小模型是如何变得如此准确的，又是哪些 <b>train-time scaling</b> 技巧把它们带到这一步？一个反复出现的警告是：对推理做朴素 RL 通常会失败，因为 <b>实现细节</b> 很难做对。</p>",
+      "terms": ["AIME 2024/2025", "MATH", "GPT-3.5", "DeepSeek-Math", "DAPO", "Qwen 32B", "数据污染（contamination）"]
+    },
+    {
+      "t": 210,
+      "title": "Train-Time Scaling 背后的三个关键洞见",
+      "problem": "对推理做朴素 RL 效果不佳，而这种失败常被归咎于调参，而非一小撮可识别的设计选择。",
+      "why": "推理 RL 需要从模型自身输出中获得可用信号，而非依赖 gold trace，并且它对那些只在大规模下才暴露的实现细节异常敏感。",
+      "how": "讲座提炼出三个洞见：通过巧妙过滤从自身输出中学习；让训练算力替代参数量；以及在扩展规模时把 RL 实现细节视为决定性因素。",
+      "detail": "<p>三个洞见贯穿整讲：</p><ul><li><b>从自身输出中学习。</b> 预训练给模型喂的是互联网文本；如果改为让它从自身输出中学习并 <b>巧妙地过滤</b>，就能进一步提升——这正是 self-improving AI agents 的由来。</li><li><b>Train-time compute 替代参数量。</b> 投入在模型自身输出上训练所用的算力可以补偿模型规模，这与早先给更小的模型更多数据能提升某些基准的结论相呼应。</li><li><b>RL 不是监督学习。</b> 使用强化学习时必须非常小心实现细节；随着算法规模扩大，小的修正（loss shaping、裁剪、采样）会变得极其重要。</li></ul><p>这三点决定了论文的讲述顺序：STaR 以低成本展示过滤输出的闭环，DeepSeek-Math 展示大规模下正确的 RL，DAPO 展示让大规模 RL 稳定的那些小修正。</p>",
+      "terms": ["self-improving agents", "过滤（filtering）", "用算力换参数（compute for parameters）", "RL 实现细节（RL implementation details）", "预训练（pre-training）", "数据扩展（data scaling）"]
+    },
+    {
+      "t": 267,
+      "title": "三种训练范式与核心的 train-time 闭环",
+      "problem": "人们很容易把预训练、偏好微调与推理期技巧混为一谈；讲座需要清晰的区分和一个便于记忆的闭环。",
+      "why": "Train-time scaling 的定义就在于它如何处理 test-time 输出——它取过滤后存活的样本进行微调，把一次性的推理收益转化为权重更新。",
+      "how": "三种范式是预训练（互联网文本）、微调 / RLHF（用偏好数据或 RLHF/RLAIF 数据训练聊天机器人），以及 test-time scaling（多数投票、推理期采样、组合 trace）。闭环是：生成、过滤、微调、重复。",
+      "detail": "<p>对比三种范式：</p><ul><li><b>预训练</b>——在互联网文本上训练模型（第 1 讲已覆盖，此处不再展开）。</li><li><b>微调 / RLHF</b>——聊天机器人的产生方式，在偏好数据上做微调或用人类反馈 / RLAIF 做 RL。</li><li><b>Test-time scaling</b>——基于推理的技术，如多数投票与推理期采样，然后把输出组合起来；这正是作业 1 所练习的内容。</li></ul><p><b>Train-time scaling</b> 的定义是：取模型在应用 test-time 过滤器<i>之后</i>的输出，并在此基础上进一步微调。唯一需要记住的闭环：模型生成输出，verifier 或 test-time 过滤器进行选择，你在存活样本上微调，然后重复。&ldquo;如果你从整讲中什么都不带走，只记住这个闭环，那么你基本就学到了 train-time scaling 的核心。&rdquo;</p>",
+      "terms": ["预训练（pre-training）", "RLHF", "RLAIF", "test-time scaling", "多数投票（majority voting）", "train-time 闭环（train-time loop）"]
+    },
+    {
+      "t": 347,
+      "title": "听众提问与 o1/Qwen 的算力扩展曲线",
+      "problem": "学生问：如何在固定的算力预算下权衡 train-time 与 test-time scaling，以及 train-time 的收益是否会在某个点开始趋于平缓。",
+      "why": "答案决定了钱该怎么花：test-time compute 添加成本低，但只能对样本重新排序，而 train-time compute 会改变权重。讲者把完整的权衡留到第三篇论文讨论。",
+      "how": "o1 的图把 AIME pass@1 放在 y 轴，分别对 train-time compute（左）和 test-time compute（右）作图，两者均为对数尺度；增加任一者都能提升准确率，两者叠加也有效。Qwen 呈现了相同模式，从而支持生成并回灌的闭环。",
+      "detail": "<p>学生的问题——train-time 与 test-time scaling 之间良好的平衡是什么，ROI 是否会趋于平缓？——被明确推迟到第三篇论文（DAPO）中，届时会重新讨论这些权衡。</p><ul><li>作为引入的图是 <b>o1</b>：y 轴为 AIME <b>pass@1</b>，x 轴为算力，<b>左侧是 train-time compute</b>，<b>右侧是 test-time compute</b>，两者都是对数线性。</li><li>更多推理期算力带来更好的 pass@1；更多 train-time 算力同样改善 pass@1；两者可以叠加，从而形成一个在基准上生成模型输出并回灌以改进模型的闭环。</li><li><b>Qwen</b> 在 AIME 上展现了相同的组合式提升。</li><li>为后文埋下的警示：这些量并不总是符合直觉，厂商的图也不总是可靠——此处指 OpenAI 发布时的图。</li></ul>",
+      "terms": ["算力分配（compute allocation）", "pass@1", "对数线性扩展（log-linear scaling）", "train-time compute", "test-time compute", "o1", "Qwen"]
+    },
+    {
+      "t": 438,
+      "title": "闭环为何成立：可验证性",
+      "problem": "生成-过滤-微调的闭环只有在过滤器能可靠区分正确与错误输出时才成立；不可靠的过滤器会把噪声灌进权重。",
+      "why": "数学是一个具备可验证性的领域——存在 ground-truth 答案——因此模型能标注自己的输出并选出正确的那些用于训练。",
+      "how": "由于最终答案可以核对，正确的输出会被送入 train-time scaling；因此该方法在可验证领域效果最好。这就是早前讲座中鲁棒验证这条线索。",
+      "detail": "<p>让 train-time scaling 得以运作的根本机制：<b>可验证性</b>。</p><ul><li>数学有可核对的最终答案，因此你知道哪些输出正确、哪些不正确，并选出正确的输出送入 train-time scaling。</li><li>这直接呼应了先前关于 <b>robust verification</b> 的讲座：验证才使过滤器可信。</li><li>结果：该技术在具备可验证性的领域（数学、代码、数据分析）比在缺乏可核对信号的开放式领域效果更好。</li><li>需要记住的权衡：如果 verifier 较弱，过滤器本身就成为瓶颈，闭环可能强化错误的推理。</li></ul>",
+      "terms": ["可验证性（verifiability）", "鲁棒验证（robust verification）", "最终答案核对（final-answer check）", "过滤器（filter）", "奖励信号（reward signal）"]
+    },
+    {
+      "t": 460,
+      "title": "Chain-of-Thought 带来了什么，以及在哪些领域见效",
+      "problem": "没有长 chain of thought 的模型无法解决困难问题，而推理带来的提升在不同领域间并不均衡。",
+      "why": "推理 token 被花在问题分析、任务分解、自我评估、回退（backtracking）以及尝试不同方法上——这是一种略显并行的搜索，需要模型对解是否正确有一定判断。",
+      "how": "思考型模型（o1、Gemini Flash Thinking 等同侪）会自然地产生这些模式。在可验证领域（编程、数据分析、数学）中，相对非思考型 GPT-4o 的胜率超过 50%，但在个人写作与编辑上几乎没有增益。",
+      "detail": "<p>思考型模型通过在 <b>chain of thought</b> 上花费 token 来解决困难问题：</p><ul><li><b>问题分析</b>——对于一个打印矩阵转置的 bash 脚本，模型会先推断输入/输出格式，然后再求解。</li><li><b>任务分解</b>——解析字符串、构建矩阵、转置、格式化输出；对这个小例子来说是杀鸡用牛刀，但随着任务变复杂就很有价值。</li><li><b>自我评估与自我纠正</b>——在计算溶液的 pH 时，模型意识到自己的公式有误并加以修正；它还可以回退到之前的步骤并尝试不同方法。</li><li>这相当于在不同方法上做 <b>一种略显并行的搜索</b>，而这要求模型对解是否正确有一定判断。</li></ul><p>经验上，在可验证领域（计算机编程、数据分析、数学计算）中，相对非思考型 <b>GPT-4o</b> 的胜率超过 50%，但在个人写作/编辑上几乎没有增益。能够验证并闭合闭环的领域获益最大。</p>",
+      "terms": ["chain of thought", "问题分析（problem analysis）", "任务分解（task decomposition）", "自我纠正（self-correction）", "回退（backtracking）", "胜率（win rate）", "GPT-4o"]
+    },
+    {
+      "t": 700,
+      "title": "听众的质疑与对基本原理的重申",
+      "problem": "一名学生注意到 o1 的图看起来可疑——零 train-time compute 时的性能似乎比有限 train-time compute 时更好——课堂上进而追问 test-time 还是 train-time compute 更值得投入。",
+      "why": "这种张力很重要：test-time compute 成本低，且有好的 verifier 时可以几乎无上限地扩展；而 train-time compute 改变的是权重，但前提是闭环中有足够多的成功样本可供 bootstrap。",
+      "how": "讲者承认那张图只是一个实例，且并不总是可靠，随后重申基本原理：test-time compute 仅作用于推理，train-time 提升 pass@1，两者都需要鲁棒验证才能闭合闭环。",
+      "detail": "<p>课堂上对这条曲线提出质疑：零 train-time compute 时的性能看起来比有限 train-time compute 时更好。讲者承认那只是一个实例，并表示它并不总是正确（该领域的曲线在最新发布中曾出错），随后继续讲下去。</p><p>重申基本原理：</p><ul><li><b>Test-time compute 添加成本低。</b> 训练一个模型，运行大量推理，只要有一个答案正确且你有好的 verifier，就能几乎无上限地扩展算力——参见 AlphaCode 式的搜索（下周五的主题）。</li><li><b>闭环需要足够多的成功样本。</b> 如果模型基本上从不产生正确样本，train-time scaling 就没有可 bootstrap 的基础。</li><li><b>一个注意点：</b> test-time compute 只有在可验证性足够鲁棒时才有效；否则你必须让模型推理得更好，而且仍然需要验证闭环。</li><li>总之：借助 train-time scaling 你提升了 <b>pass@1</b>，使正确输出更可能出现，但闭环的验证仍然必不可少。</li></ul>",
+      "terms": ["AlphaCode", "pass@1", "闭环反馈（closed feedback loop）", "鲁棒可验证性（robust verifiability）", "test-time compute", "bootstrap"]
+    },
+    {
+      "t": 924,
+      "title": "听众提问：简单问题上的性能回退与 overthinking",
+      "problem": "微调模型以更好地解决困难问题，有可能使其在更简单问题上的性能回退，因为所有权重都会更新。",
+      "why": "这是经典的能力/保持权衡，也预示了 RL 中关于偏离模型已有行为的担忧。",
+      "how": "讲者的回答：通常不应在简单问题上出现回退，除非推理链崩溃——这种具体的失败模式就是被称为 overthinking 的重复链。",
+      "detail": "<p>学生问：教模型解决困难问题是否会使其在更简单问题上回退——这是本讲中每一种后训练方法都会重新引发的担忧。</p><ul><li>讲者把深入版本留到论文部分，但先回答了直接的情形：通常<b>不应出现回退</b>，因为解决更难的问题不应损害简单问题。</li><li>例外情况是模型陷入<b>完全崩溃的推理链</b>——重复的链——这种失败模式被称为 <b>overthinking</b>。重复、无产出的 trace 会消耗预算，并让模型此前能处理的答案变差。</li><li>这与后文在 GRPO/DAPO 中用 <b>KL divergence</b> 及其他正则化处理的是同一个担忧，也是持续把 <b>entropy</b> 和 <b>response length</b> 控制住的动机。</li><li>它还与 DAPO 的长度/截断修正相关：如果模型学会输出越来越长的链，即使训练奖励上升，质量也可能下降。</li></ul>",
+      "terms": ["性能回退（regression）", "overthinking", "重复推理（repetitive reasoning）", "KL divergence", "灾难性遗忘（catastrophic forgetting）"]
+    },
+    {
+      "t": 968,
+      "title": "论文 1，STaR：动机与 rationale 数据瓶颈",
+      "problem": "让模型产出高质量的逐步 rationale 受制于数据：互联网规模的语料中几乎不含推理步骤，而人工标注 rationale 成本高昂。",
+      "why": "用少量推理示例做 few-shot prompting，其效果不如在缺乏推理链但要大得多的数据集上做微调；而从已知解法模式自动生成 rationale 只在非常狭窄的领域可行。",
+      "how": "STaR（Stanford）通过从模型自身生成中 bootstrap rationale 来解决数据问题，并以最终答案是否正确进行过滤。",
+      "detail": "<p>STaR 从 chain-of-thought 出发：要求模型逐步展示其工作过程可带来 <b>可解释性</b>，并在多个基准上提升数学与常识推理。</p><p>数据瓶颈：</p><ul><li>互联网规模的数据集中实际上并不包含 <b>推理步骤</b>；只有少数来源拥有大规模 rationale。</li><li>人工标注推理步骤非常昂贵——它确实需要真人来做。</li><li>从已知解法模式自动生成 rationale 只在非常特定的领域可行。</li><li>用少量问题/rationale/答案示例做 <b>few-shot prompting</b>，效果仍不如在更大得多的数据集上微调的模型，因此小规模推理集是不够的。</li></ul><p>因此目标就是：通过用最终答案核对来过滤模型自身的输出，从而在无需人工标注的情况下获得推理数据。</p>",
+      "terms": ["STaR", "chain of thought", "rationale", "few-shot prompting", "数据瓶颈（data bottleneck）", "self-improving agents"]
+    },
+    {
+      "t": 1065,
+      "title": "STaR：生成、过滤正确答案、为失败样本构造 rationale、迭代",
+      "problem": "只对正确示例做微调，会让模型卡住的问题上没有任何信号，因此它无法学会解决新的、更难的问题。",
+      "why": "失败的尝试仍携带信息，但模型没有产出正确的推理路径；仅按结果过滤恰好丢弃了那些处于能力边缘的问题。",
+      "how": "STaR 生成解答（比如 1 万个问题），只保留最终答案正确的，进行微调，然后重复。对失败样本它使用 rationalization：把已知答案作为 hint 加入，要求模型反向生成 rationale，并把它当作直接解出来一样用于训练。",
+      "detail": "<p>STaR 算法刻意做得极简：</p><ul><li>从一小组<b>带 rationale</b> 的示例出发；在一个大得多的问题/答案集上生成解答（约 <b>1 万</b>是一个有代表性的数量）。</li><li>只保留<b>最终答案正确</b>的输出；在 问题 → rationale → 答案 上微调；重复该闭环。</li><li><b>为失败样本做 rationalization：</b> 把答案作为 <b>hint</b> 给模型（&ldquo;答案是 42，现在倒着解释&rdquo;），生成 rationale，并把 问题 → rationale → 答案 加入训练集，就像它被直接解出来一样——推理时从不展示这个 hint。</li><li>这会把训练集扩展到比模型当前能解决的更难的问题，因此它能迭代地 bootstrap，而不是被简单问题所封顶。</li><li>讲座把它称为一种近乎 <b>off-policy reinforcement learning</b> 的技术：生成尝试、从成功的路径中学习，并为失败的路径构造 rationale。</li></ul>",
+      "terms": ["rationalization", "hint", "生成-过滤-微调（generate-filter-finetune）", "off-policy RL", "bootstrap", "1 万个问题（10k problems）"]
+    },
+    {
+      "t": 1192,
+      "title": "STaR 作为 off-policy RL 及其核心假设",
+      "problem": "STaR 的过滤只有在以下条件下才成立：最终答案正确是良好推理链的良好代理，且模型在给定答案时确实能产出有效的 rationale。",
+      "why": "这些假设界定了该方法的失效边界：对于远超 base model 能力的问题，既没有正确样本也没有有效 rationale，因此无从学起。",
+      "how": "讲座列出三个假设——最终答案正确可代理推理质量、模型能根据答案 hint 构造 rationale、初始模型足够强以从 few-shot 示例中 bootstrap——这使迭代这一环节至关重要。",
+      "detail": "<p>STaR 做出了明确的假设：</p><ul><li><b>答案正确 ⟹ rationale 良好。</b> 在数学中他们发现这大体成立，因此把答案错误的样本过滤掉，作为过滤低质量推理的代理。代价：模型从不会从不正确的推理链中学习，而且可能存在 true negatives 与 false positives（恰好得出正确答案的无效步骤）。</li><li><b>模型能够构造 rationale。</b> 把答案展示给它并要求写出过程，被假定能产出有效的推理路径。</li><li><b>base model 足够强</b>，能从 few-shot 示例中 bootstrap。如果问题类别远超其能力，STaR 进展甚微，这正是 <b>迭代</b>闭环重要的原因——改进会累积，使更难的问题进入射程。</li></ul>",
+      "terms": ["假设（assumptions）", "推理质量的代理（proxy for reasoning quality）", "rationalization", "true negatives", "false positives", "迭代式 bootstrap（iterative bootstrap）"]
+    },
+    {
+      "t": 1274,
+      "title": "STaR 问答：步骤过滤、过程奖励与从失败中学习",
+      "problem": "学生探究闭环的薄弱点：正确答案从何而来、中间步骤是否被检查，以及模型即便拿到答案仍然失败时会怎样？",
+      "why": "没有步骤级验证，正确的最终答案可能掩盖无效的中间推理；没有从负样本中学习的方法，闭环就无法利用其失败。",
+      "how": "回答：种子数据是一个基准（问题与已知答案）；STaR 本身并不过滤第三步，不过后续论文加入 process reward model 来给步骤打分；从负样本中学习仍未解决，因此失败样本被丢弃。",
+      "detail": "<p>关于 STaR 的机制与缺口的问答：</p><ul><li><b>正确答案从何而来？</b> 每个人都从带有正确答案的基准出发；推理是生成出来的，答案提供标签。</li><li><b>第三步是否被过滤？</b> STaR 本身<b>不</b>过滤经 rationalization 得到的步骤。后续工作在推理链之上加入 <b>process reward model</b> 来判断哪些步骤合理——这被标记为一个可能的项目想法。</li><li><b>如果模型即便拿到答案仍然失败怎么办？</b> 假设是基准处于其能力范围内（或至少有一个子集在范围内）；通过迭代，模型最终能处理其中更多问题。</li><li><b>从负样本中学习：</b> 讲者表示从负样本中学习&ldquo;尚未被攻克&rdquo;；只要奖励非零，从正样本学习就有效，而如今负样本在很大程度上被过滤掉了。</li><li><b>验证 rationale 质量</b>需要人工（繁琐）或 process reward model，因为没有自动的步骤级检查。</li></ul>",
+      "terms": ["process reward model", "步骤级验证（step-level verification）", "负样本（negative examples）", "基准种子数据（benchmark seed data）", "rationale 质量（rationale quality）"]
+    },
+    {
+      "t": 1513,
+      "title": "STaR 详解：算法、GPT-J 设置与数据集",
+      "problem": "这个非形式化的闭环需要精确描述 prompt 集、训练集、rationalization 分支，以及让迭代生效的实验配置。",
+      "why": "prompt 集很小且带 rationale，而训练集很大且只有答案，因此该方法的行为取决于 few-shot 的 rationale 风格如何迁移到生成的训练数据上。",
+      "how": "从小的 prompt 数据集（问题、rationale、答案）和大的训练数据集（问题、答案）出发。在训练问题上对模型做 few-shot prompt，保留正确的 rationale，为失败样本加入带答案 hint 的 rationalization，微调，然后重复。实验使用 GPT-J 6B，带 warm-up、恒定学习率，以及不断增大的内循环。",
+      "detail": "<p>严谨的逐步讲解：</p><ul><li><b>Prompt 数据集</b>很小，包含一个 rationale 加上正确答案（例如一道关于把葡萄放在哪里的选择题、rationale、答案 B = 购物车）。</li><li><b>训练数据集</b>很大且只有答案（类似基准的训练划分）；<b>vanilla STaR</b> 在这些问题上做 few-shot prompt，由 LM 检查答案，收集正确的 rationale，然后微调。</li><li><b>Rationalization 分支：</b> 对答案错误的样本，把正确答案作为 hint 加入，据其生成 rationale，并在微调前将其加入 rationale 集。</li><li><b>迭代：</b> 微调后 LM 能产出更好的链，因此重新在训练集上运行并重试此前未解决的问题。</li><li>实验使用开源的 <b>GPT-J 6B</b>；先做少量 warm-up，然后用 <b>恒定学习率</b>；外循环迭代次数固定，内循环步数<b>每一轮递增</b>（先慢启动，再加大工作量）。</li><li>数据集：<b>GSM8K</b>（约 9K 道小学题）、<b>CommonSenseQA</b>、多位数<b>算术</b>，以及合成数据。</li></ul>",
+      "terms": ["prompt 数据集（prompt data set）", "训练数据集（training data set）", "GPT-J 6B", "恒定学习率（constant learning rate）", "外循环（outer loop）", "内循环（inner loop）", "GSM8K", "CommonSenseQA"]
+    },
+    {
+      "t": 1711,
+      "title": "STaR 结果：样本效率、人工评估与 GSM8K 的零结果",
+      "problem": "STaR 是否优于直接的监督微调，以及反复迭代能推进到多远，这些并不显然。",
+      "why": "当问题恰好略超模型能力时，rationalization 帮助最大；对已在其能力范围内的问题它不提供信号，而该方法的 off-policy 性质使其进入平台期。",
+      "how": "报告结果：仅使用 70–87% 的数据即达到 MATH 51.7，人工评估者认为 rationale 合理，STaR 用 86% 的数据达到 72.5%，优于大数据基线。在 GSM8K 上，rationalization 没有带来增益。",
+      "detail": "<p>在四个数据集上的结果：</p><ul><li><b>MATH：51.7%</b>，仅使用 <b>70–87%</b> 的数据即达到，因为不正确的解被丢弃了。</li><li><b>样本效率：</b> 带 rationalization 的 STaR 用大约 <b>86%</b> 的数据达到约 <b>72.5%</b>——无需普通微调基线所需的体量就能取得高准确率。</li><li><b>人工评估（CommonSenseQA）：</b> 把 rationale 展示给人工评估者，并与 few-shot rationale 比较；从定性上看，STaR 的 rationale 被认为合理。</li><li><b>Off-policy 的注意事项：</b> 它不是真正的 RL，因此经过若干次迭代后性能<b>进入平台期</b>，需要调参。</li><li><b>GSM8K 的零结果：</b> rationalization <b>没有</b>提升性能——无论有无 rationalization，模型使用的计算步数都相近。GSM8K 处于 GPT-4o 的能力范围内，因此问题过于简单，额外的推理没有帮助。</li></ul>",
+      "terms": ["MATH 51.7", "样本效率（sample efficiency）", "人工评估（human evaluation）", "CommonSenseQA", "平台期（plateau）", "GSM8K", "能力边界（capability frontier）"]
+    },
+    {
+      "t": 1917,
+      "title": "STaR 的要点与挑战",
+      "problem": "即便 STaR 有效，它也仅依赖最终答案进行过滤，这可能放行错误的中间推理，而且它没有可靠的方法评估 rationale 质量。",
+      "why": "其价值主张是在无需人工标注 rationale 的情况下实现高样本效率，但缺少步骤级验证以及 few-shot 格式引入的偏差限制了可靠性。",
+      "how": "要点：rationalization 以拥有答案为前提；没有 rationalization 的输出来自模型已有信心的情形。挑战：缺乏良好的 rationale 评估（需要人工或 process reward model），以及仅按正确答案过滤带来的 true negatives / false positives。",
+      "detail": "<p>STaR 的要点与开放挑战：</p><ul><li><b>对 rationalization 的细致理解：</b> 它以拥有答案为前提来找出好的 rationale。<i>没有</i> rationalization 的输出来自模型已有信心的情形，但如果它能看答案，就可能产出更好的 rationale。</li><li><b>风格偏差：</b> few-shot prompting 会影响 rationale 的格式，进而影响模型产出何种 rationale，从而影响你训练所用的数据；prompt engineering 可能以非预期的方式引导模型。</li><li><b>优点：</b> bootstrap 生成的 rationale 无需人工就能带来高样本效率，并广泛适用于符号问题与自然语言数学推理。</li><li><b>挑战：</b> 对大多数任务而言没有良好的自动 rationale 评估（需要人工或 process reward model）；仅按正确答案过滤会把无效的中间步骤留在训练集中。</li></ul>",
+      "terms": ["样本效率（sample efficiency）", "rationale 评估（rationale evaluation）", "few-shot 风格偏差（few-shot style bias）", "process reward model", "false positives", "true negatives"]
+    },
+    {
+      "t": 2032,
+      "title": "听众提问：distillation、STaR 是否是真正的 RL，以及 VAR / Quiet-STaR",
+      "problem": "一名学生指出，你其实可以用前沿模型来生成 rationale 数据（distillation），从而质疑让小模型自我 bootstrap 的实际价值。",
+      "why": "Distillation 在实践中往往更容易，但本讲的目标是在不依赖更强 teacher 的前提下理解模型本身的改进；这段交流也引出了 generator/verifier 与 latent-thought 的变体。",
+      "how": "讲者承认对许多项目而言 distillation 是合理的观点，随后把 STaR 定位为代理 verifier。把真正的 verifier 加入闭环就是 VAR（generator 与 verifier 一起训练），而 Quiet-STaR 用 MLP 把推理移入 latent space。",
+      "detail": "<p>两条听众线索：</p><ul><li><b>Distillation。</b> 一名学生主张，在实际应用中你会直接取用强大模型的输出（distillation），而不是从小模型 bootstrap。讲者同意这是一个合理的观点，但表示本讲有意从零开始构建这一能力，以便学生理解其中需要付出什么；distillation 是一个相关但不同的话题。</li><li><b>STaR 是完整的 RL 吗？SFT 与 RL 的关系？</b> 这个问题触发了向 GRPO 的过渡；SFT 与 RL 的权衡被留到最后。</li><li><b>VAR：</b> 在 STaR 中，正确的最终答案充当代理 verifier。如果你改为把一个真正的 <b>verifier</b> 加入闭环，就会得到一篇在<b>闭环中同时训练 generator 与 verifier</b> 的论文。</li><li><b>Quiet-STaR：</b> 它不把推理步骤放在语言空间，而是通过 MLP 把推理步骤放入 <b>latent space</b>——&ldquo;既然模型能在内部思考，为什么还要用英语写出来？&rdquo;</li></ul>",
+      "terms": ["distillation", "代理 verifier（proxy verifier）", "VAR", "generator-verifier 闭环（generator-verifier loop）", "Quiet-STaR", "latent 推理（latent reasoning）"]
+    },
+    {
+      "t": 2255,
+      "title": "课堂讨论：什么限制了 STaR 的性能",
+      "problem": "课堂上提出的开放问题是：撇开实现细节不谈，从根本上限制 STaR 这一技术的是什么。",
+      "why": "STaR 无法凭空创造 base model 中尚未潜藏的逻辑跳跃；它的上限就是 base model 的推理能力，这很重要，因为 RL 建立在同样的基础上。",
+      "how": "学生提出各种限制：无法做出超出训练分布的新逻辑跳跃；性能随模型推理（以及即便给出 hint 也能构造 rationale）的能力而变化；可能引入错误样本。讲者把这些归结为 base model 的能力。",
+      "detail": "<p>一场关于什么限制了 STaR 性能的课堂讨论：</p><ul><li><b>学生：</b> STaR 不应做出训练数据中没有的逻辑跳跃——rationalization 大致停留在模型已知的同一水平，只是产出了更多 rationale 数据。</li><li><b>学生：</b> 如果模型即便给出 hint 也无法推理，rationalization 就完全不会出现；而如果它产出糟糕的推理，就会把<b>错误样本</b>注入训练。</li><li><b>学生：</b> 性能受模型推理能力限制；有些答案天生更容易构造 rationale（例如把 225 视作 15&times;15），而不那么显然的答案需要更多数据才能形成可回退的泛化推理。</li><li><b>讲者：</b> 所有回答都成立，这一点在讲座转向 RL 时值得牢记——这个领域的大部分魔力在于，当你在此基础上构建时，<b>base model 已经能做什么</b>。</li></ul>",
+      "terms": ["base model 能力（base model capability）", "逻辑跳跃（logical leaps）", "分布偏移（distribution shift）", "错误样本（wrong samples）", "rationalization", "RL 基础（RL foundation）"]
+    },
+    {
+      "t": 2454,
+      "title": "论文 2，DeepSeek-Math：用筛选后的数学与代码做 priming",
+      "problem": "数学能力薄弱的 base model 无法仅靠 RL 修复；此前的 STEM 工作基于 arXiv 风格的数据训练，领域覆盖有限。",
+      "why": "存档论文缺乏数学内容的广度，而从 Common Crawl 筛选出的数学页面提供了远更大的 token 产出与覆盖；代码预训练也能迁移到推理与工具使用上。",
+      "how": "先对模型做 priming：从 Common Crawl 筛选出 OpenWebMath，以 DeepSeek-Coder 为起点，在数学语料上做监督微调，然后再扩展 RL。代码到数学的迁移帮助显著，而仅用存档数据训练则没有。",
+      "detail": "<p>DeepSeek-Math 的第一项贡献是在 RL 之前对 <b>base model 做 priming</b>。</p><ul><li>在 MATH top-1 图上，准确率历史上随模型规模上升；随后出现了一个表现非常好的 <b>7B</b> DeepSeek-Math，而这一飞跃来自<b>正确地完成 train-time 闭环中的 RL 部分</b>。</li><li>此前的 STEM 工作（<b>Minerva</b>，基于 PaLM）在大量 arXiv 风格的科学/数学数据上训练。DeepSeek 发现基于存档论文训练<b>并非关键所在</b>——论文缺乏跨数学领域的覆盖。</li><li>他们改为从 <b>Common Crawl</b> 中筛选出 <b>OpenWebMath</b>，产出远更多的高质量数学 token 和更广的领域覆盖。</li><li>他们以 <b>DeepSeek-Coder</b> 为起点：从代码预训练的模型出发<b>显著帮助</b>了数学推理与工具使用；这种代码到数学的迁移在此首次被展示。</li><li>他们随后在筛选后的数学语料上做监督微调以构建能力——这与 RL 无法修复 base model 薄弱领域这一规律一致。</li></ul>",
+      "terms": ["DeepSeek-Math", "Minerva", "PaLM", "OpenWebMath", "Common Crawl", "DeepSeek-Coder", "代码到数学的迁移（code-to-math transfer）"]
+    },
+    {
+      "t": 2629,
+      "title": "GRPO：用组相对 advantage 去掉 critic",
+      "problem": "PPO 式的 RLHF/RLVR 需要保留旧策略、新策略、critic/value network 和一个 reward model，四份模型副本在 RL 扩展时成为内存瓶颈。",
+      "why": "reward model 本来就是基于比较训练的，因此单独学一个 critic 是多余的；而 critic 正是阻碍扩展到更大模型的那个昂贵部分。",
+      "how": "GRPO 去掉了 critic：对每个问题采样一组答案，用 reward model 打分，并用组归一化奖励 (r − mean)/std 作为 advantage，于是只剩三份模型副本。",
+      "detail": "<p>标准的 RLHF/RLVR 使用 <b>PPO</b>，需要保留多份模型副本：旧策略、新策略、一个 <b>critic</b>（value network）以及一个 reward model。在 7B 时四份副本尚可接受，但随着 RL 扩展会成为<b>内存瓶颈</b>。</p><p><b>GRPO</b> 去掉了 critic。对每个问题，它采样一组答案，用 reward model 打分，并把 advantage 定义为<b>组归一化奖励</b>，即 <code>(r − mean(r)) / std(r)</code>。由于 reward model 本就基于比较训练，学出来的 baseline 是多余的，于是只剩三份副本。</p><ul><li>结果：在 MATH 上 <b>46.8 → 51.7</b>；首个在无 critic 情况下跨过 50% 的开源 <b>7B</b> 模型。</li><li>对于单步、答案级的问题，各种 RL 变体的差异主要在于<b>数据来源</b>以及<b>梯度系数</b>的计算方式（此处是组基线估计量）。</li><li>对比：STaR 与 online-rejection fine-tuning 给出二值 0/1 奖励并丢弃失败样本；GRPO 保留所有样本，并在各自组内给予相对且经过整形的 advantage。</li></ul>",
+      "terms": ["PPO", "GRPO", "critic", "value network", "reward model", "组归一化 advantage（group-normalized advantage）", "online rejection fine-tuning"]
+    },
+    {
+      "t": 2787,
+      "title": "GRPO 的局限：奖励分布、KL，以及 majority@k 与 pass@k",
+      "problem": "当某个问题采样的所有答案都正确或都错误时，GRPO 不提供学习信号，梯度被浪费，困难问题也教不了任何东西。",
+      "why": "组归一化除以奖励的离散程度；如果所有奖励都是 0 或都是 1，advantage 就是零。RL 需要在批次中存在奖励分布才能爬山。",
+      "how": "诊断：KL divergence 项让模型贴近它已经解决的各类行为；reward model 可以产生超出 0/1 的分级分数；而 DeepSeek-Math 提升的是 majority@k（一致性），而非 pass@k（根本能力）。",
+      "detail": "<p>组基线也是 GRPO 的弱点。</p><ul><li>如果某个问题采样的所有答案都正确（太简单）或都错误（太难），奖励的离散程度为零，于是 <b>advantage 为零</b>，该组不贡献梯度。RL 需要的是<b>奖励分布</b>；全零或全一的批次不提供爬山信号。</li><li>一名学生指出 PPO/GRPO 中的 <b>KL divergence</b> 项能防止策略偏离它已经解决的各类行为——这解决了简单问题上的回退。讲者表示同意：KL 让模型贴近它本就能做的事。</li><li><b>Reward model 打分：</b> 除了二值奖励，reward model 会给每个答案一个分数，从而支持求平均和分级 advantage；没有它，你仍可用 0/1 作为代理。</li><li><b>关键诊断：</b> online RL 优于 STaR 式闭环，但在 DeepSeek-Math 上它提升的是 <b>majority@k</b>（一致性），而<b>不是 pass@k</b>——模型变得更可靠，而非从根本上更聪明。</li></ul>",
+      "terms": ["advantage", "奖励分布（reward distribution）", "KL divergence", "reward model", "majority@k", "pass@k", "一致性（consistency）"]
+    },
+    {
+      "t": 3187,
+      "title": "论文 3，DAPO：为什么朴素地扩展 GRPO 会失败",
+      "problem": "把 GRPO 朴素地扩展到更难的推理上，例如在公开的 Qwen 32B 模型上，在 AIME 上只得到约 30%，而且运行不稳定。",
+      "why": "Entropy 崩溃，策略变得过度自信；response length 爆炸式增长，直到 trace 被上下文上限截断；而 PPO 的对称裁剪恰好扼杀了你所需要的探索。",
+      "how": "DAPO 把 GRPO 未明确说明的 RL 实现细节显式化——裁剪形状、采样、loss 形状、长度控制——从而使闭环能在更长、更难的推理链上爬山而不崩溃。DeepSeek 早前的工作在 AIME 上达到 47%，因此上限更高。",
+      "detail": "<p>把 GRPO 朴素地扩展到更难的推理（例如公开的 <b>Qwen 32B</b>）在 AIME 上只得到约 <b>30%</b>，且不稳定。</p><ul><li><b>Entropy 崩溃</b>：策略变得过度自信，探索消亡，作为可探索程度代理的 entropy 下降。</li><li><b>训练不稳定</b>与<b>无法控制的 response length</b>：链不断增长直至被<b>截断</b>，而被截断的 trace 会把噪声注入梯度。</li><li><b>PPO 的裁剪是对称的</b>：它限制了低概率 token 能被抬升的幅度，从而扼杀探索。DAPO 使用<b>非对称裁剪</b>，允许更大的提升；图中显示准确率更高、entropy 更稳定（不崩溃）。</li><li><b>参照点：</b> DeepSeek 早前的工作在 AIME 上达到 <b>47%</b>，因此 30% 远未触及上限。</li><li>DAPO 的目标是把 PPO/GRPO 探索细节中的经验之谈变成<b>显式的配方</b>。</li></ul>",
+      "terms": ["DAPO", "Qwen 32B", "entropy 崩溃（entropy collapse）", "response length", "对称裁剪（symmetric clipping）", "非对称裁剪（asymmetric clipping）", "截断（truncation）"]
+    },
+    {
+      "t": 3322,
+      "title": "DAPO：用动态采样获得可用的奖励分布",
+      "problem": "在固定的组大小下，许多组全对或全错，因此其 advantage 为零，梯度被浪费——这正是此前指出的 GRPO 失败模式。",
+      "why": "你想要的是一批中大多数组都携带可用的奖励分布；通过过采样并丢弃退化组，可让有效批次保持富含信号。",
+      "how": "动态采样进行过采样，过滤掉奖励全为零或全为一的组，只保留在 0 与 N 之间具有中间分布的子集。这样可维持用于梯度传播的有效批次大小。",
+      "detail": "<p><b>动态采样</b>直接解决了奖励分布问题。</p><ul><li>在 GRPO 中你会采样固定大小的组（讲座以 <b>64</b> 为例）并取组基线。DAPO 则<b>过采样</b>。</li><li>然后它<b>过滤掉全对和全错的组</b>，只保留奖励在 0 与 N 之间具有真实分布的子集。</li><li>目标：你的 advantage 不应为零。如果奖励全对或全错，该组就被丢弃；只保留有信号的组。</li><li>这样可维持用于传播梯度的<b>有效批次大小</b>，因为梯度不是从退化组计算得来的。</li><li><b>问答：</b> 一名学生问 64 个样本是否偏少，并提到 AIME 题库有限。讲者说这个数字取决于基准与 base model，该设置只是论文所取得结果的一个示例。</li></ul>",
+      "terms": ["动态采样（dynamic sampling）", "过采样（oversampling）", "有效批次大小（effective batch size）", "奖励分布（reward distribution）", "组基线（group baseline）", "梯度信号（gradient signal）"]
+    },
+    {
+      "t": 3452,
+      "title": "DAPO：token 级损失与超长奖励整形",
+      "problem": "样本级损失会让一段冗长的垃圾答案与一段简短的好答案获得相同权重，而困难问题生成的推理链会触及上下文上限并被截断。",
+      "why": "随着模型改进，链会变长；截断注入噪声，而样本级平均会让失控的输出长度扭曲梯度并破坏 entropy 的稳定。",
+      "how": "DAPO 改用 token 级损失（使更短、更好的答案得到更合理的整形），并加入软性超长惩罚——一种渐进式长度惩罚而非硬性截断——从而稳定训练。替代方案包括在 RL 闭环中逐步增加上下文长度。",
+      "detail": "<p>围绕 response length 的两个相互关联的修正：</p><ul><li><b>样本级损失 vs token 级损失。</b> 使用样本级损失时，每个问题/答案序列贡献相同，因此一段很长的垃圾答案与一段简短的好答案权重相同。DAPO 使用 <b>token 级损失</b>，按长度对信号进行整形，并同时控制 <b>entropy</b> 与<b>平均 response length</b>。</li><li><b>超长/截断处理。</b> 在困难问题上链会在上下文上限处被<b>截断</b>；被截断的推理链会产生噪声。DAPO 在 token 上加入<b>渐进式（软性）惩罚</b>而非硬性截断，从而稳定训练。</li><li>其他论文中的替代做法：在 RL 闭环中逐步增加<b>上下文长度</b>，使 trace 能容纳下。</li><li>没有这些控制，response length 会不受控地增长，entropy 也会变得不稳定，因为模型学会了输出越来越长的链。</li></ul>",
+      "terms": ["token 级损失（token-level loss）", "样本级损失（sample-level loss）", "软性超长惩罚（soft overlong punishment）", "response length", "entropy", "上下文长度（context length）", "截断噪声（truncation noise）"]
+    },
+    {
+      "t": 3583,
+      "title": "DAPO 的消融阶梯与结果",
+      "problem": "DAPO 的哪些修正真正重要、各自贡献多少尚不清楚；消融实验在 AIME 基准上逐一分离它们。",
+      "why": "每个修正针对不同的失败：含噪声的截断样本、探索崩溃、长度失控、损失加权，以及退化的奖励组。它们合起来把成绩从 30% 提升得多得多。",
+      "how": "在 Qwen 32B 的 AIME 上：超长过滤 30 → 36；非对称裁剪 → 38；软性超长惩罚 → 41；token 级损失 → 42；动态采样 → 50，超过蒸馏到 Qwen 32B 的 DeepSeek-R1。",
+      "detail": "<p><b>AIME / Qwen 32B</b> 上的消融阶梯：</p><ul><li><b>超长过滤</b>去除被截断、含噪声的样本：<b>30 → 36</b>。</li><li><b>非对称裁剪</b>（在上侧裁剪得更高）保住探索并使 entropy 稳定：<b>→ 38</b>。</li><li><b>软性超长惩罚</b>，用渐进式长度惩罚代替硬性截断：<b>→ 41</b>。</li><li>用 <b>token 级损失</b>代替样本级损失，使一段冗长的垃圾答案不会与一段简短的好答案获得相同权重：<b>→ 42</b>。</li><li><b>动态采样</b>，过采样并丢弃全对/全错的组，使有效批次始终携带信号：<b>→ 50</b>。</li><li>最终的 <b>50</b> 超过了<b>蒸馏到 Qwen 32B</b> 的 DeepSeek-R1——DAPO 直接在 Qwen 32B 上爬山，而不是依赖从更强推理模型蒸馏。</li></ul>",
+      "terms": ["消融阶梯（ablation ladder）", "超长过滤（overlong filtering）", "非对称裁剪（asymmetric clipping）", "软性超长惩罚（soft overlong punishment）", "token 级损失（token-level loss）", "动态采样（dynamic sampling）", "DeepSeek-R1 蒸馏（DeepSeek-R1 distill）"]
+    },
+    {
+      "t": 3671,
+      "title": "DAPO 的经验、SFT 与 RL，以及三种方法的比较",
+      "problem": "仅凭 RL loss 不足以作为进展的代理：reward model 会饱和，response length 与 entropy 会失控，而且 RL 闭环中的优化比监督学习更难。",
+      "why": "奖励可能有噪声或饱和，探索可能崩溃，被截断或长度不匹配的样本会扭曲梯度，因此必须同时控制多个相互耦合的量。",
+      "how": "关注三个量：response length、entropy（既不过低也不过高），以及准确率为 1 的样本比例（决定你需要采样多少）。然后根据数据、base model、内存与推理链长度，在 STaR、GRPO 与 DAPO 之间选择。",
+      "detail": "<p>经验与方法选择：</p><ul><li>监控 <b>response length</b>（长度爆炸 ⇒ 控制损失）、<b>entropy</b>（让探索保持活跃但不要混乱），以及<b>完全正确的样本比例</b>（告诉你需要采样多少）。如果很多步之后仍无提升，<b>reward model 可能已饱和</b>。</li><li><b>SFT 与 RL：</b> 在有强奖励信号的领域，RL 用<b>更少的样本</b>就能爬山，但调参工作量很大。用大量高质量数据做 SFT 通常是更快提升原始性能的方式，但它本身不会提升推理 trace 的能力。</li><li><b>STaR：</b> 当你只有几百条推理示例且没有 RL 基础设施时很合适；像 GSM8K 这样的简单任务会在模型能力范围内获得适度提升。</li><li><b>GRPO：</b> 需要一个好的 base model 并用指令数据做 priming，但可在有限的 GPU/内存下工作，且已在标准数学推理上得到充分验证。</li><li><b>DAPO：</b> 当链很长（更难的问题）且你想要 state-of-the-art 时需要它；你必须控制损失、采样、裁剪与长度这些变量。</li></ul>",
+      "terms": ["奖励饱和（reward saturation）", "response length", "entropy", "正确率比例（accuracy fraction）", "SFT 与 RL（SFT vs RL）", "基础设施权衡（infrastructure trade-off）"]
+    },
+    {
+      "t": 3793,
+      "title": "真正提升的是什么，与根本能力之别",
+      "problem": "这些方法究竟让模型从根本上更聪明，还是仅仅更可靠，这非常重要；讲座主张是后者，并追问新能力从何而来。",
+      "why": "pass@k 衡量模型究竟能否解决一个新问题；majority@k 衡量它解决的频率，因此一致性的提升不等同于能力的提升。",
+      "how": "随着算力增加，这三种技术都能提升 majority@k、答案格式与多步连贯性——但都尚未提升根本能力、教会真正新的问题，或做跨领域泛化。还提到：当模型超出 reward model 时出现的 reward hacking，以及 ensemble verifier。",
+      "detail": "<p>对这三种技术可以期待什么：</p><ul><li>随着投入更多算力，三者都能提升 <b>majority@k</b>（纵轴）、<b>答案格式</b>与<b>多步连贯性</b>。</li><li><b>都尚未提升根本能力</b>：它们没有教会模型解决真正新的问题，也没有多少跨领域泛化。提升 <b>pass@k</b> 意味着提升解决新问题的根本能力，而这在历史上来自某个维度的突破或扩展。</li><li><b>Reward hacking：</b> 如果模型能力过强，奖励就会被钻空子；如果 reward model 缺乏信号，闭环就无法爬山。这个优化问题从根本上比监督学习更难——你依赖于模型的推理能力，以及一个 verifier 或 reward model。</li><li><b>验证供给</b>是瓶颈：代码有最终答案、执行反馈和单元测试；数学有答案。有多少领域能提供这类信号、verifier 的 ensemble 能否填补单个 verifier 的缺口、哪些验证信号足够好，这些仍是核心问题。</li></ul>",
+      "terms": ["majority@k", "pass@k", "根本能力（fundamental capability）", "reward hacking", "ensemble verifier（ensemble verifiers）", "执行反馈（execution feedback）", "验证供给（verification supply）"]
+    },
+    {
+      "t": 3996,
+      "title": "开放问题、研究方向与最后的问答",
+      "problem": "Train-time scaling 是一个活跃的研究领域，仍有未解决的问题：究竟什么在提升、所报告的推理行为是否真实，以及如何利用失败样本。",
+      "why": "这些方法教会的是可靠性而非新能力，推理 trace 可能是被统计性地放大而非涌现，失败样本被丢弃而非被学习利用，而奖励噪声与饱和限制了闭环。",
+      "how": "开放问题：为什么 majority@k 上升而 pass@k 不上升；回退/自我纠正是否真实；从失败中学习。方向：更好的数据生成、对奖励噪声鲁棒的 RL、奖励的选择，以及把 STaR 式 rationalization 与 DAPO 结合。最后的问答涉及 RL 在前沿算力中的占比与数据效率。",
+      "detail": "<p>被点出的开放问题：</p><ul><li><b>为什么 majority@k 上升而 pass@k 不上升</b>——这是核心且尚未解释的经验事实。</li><li><b>推理行为是真实的吗？</b> 回退与自我纠正会出现在 trace 中，但它们是涌现出来的，还是本就存在、只是变得在统计上更普遍？</li><li><b>从失败中学习</b>尚未解决；大多数技术把失败样本过滤掉了。</li><li><b>有前景的方向：</b> 沿<b>数据</b>方向（生成更好的训练数据）、沿<b>算法</b>方向（让 RL 对 reward model 噪声鲁棒、选择奖励），以及把 STaR 式 rationalization 与 DAPO 结合。</li></ul><p>最后的问答：一名学生问，前沿训练中仍有哪一比例是原始的 next-token prediction，哪一比例是推理数据。讲者引述公开数据称 RL 占比从大约 <b>99%/1% 的预训练/RL</b> 朝向约 5% 增长，而 <b>Grok 4</b> 声称约 50% 用于 RL，却没有相应的跃升——瓶颈在于奖励薄弱/有噪声。在有限的数据集（AIME、USM）上，RL <b>更节省数据</b>，正确的抽象不是&ldquo;数据是否足够多&rdquo;，而是&ldquo;数据是否足以用来<b>爬山</b>&rdquo;（例如在没有动态采样过滤的情况下）。ensemble verifier 有助于填补信号缺口。</p>",
+      "terms": ["开放问题（open problems）", "majority@k", "pass@k", "推理行为（reasoning behaviors）", "从失败中学习（learning from failures）", "Grok 4", "数据效率（data efficiency）", "爬山（hill-climb）"]
+    }
+  ]
+}

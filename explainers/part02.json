@@ -1,0 +1,223 @@
+{
+  "n": 2,
+  "title": "Test-Time Compute Scaling",
+  "summary": "The lecture treats inference as a first-class scaling axis. It starts from the Large Language Monkeys paradigm — repeated sampling plus an automated verifier, which lets weak open models beat frontier proprietary ones — and derives an inference scaling law in which coverage follows a power law in the number of samples, valid only when the task distribution has a long tail of hard problems. It then isolates the generation-verification gap: majority voting and reward-model selectors plateau far below oracle coverage, and the gap widens on harder data. After a survey of verification mechanisms (formal proofs, unit tests, compilers) and class discussion of open directions, it covers the Scaling Test-Time Compute Optimally paper — parallel sampling vs sequential revisions, ORMs vs PRMs, PRM-guided beam search, and difficulty-binned allocation. It closes with Archon/ITAS, which searches over compositions of models and prompt-based inference operators (generation, fusion, critic, ranker, verifier, unit tests) to maximize pass@1 under an inference-call budget, matching closed frontier models with open-source ones by an average of +14.1%.",
+  "sections": [
+    {
+      "t": 5,
+      "title": "Three Stages of LLM Development and the Inference Axis",
+      "problem": "Historically a model's capability is frozen once pre-training ends: inference is a single low-compute round-trip between query and model, so the only route to a smarter system is another very expensive training run.",
+      "why": "Capability is baked into the parameters, and the old serving regime spent almost nothing per call, so there was no per-query lever that could trade compute for accuracy.",
+      "how": "Treat inference (test-time) compute as a first-class scaling axis: spend more compute at generation time to make the same frozen model more useful, without changing parameters and without any fine-tuning.",
+      "detail": "<p>The lecture frames LLM development as <b>three stages</b>: <b>pre-training</b> (historically months of many GPUs over trillions of data tokens — the dominant cost), <b>fine-tuning</b> (orders of magnitude less data than pre-training), and <b>inference</b>, where the model is actually used.</p><ul><li>Old regime: a near-zero-cost, single back-and-forth between user query and model; almost nothing spent per call.</li><li>New regime: allocate substantial per-query compute and convert it into higher answer quality, and this compute can run <b>offline</b>.</li><li>Hard constraint: the parameters stay fixed — no weight updates, no fine-tuning — only the procedure wrapped around the frozen model changes.</li><li>Why it matters: this is an axis orthogonal to parameters and data, and unlike pre-training it is available to anyone with API access rather than only labs that can afford a frontier run.</li></ul>",
+      "terms": ["pre-training", "fine-tuning", "inference", "test-time compute"]
+    },
+    {
+      "t": 72,
+      "title": "Large Language Monkeys: Repeated Sampling Plus a Verifier",
+      "problem": "One-shot generation badly under-reports model ability: on hard math, coding, and question answering, smaller open models look far behind frontier proprietary models.",
+      "why": "Generation is stochastic and high-variance — a correct trajectory is just one draw among many — so a single attempt exposes only one sample of the model's distribution and hides answers the model can actually produce.",
+      "how": "Repeatedly sample the same input (10, 100, up to 1000+ times) and apply a verifier to pick a correct candidate, converting latent, rare success into system-level accuracy.",
+      "detail": "<p>Invoking the <b>infinite monkey theorem</b>, the <b>Large Language Monkeys</b> paradigm samples the same problem many times and uses a <b>verifier</b> to select a correct response. The speaker's framing is that the models already know the answers to these hard problems and repeated sampling merely <b>elicits and surfaces</b> them — they just do not reveal the answer on the first trial.</p><ul><li>Result: <b>Llama 3 8B/70B</b>, clearly inferior to <b>GPT-4o</b> at a single attempt, can become better than GPT-4o and other larger proprietary models after enough samples.</li><li>The effect is demonstrated across hard math, coding, and question-answering problems.</li><li>Mechanism: sample k candidates, let the verifier identify which one is correct, and return that as the system output.</li><li>Failure mode: everything hinges on having an automated verifier; without one there is no way to know which candidate is correct.</li></ul>",
+      "terms": ["Large Language Monkeys", "repeated sampling", "verifier", "elicitation", "pass@k"]
+    },
+    {
+      "t": 196,
+      "title": "Cross-Domain Coverage and Automated Selection (SWE-bench)",
+      "problem": "It is unclear whether repeated sampling generalizes beyond math, and whether the generate-then-select loop can be fully automated end to end.",
+      "why": "If the paradigm only helps on benchmarks with hand-built answer extraction, it is not a general capability lever; the interesting case is when selection is also automated.",
+      "how": "Plot coverage — the fraction of problems solved by at least one of k samples — against the number of samples from 1 to 1000, across domains including agentic software-engineering benchmarks.",
+      "detail": "<p>The paradigm is reported to work across essentially any domain tried, including agentic benchmarks such as <b>SWE-bench</b>, which mimics how a software engineer edits code and creates new patches.</p><ul><li>The x-axis is the number of samples (1 to 1000); the y-axis is <b>coverage</b>, the fraction of problems solved by at least one sample.</li><li>Concrete result: <b>DeepSeek V3</b> outperforms <b>Claude 3.5</b> and <b>o1-preview</b> after ~1000 samples on coding and software-engineering problems.</li><li>The key enabler is that coding problems come with <b>unit tests</b>: if the tests can select which sample is correct, the entire pipeline is automated.</li><li>Consequence: a cheap open-source model can be turned into a more capable system without any weight changes — an end-to-end automated way to create a stronger model out of a weaker one.</li></ul>",
+      "terms": ["coverage", "SWE-bench", "DeepSeek V3", "unit tests", "agentic benchmarks"]
+    },
+    {
+      "t": 283,
+      "title": "An Inference Scaling Law: Coverage vs Number of Samples",
+      "problem": "Pre-training has scaling laws that predictably map data, compute, and parameters to test loss, but there was no analogous predictive theory for how test-time compute buys accuracy.",
+      "why": "Without a quantitative relationship between samples drawn and problems solved, you cannot forecast how many samples a target coverage requires or how to budget inference resources.",
+      "how": "Define an inference/test-time scaling law: coverage as a function of the number of parallel samples follows an exponential power law, with coefficients fitted from the model's observed scaling behavior.",
+      "detail": "<p>The lecture reuses the pre-training scaling-law template — equations that may change with setup but give a predictable path from data/compute/parameters to test loss — and instantiates it for inference. Here the relationship is between <b>coverage</b> and the number of samples <b>k</b> drawn in parallel, and it follows an <b>exponential power law</b> with fitted coefficients (call them <code>A</code> and <code>B</code>).</p><ul><li>Validated across a range of models and parameter sizes — <b>Llama 3 8B/70B, Gemma, Pythia</b> — from <b>70M up to 70B parameters</b>, and across domains.</li><li>The predicted curve closely tracks measured coverage, so you can predict how many samples are needed to hit a target coverage and how much compute to allocate.</li><li>Surprising detail: even a <b>70M-parameter</b> model exhibits the same scaling behavior, not only large models.</li><li>Trade-off: the law describes potential (coverage) rather than realized accuracy of a deployable selector, whose quality is the separate bottleneck discussed next.</li></ul>",
+      "terms": ["inference scaling law", "coverage", "power law", "Llama 3", "Gemma", "Pythia"]
+    },
+    {
+      "t": 453,
+      "title": "Why a Power Law: Per-Problem pass@k and the Long-Tail Condition",
+      "problem": "The aggregate power law is counter-intuitive: for one problem pass@k grows exponentially and saturates, yet across a suite of problems the equation changes and a power law emerges.",
+      "why": "Aggregating per-problem exponentials with differing pass@1 does not trivially produce a clean power law; a specific distribution of per-problem difficulty is required.",
+      "how": "Derive pass@k = 1 - (1 - P)^k for a single problem, then identify the necessary and sufficient dataset-level condition — a long tail of hard problems — that yields the observed scaling.",
+      "detail": "<p>For a single problem with probability P of a correct response, the probability that <i>at least one</i> of k answers is correct is <code>1 - (1 - P)^k</code>: <code>(1 - P)</code> is the probability that all k are wrong, and one minus that is the probability that at least one is right.</p><ul><li>This per-problem curve is exponential and saturating, but across a suite of problems the individual equations differ, so the <b>aggregate</b> curve is a different object.</li><li>The paper asks what dataset-level property justifies the exponential/power-law scaling, and the answer is a <b>sufficient-and-necessary condition</b>: a <b>long tail of hard problems</b>.</li><li>Formally, the pass@1 distribution over problems must have a heavy tail of low but nonzero success probabilities for the aggregate power law to appear.</li><li>Trade-off: this makes the scaling law a property of the task distribution, not the model alone — the same model gives different curves on different datasets.</li></ul>",
+      "terms": ["pass@k", "pass@1", "long tail of hard problems", "power law", "coverage"]
+    },
+    {
+      "t": 525,
+      "title": "Empirical Evidence for the Long Tail",
+      "problem": "The long-tail condition is a mathematical requirement; it must be checked against real datasets, otherwise the scaling law is vacuous.",
+      "why": "If benchmark problems were uniformly difficult or uniformly easy, the aggregation would not produce the reported power-law behavior.",
+      "how": "Count how many problems are solved at pass@1 and at increasing sample counts, and inspect the distribution of per-problem pass@1 across a corpus.",
+      "detail": "<p>Empirically, the condition holds. Looking at the count of problems solved at pass@1 versus more and more samples, the picture is consistent across the tasks tried:</p><ul><li>A large portion of problems are <b>simple and solved in a single attempt</b>.</li><li>As complexity rises, pass@1 falls monotonically, leaving a long tail of problems that are rarely solved.</li><li>The resulting curve — high at simple problems, low and tapering at the hardest ones — is exactly the shape required to justify the observed power-law scaling.</li><li>This tail is also where repeated sampling pays off: those low-pass@1 problems are the ones where a correct answer appears only once or twice among thousands of samples.</li><li>Connection to later material: because the correct answers in the tail are so rare, any frequency-based selector cannot capture them, which motivates the generation-verification gap.</li></ul>",
+      "terms": ["pass@1 distribution", "long tail", "coverage", "difficulty"]
+    },
+    {
+      "t": 684,
+      "title": "Reallocating Compute from Pre-training to Inference",
+      "problem": "The historical spend profile — hundreds of millions to billions on pre-training, much less on fine-tuning, and almost nothing per inference call — was dictated by a paradigm where capability came only from training.",
+      "why": "Pre-training is a one-time capital expense baked into weights, while earlier serving treated inference as a cheap single round-trip, so there was no operational reason to spend there.",
+      "how": "Shift budget toward inference: spend heavily at test time, and crucially run that compute offline by releasing agents that keep generating tokens and improving answers.",
+      "detail": "<p>The speaker reframes the economics. Previously companies spent hundreds of millions to billions on <b>pre-training</b> alone, much less on fine-tuning, and almost nothing per inference call because each call was a one-time back-and-forth between query and model. The new paradigm lets you spend far more compute on inference and convert it into capability.</p><ul><li>Inference compute can be <b>offline</b>: you can release agents to go solve a problem and keep generating tokens, improving the quality of the answer they produce.</li><li>Because sampling parallelizes, the budget becomes a per-problem allocation decision rather than a fixed per-call cost.</li><li>Concrete tension the speaker raises: pre-training is paid <b>once</b>, but test-time scaling is paid <b>every time the model runs</b>, so any comparison is not one-to-one.</li><li>Strategic implication: this raises the question of whether pre-training is 'done', since a fixed model plus more samples can serve many tasks.</li></ul>",
+      "terms": ["inference compute", "offline inference", "pre-training cost", "token budget"]
+    },
+    {
+      "t": 739,
+      "title": "The Need for Automated Verification: Proofs and Unit Tests",
+      "problem": "Repeated sampling produces many candidates but no ground truth; without a selector there is no way to know which sample is correct, so the whole method collapses.",
+      "why": "For most open-ended outputs correctness is hard to check directly; the loop only closes when a cheap, reliable, automated checker exists that can adjudicate candidate answers.",
+      "how": "Exploit domains where verification is much easier than generation: run formal proof checkers on math and execute unit tests on code, using them as the verifier in the generate-select loop.",
+      "detail": "<p>The lecture surveys domains with a cheap ground-truth check.</p><ul><li><b>Math</b>: for certain problem types you can use <b>formal proofs</b> — given a proof strategy, run it through formal-proof software that checks whether each step is correct.</li><li><b>Coding</b>: <b>unit tests</b>. The crucial asymmetry is that writing a unit test is arguably a much simpler task than writing the entire program that solves the problem, so tests can be written by humans and used as the verifier.</li><li>Automated verification is the precondition for the entire repeated-sampling pipeline; without it there is simply no answer to 'which one is correct?'.</li><li>Quality caveat: the verifier is only as good as its coverage. Unit tests that do not truly cover the code are an explicit failure mode, and even manual correctness checks (the speaker cites a high but not perfect rate on math) leave room for error.</li></ul>",
+      "terms": ["automated verification", "formal proofs", "unit tests", "verifier"]
+    },
+    {
+      "t": 809,
+      "title": "AI as a Compiler: CUDA Generation and Behavioral Equivalence",
+      "problem": "Verification is easy for math and coding, but there is a broader class of tasks where the correct output is expensive to define yet cheap to compare against a reference.",
+      "why": "When a task is a translation between languages, correctness reduces to behavioral equivalence — matching outputs on the same inputs — which is a perfect default verifier.",
+      "how": "Have an LLM generate low-level code (CUDA) from source code (PyTorch), then verify by comparing the two implementations' outputs for any given input; benchmark with KernelBench.",
+      "detail": "<p>This is one of the lab projects the speaker is most excited about. An LLM generates compiler-like low-level code such as <b>CUDA</b> for a source program such as <b>PyTorch</b>, and the reason it is verifiable is that you can always run both and compare outputs for any input.</p><ul><li><b>CUDA</b> is the lower-level, hardware-aware language used for optimized GPU code; the generated kernel must reproduce the reference semantics.</li><li>Benchmark: <b>KernelBench</b>, a dataset/benchmark for CUDA generation, shows the same coverage curve improving with the number of samples.</li><li>Because outputs are compared directly, there is effectively a <b>perfect verifier by default</b>, so no learned reward model is needed.</li><li>Generalization: the same idea covers any translation between two languages (e.g., porting Python or C++ to Java and back), where equivalence can be measured much more easily than the code can be written.</li><li>Trade-off: this only applies to semantics-preserving translation tasks, not open-ended generation.</li></ul>",
+      "terms": ["AI as a compiler", "CUDA", "PyTorch", "KernelBench", "behavioral equivalence"]
+    },
+    {
+      "t": 935,
+      "title": "The Generation-Verification Gap",
+      "problem": "Many domains have no verifier, and there the best practical selectors — majority voting and model-based reward-model rankers — fall far short of the model's true coverage.",
+      "why": "On the hardest problems the correct answer appears only once, twice, or three times across thousands of samples, so any frequency-based or weak-scoring selector cannot surface it; generation is strong but verification is the bottleneck.",
+      "how": "Name and quantify the mismatch as the generation-verification gap — the distance between what practical selectors achieve and oracle coverage — and make shrinking it the research target.",
+      "detail": "<p>The lecture compares <b>majority voting</b> (pick the most frequent generated answer), a <b>reward-model</b> ranker (an LLM trained to score response quality, possibly combined with majority voting), and an oracle/perfect selector representing true coverage.</p><ul><li>Majority voting <b>plateaus after roughly 10-50 samples</b> and sits far below the oracle line; even LLM-based reward models leave a large gap.</li><li>The gap is <b>more pronounced on harder datasets</b>: MATH is harder and more complex than GSM8K, and the divergence is larger there.</li><li>Root cause: rare successes. Correct responses to the hardest problems may appear only once, twice, or three times across a thousand or ten thousand samples, so majority voting structurally cannot capture them.</li><li>On simpler data such as GSM8K, many answers are easy to generate and majority voting works for many problems — but even there the hardest items have low correct-answer frequency.</li><li>Implication: the model can generate good answers it cannot identify, so verification, not generation, is the limiting factor.</li></ul>",
+      "terms": ["generation-verification gap", "majority voting", "reward model", "oracle selector", "best-of-n", "MATH", "GSM8K"]
+    },
+    {
+      "t": 1163,
+      "title": "Class Discussion I: Verifier Quality and Hybrid RAG Off-Ramps",
+      "problem": "Having established repeated sampling and the generation-verification gap, the class probes what actually generalizes and where the open problems are.",
+      "why": "The practical value of test-time scaling is bounded by verifier quality and by whether cheaper selection signals exist in domains without clean checkers.",
+      "how": "Students consolidate takeaways — sample many answers, and make verifier quality the priority — and propose a knowledge-graph/RAG hybrid that falls back to retrieval when inference-time confidence is low.",
+      "detail": "<p>The first student takeaway is that sampling many answers helps, and that with a good verifier the gain is large; the second is that <b>the quality of the verifier is what really matters</b> for this approach.</p><ul><li>A student proposes a hybrid: build a <b>knowledge graph</b> plus an advanced retrieval-augmented generation (RAG) method, and decide between retrieval and model generation based on the accuracy/confidence of the inference-time score.</li><li>Motivation: reduce reliance on expensive sampling and increase answer <b>speed</b> while maintaining accuracy — use knowledge when it is reliable and fall back to generation/RAG when accuracy must be raised.</li><li>The professor confirms the direction (RAG helping the efficiency/time dimension) and notes the goal is to reduce the dependency on test-time compute to increase accuracy.</li><li>This sets up later suggestions that self-study, partial verifiers, and verifier ensembles can improve the pass@k-vs-k trend beyond raw repeated sampling.</li></ul>",
+      "terms": ["verifier quality", "RAG", "knowledge graph", "hybrid retrieval"]
+    },
+    {
+      "t": 1416,
+      "title": "Class Discussion II: Self-Study, Partial Verifiers, Ensembles, Coverage",
+      "problem": "Naive repeated sampling wastes budget and fails on hard problems, and in some domains verification is only partial — you can detect wrongness more easily than correctness.",
+      "why": "Pre-exploration may improve the sampling distribution; partial signals (reject-wrong) enable evolutionary search; and a single verifier is fragile, so ensembling helps but costs compute.",
+      "how": "Propose self-study/exploration before sampling, wrongness filters plus simulation/tool verifiers, weak-supervision verifier ensembles, and careful validation of what 'coverage' really means.",
+      "detail": "<p>Discussion points, in order:</p><ul><li>A <b>self-study</b> phase — let the model explore a domain and consolidate insights before sampling solutions — could produce better pass@k trends, and the professor confirms later material covers self-study search and tool use.</li><li>In hard domains it can be easy to detect that an answer is <b>wrong</b> even when confirming correctness is expensive; use that to <b>project out bad answers</b> and drive an evolutionary loop.</li><li>For physics/dynamics/robotics, a <b>simulation</b> or another model can filter incorrect answers, though simulation verifiers are not fully accurate.</li><li>On <b>ensembling verifiers</b>: the lab has weakly supervised ensembling work; ~10-20 verifiers is feasible (not 1000) but is compute-costly. The dataset of <b>10,000 samples per problem</b> is on Hugging Face.</li><li>On coverage validity for engineering tasks: manually checking math answers gave a high but imperfect rate (~78%), and unit tests without true code coverage are a failure mode.</li><li>Closing intuition: generate solutions as a <b>tree</b> and verify each node.</li></ul>",
+      "terms": ["self-study", "partial verifier", "weak supervision", "verifier ensemble", "simulation", "Hugging Face"]
+    },
+    {
+      "t": 1612,
+      "title": "Parallel Sampling vs Sequential Revisions",
+      "problem": "Repeated sampling is only one axis of test-time scaling; it is unclear how to spend compute between independent samples and iterative refinement.",
+      "why": "Parallel sampling explores diverse one-shot trajectories, while sequential revision deepens a single trajectory from different angles — they exploit different failure modes.",
+      "how": "Read Scaling LLM Test-Time Compute Optimally and separate parallel sampling from sequential revisions, which can be induced by prompting or are internalized by reasoning models.",
+      "detail": "<p>The paper <b>Scaling LLM Test-Time Compute Optimally Can Be More Effective Than Scaling Model Parameters</b> frames two ways to generate or improve answers with test-time compute.</p><ul><li><b>Parallel sampling</b>: generate multiple independent answers to the same input question.</li><li><b>Sequential revisions</b>: the model produces one initial approach, then keeps revising, looking at the problem from different angles and adding to its solution until it is confident enough to emit a final answer.</li><li>In this lecture the revision behavior is assumed to come from <b>our own prompting</b>, but the speaker notes that reasoning models are now trained so that they exhibit this revision behavior internally in their own answers.</li><li>Trade-off: parallelism buys diversity per token budget; sequential revision buys depth and self-correction per token budget — the optimal mix is the subject of the following experiments.</li></ul>",
+      "terms": ["parallel sampling", "sequential revisions", "reasoning models", "test-time scaling"]
+    },
+    {
+      "t": 1716,
+      "title": "Selection Models: ORMs, PRMs, and PRM-Guided Beam Search",
+      "problem": "Improving the quality of generated answers is not enough — you must also decide how to select among them, and different scoring models match different search structures.",
+      "why": "An outcome score gives no mid-solution signal, while a process score can prune partial reasoning; the granularity and supervision of the scorer determine what search is possible.",
+      "how": "Compare outcome reward models (score the final answer) and process reward models (score each step), and use a PRM to guide a beam search over the reasoning tree.",
+      "detail": "<p>Two scoring families drive inference-time selection:</p><ul><li><b>Outcome reward models (ORMs)</b> look only at the final answer and produce a score; their accuracy/quality can be limited, especially on new domains.</li><li><b>Process reward models (PRMs)</b> assign a score per <b>step</b> of the generated solution (e.g., a five-step math solution), typically a value between 0 and 1 given the question, the step, or both. They are generally fine-tuned language models, work best in-domain, but exhibit some cross-task generalization.</li><li>Granularity: PRM scoring is <b>not per token</b> — a step is an 'intellectually meaningful chunk' or a sentence, and training typically uses human yes/no annotations of each step.</li><li><b>Best-of-n with a verifier</b>: generate n samples and take the highest ORM score.</li><li><b>PRM-guided beam search</b>: with a per-level budget of four samples, keep the top two by PRM score, resample and expand from them, optionally with a threshold — a tree search whose expansion is guided by step scores.</li><li>Availability: many <b>off-the-shelf PRMs</b> can be used or you can train your own PRM/ORM on your own data.</li></ul>",
+      "terms": ["outcome reward model", "process reward model", "best-of-n", "PRM-guided beam search", "step-level annotation"]
+    },
+    {
+      "t": 2079,
+      "title": "Compute-Optimal Allocation: MATH Difficulty Bins and Mixing Axes",
+      "problem": "It is unclear whether test-time compute should be spent on parallel exploration or sequential refinement, and how to combine the two to minimize budget for a target accuracy.",
+      "why": "Problem difficulty changes the structure of the search: easy problems admit many paths to the answer, while hard problems have few viable paths and differ in how much exploration versus depth is required.",
+      "how": "Define difficulty from per-problem pass@1, bucket MATH problems into five bins, sweep generation budgets, and compare majority voting, ORM, PRM, and optimized mixtures while tracking the sequential-to-parallel token ratio.",
+      "detail": "<p>The experiment uses the <b>MATH</b> dataset (~<b>12k train</b>, <b>500 test</b> questions) with a <b>PaLM</b> model. Difficulty is defined from observed <b>pass@1</b> over many samples, producing <b>five complexity bins</b> (bin 5 = hardest, lowest accuracy).</p><ul><li>For each bin they sweep the generation budget and compare <b>majority voting</b>, <b>ORM</b>, <b>PRM</b>, and an optimized mix; the optimized region is still open research.</li><li>On the sequential-to-parallel ratio: for <b>easier</b> problems a high <b>sequential</b> share (many more revision tokens than parallel branches) reaches the best accuracy.</li><li>As problems become <b>harder</b> the optimum shifts, and it changes again between bucket four and bucket five, so the optimal allocation is difficulty-dependent and not universally settled.</li><li>Goal: for every target accuracy, use the <b>minimum generation budget</b>; combining best-of-n with sequential revisions supervised by an ORM/PRM beats either axis alone.</li></ul>",
+      "terms": ["MATH", "difficulty bins", "pass@1", "sequential-to-parallel ratio", "PaLM", "compute-optimal"]
+    },
+    {
+      "t": 2283,
+      "title": "Test-Time Compute vs Pre-training: Which Budget Wins",
+      "problem": "Are we done pre-training, or does more pre-training still matter, given that inference compute can be scaled too?",
+      "why": "The two budgets have different cost structures — pre-training is a one-time capital expense, test-time scaling is paid on every run — so the right trade depends on problem difficulty and who is paying.",
+      "how": "Compare the ratio of inference tokens to pre-training tokens by difficulty and observe where each strategy dominates.",
+      "detail": "<p>For <b>easy and medium</b> questions, additional test-time compute is reported to be more favorable than scaling pre-training of the model; the inference-to-pre-training token ratio is positive there.</p><ul><li>For the <b>hardest</b> problems, larger and more heavily pre-trained <b>frontier models still do better</b> even with a reasonably large (essentially unbounded) test-time budget.</li><li>The speaker stresses this is not a one-to-one comparison and is still work in progress, but it holds across much of the lab's research.</li><li>Structural asymmetry: <b>pre-training is done once</b>, while <b>test-time scaling happens every time we run the model</b>.</li><li>Important practical caveat: not everyone can pre-train a large model, so even if pre-training were strictly better per token, test-time scaling on smaller/open models is often the only feasible route; frontier models must presumably continue pre-training for the very hardest problems.</li><li>A small model can be fine-tuned into an expert on a narrow question set, but the comparison here is about general recipes on general data, not task-specific specialization.</li></ul>",
+      "terms": ["pre-training vs inference", "frontier models", "token ratio", "test-time budget"]
+    },
+    {
+      "t": 2545,
+      "title": "Class Discussion III: Tree Search, Mixing, and Easy-vs-Hard Intuition",
+      "problem": "Given parallel and sequential axes plus verification, what is the right general strategy — and is there a universal answer?",
+      "why": "The correct allocation depends on the branching structure of the problem, and no single recipe dominates across difficulty levels.",
+      "how": "Discuss tree search as a mix of both axes with verification-based pruning, and reason about how the number of viable solution paths varies with difficulty.",
+      "detail": "<p>There is no universal answer; the general sentiment is that <b>combining</b> the two axes does better than either alone.</p><ul><li><b>Tree search</b> mixes the two: you reuse partial reasoning (a tree) rather than throwing away entire samples, and prune confusing or violating branches.</li><li>Connection to the earlier beam search: bring in a <b>PRM</b> to cut the tree at each level and explore only the more promising branches.</li><li>A student's intuition: bigger/easier problems have many <b>paths</b> to success, so a chain-of-thought style approach with verification at each step suffices, pruning branches as they violate constraints; harder problems have few viable paths, so you need many <b>parallel</b> samples to find at least one viable solution.</li><li>The professor agrees this is an intuitive way to think about it, and frames the whole problem as knobs: how to allocate generated tokens and how to elicit generations from the model.</li></ul>",
+      "terms": ["tree search", "pruning", "branching", "PRM", "parallel vs sequential"]
+    },
+    {
+      "t": 2747,
+      "title": "Archon and ITAS: Inference-Time Architecture Search",
+      "problem": "There are many inference-time operators and models, but no principled way to choose which to use, how to sequence them, or how to allocate an inference-call budget to maximize accuracy.",
+      "why": "Hand-designing a test-time pipeline is combinatorial and wasteful, and naive parallel sampling or single-model selection leaves accuracy and budget on the table.",
+      "how": "Reframe inference scaling as an architecture design problem: input benchmarks, a budget, available LLMs, and a library of inference techniques; output a composed architecture found by the optimizer ITAS.",
+      "detail": "<p><b>Archon</b> is an architecture research framework for inference-time scaling (the TA is a co-author). The paper's framing is to treat inference scaling as an <b>inference architecture design</b> problem.</p><ul><li>Inputs: a set of target benchmarks; an inference-call <b>budget</b>; a set of <b>available LLMs</b> (models can be mixed and matched); and a set of inference-time techniques.</li><li><b>ITAS</b> (inference time architecture search) is the optimizer that decides how to compose the models and techniques — parallel, sequential, and otherwise.</li><li>Output: an architecture that mixes and matches techniques and models to maximize answer quality under the budget; the objective is to hit high quality without wasting tokens and generations.</li><li>Trade-off: the search itself is compute-expensive because it requires many inference calls, so the space is pruned (see later slides).</li></ul>",
+      "terms": ["Archon", "ITAS", "inference time architecture search", "inference budget", "test-time techniques"]
+    },
+    {
+      "t": 2887,
+      "title": "Archon Operators I: Generation and Fusion",
+      "problem": "What are the composable building blocks of an inference architecture, and which ones actually move accuracy?",
+      "why": "The search space is defined by its operators; if the operators are weak or too few, the optimizer cannot do better than manual sampling.",
+      "how": "Define generation (n samples) and fusion (an LLM synthesizes one answer from k responses), both implemented via prompting with no task-specific training.",
+      "detail": "<p>Archon's operators are all <b>prompting-based</b> — the model is not trained for a specific test-time-scaling task; it is simply instructed in the prompt.</p><ul><li><b>Generation (gen)</b>: sample from the model, optionally n generations at a time, producing n different responses to the input question — the basis of repeated sampling.</li><li><b>Fusion</b>: given k different responses, show all of them plus the input question to an LLM and ask it to <b>synthesize one output response</b> that is aware of all the ways the question was answered.</li><li>Fusion is surprisingly effective and is categorized as a <b>sequential update</b> over parallel samples: parallel samples are fused into a single answer.</li><li>Trade-off: fusion trades token budget for a chance to exceed any individual candidate, including beating an oracle selector (shown later).</li></ul>",
+      "terms": ["generation", "fusion", "synthesis", "prompting-based"]
+    },
+    {
+      "t": 2993,
+      "title": "Archon Operators II: Critic, Ranker, Verifier",
+      "problem": "Selection and refinement operators beyond raw generation are needed to exploit the candidates that sampling produces.",
+      "why": "A critic exposes failure modes of a response, a ranker orders candidates globally, and a verifier produces a score with justification — each provides a different signal for the search.",
+      "how": "Add prompt-based critic, ranker, and verifier operators to the search space, all usable without fine-tuning.",
+      "detail": "<p>The remaining core operators are again implemented purely by prompting:</p><ul><li><b>Critic</b>: for any given response, ask a model to describe its <b>weaknesses and strengths</b>; this critique can be an inference-time scaling action in its own right or feed later stages.</li><li><b>Ranker</b>: ask the model to <b>rank</b> the generated responses from a previous step by quality; the top-ranked response can be selected directly.</li><li><b>Verifier</b>: returns a response together with the <b>reasoning</b> for why it came to a particular score for an answer.</li><li>All are prompt-based optimization — the framework has not trained the model for these specific test-time-scaling tasks.</li><li>Unit-test generation and evaluation are the next two operators, covered on the following slides, and are especially relevant for code and math.</li></ul>",
+      "terms": ["critic", "ranker", "verifier", "prompt-based optimization"]
+    },
+    {
+      "t": 3063,
+      "title": "Fusion Beats Oracle Selection; Model Ensembling Confirms the Trend",
+      "problem": "Do these techniques actually help, and how large is the gain relative to an unattainable perfect selector?",
+      "why": "Fusion can repair and combine correct fragments across candidates, so it can outperform even an oracle that merely picks one candidate, which reframes where the headroom lies.",
+      "how": "Measure win rate on a reasoning benchmark across random selection, model ranking, oracle selection, fusion, and filtered fusion; then repeat with 1, 2, and 10 models each contributing one answer.",
+      "detail": "<p>On a reasoning benchmark (a reasoning/QA task), the win-rate comparison shows a clean ordering:</p><ul><li><b>Orange — random selection</b>: the worst case, randomly pick one generated response.</li><li><b>Green — model ranker</b>: ask the model to rank responses and take the top one; already beats random.</li><li><b>Blue — oracle selection</b>: assume an oracle verifier that identifies the single best generated response; better than the model ranker but still restricted to choosing one candidate.</li><li><b>Red — fusion</b>: show all k responses and ask the model to synthesize one answer; this can <b>exceed oracle selection</b>, showing that generation of a new fused answer is more powerful than selection.</li><li><b>Purple — filtered fusion</b>: first select the top five responses, then fuse them; filtering before fusing beats fusing everything.</li><li>Right-hand experiment: instead of one model, use 1, 2, or 10 different models each producing one answer; the same ordering persists (random gets worse because the ensemble includes weaker models), and the ensemble is built by adding the best model first, then second best, and so on.</li></ul>",
+      "terms": ["win rate", "oracle selection", "fusion", "filtered fusion", "model ensemble"]
+    },
+    {
+      "t": 3301,
+      "title": "Unit Test Generation and Unit Test Evaluation",
+      "problem": "For coding and math, verification should be automated, but running executable tests is not always available or convenient inside an inference architecture.",
+      "why": "Tests can be generated by the model itself, and even evaluating an answer against a test can be delegated to the model, giving a scalable selection signal.",
+      "how": "Have the model generate unit tests, then either run them or ask the model to evaluate a candidate answer against the test; use these as operators in the architecture.",
+      "detail": "<p><b>Unit test generation</b>: ask the model to produce unit tests for a coding task, a math optimization problem, or another reasoning task.</p><ul><li>Example prompt: check for <b>balanced round brackets</b> in an input string. A good generated test is 'given a string with an odd number of brackets, the solution should output no'. Another is 'when a closing bracket is encountered, it must match the most recently opened unmatched bracket'.</li><li>The model can also generate the <b>code</b> to run these tests.</li><li><b>Unit test evaluation</b> is the crazier variant: instead of running the test, ask the model to evaluate a generated answer <b>against</b> the unit test, delegating execution semantics to the model.</li><li>Trade-off: this removes the need for an execution sandbox but introduces the model's own judgment as a source of verification error.</li><li>These operators feed the optimized architectures shown next: generate a large number of samples, generate unit tests, and evaluate candidates.</li></ul>",
+      "terms": ["unit test generation", "unit test evaluation", "balanced brackets", "automatic verification"]
+    },
+    {
+      "t": 3511,
+      "title": "Depth Helps; Bayesian Optimization Over a Constrained Search Space",
+      "problem": "The space of possible architectures is huge, and searching it naively is prohibitively expensive.",
+      "why": "Layered pipelines behave like deep networks — more stages keep improving accuracy — but exhaustive or random search over orderings is intractable.",
+      "how": "Stack layers of inference operators and use Bayesian optimization over a pruned search space with hard structural constraints, optimizing accuracy under a call budget.",
+      "detail": "<p>A key empirical property: <b>stacking more layers</b> of inference-time techniques — making the architecture deeper — helps accuracy. The rightmost architecture (an <b>ensemble</b> of models plus three layers of critique and fusers and a final fuser layer) is significantly better across tasks than using only the best model once, or the best model eight times with one fusion layer. The analogy is adding layers in deep learning: careful additional inference layers make the model more accurate.</p><ul><li>The optimizer is a <b>Bayesian optimizer</b> (widely available in open-source tooling), which maps architectural configurations to accuracy and optimizes that objective; it is much more sample-efficient than greedy or random selection.</li><li>Search-space constraints to control cost: allow <b>only one inference technique per layer</b>; the <b>first layer is always the generator</b>; a <b>critic must precede</b> a ranker or fuser (validated locally); a <b>unit test generator must be followed by an evaluator</b>.</li><li>Objectives can include which models are available and the inference-call budget; the search uses a held-out training set and optimizes accuracy vs number of calls.</li></ul>",
+      "terms": ["depth", "Bayesian optimization", "search space constraints", "critique-fuser layers", "sample efficiency"]
+    },
+    {
+      "t": 3687,
+      "title": "Archon Results: Open Models Match Frontier, +14.1% Average pass@1",
+      "problem": "Can a searched inference-time architecture, built only from open-source models, really compete with the frontier closed models of the time?",
+      "why": "If so, test-time architecture search is a practical capability lever that does not require pre-training a frontier model, and it reframes the value of open weights.",
+      "how": "Optimize Archon for task-specific and general-purpose objectives, then compare final-response pass@1 against GPT-4o and Claude 3.5 Sonnet across instruction following, reasoning, math, and coding.",
+      "detail": "<p>The distinguishing property of Archon is that it emits <b>one final response</b> at the end — it is optimizing <b>pass@1</b>, not coverage. Using only open-source models, it could match or exceed the frontier closed-source models of the time by a large margin across many tasks in pass@1.</p><ul><li>Archon can be trained <b>task-specific</b> (Bayesian-optimize on one task and test on it) or <b>general-purpose</b> (optimize to do well across many tasks).</li><li>Even the <b>general-purpose</b> configuration does very well, better than the frontier models across these tasks — an important observation, since it shows these inference architectures generalize <b>beyond the tasks they were searched on</b>.</li><li>Headline number: on average, Archon outperformed <b>GPT-4o</b> and <b>Claude 3.5 Sonnet</b> in pass@1 by <b>14.1%</b> across instruction following, reasoning, math, and coding problems.</li><li>The lecture closes with further discussion questions left for students to think about over the weekend.</li></ul>",
+      "terms": ["pass@1", "Archon", "general-purpose architecture", "GPT-4o", "Claude 3.5 Sonnet", "task-specific"]
+    }
+  ]
+}

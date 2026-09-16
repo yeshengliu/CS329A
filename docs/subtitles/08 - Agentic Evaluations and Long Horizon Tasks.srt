@@ -1,0 +1,7491 @@
+1
+00:00:05,520 --> 00:00:10,880
+Today's lecture will focus on agentic
+
+2
+00:00:07,680 --> 00:00:12,240
+evaluations and long horizon tasks. How
+
+3
+00:00:10,880 --> 00:00:15,679
+many of you have had to run an
+
+4
+00:00:12,240 --> 00:00:19,800
+evaluation for your project um to do
+
+5
+00:00:15,679 --> 00:00:19,800
+whatever you've been doing?
+
+6
+00:00:21,039 --> 00:00:25,600
+No one is running an evaluation. How are
+
+7
+00:00:22,880 --> 00:00:27,680
+you guys doing any projects?
+
+8
+00:00:25,600 --> 00:00:31,359
+Uh what evaluation tasks have you used
+
+9
+00:00:27,680 --> 00:00:31,359
+for agentic evaluations?
+
+10
+00:00:33,280 --> 00:00:38,760
+I'm going to call people out if I don't
+
+11
+00:00:35,600 --> 00:00:38,760
+get answers.
+
+12
+00:00:38,879 --> 00:00:41,760
+What do you What have you been using in
+
+13
+00:00:40,719 --> 00:00:43,520
+your project?
+
+14
+00:00:41,760 --> 00:00:45,440
+>> Like I wonder for like enacting
+
+15
+00:00:43,520 --> 00:00:47,200
+meditation. Do you mean like it has to
+
+16
+00:00:45,440 --> 00:00:49,120
+be something like speed bench or like
+
+17
+00:00:47,200 --> 00:00:50,320
+knowledge task? A multihoff knowledge
+
+18
+00:00:49,120 --> 00:00:51,600
+task.
+
+19
+00:00:50,320 --> 00:00:54,640
+>> All of those count, right?
+
+20
+00:00:51,600 --> 00:00:56,800
+>> Okay. Yeah. So then I guess like hard QA
+
+21
+00:00:54,640 --> 00:00:59,199
+QA. Okay. So that's a multihop question
+
+22
+00:00:56,800 --> 00:01:01,039
+answering task. Sweeten would also
+
+23
+00:00:59,199 --> 00:01:05,239
+count.
+
+24
+00:01:01,039 --> 00:01:05,239
+>> What else have you folks been using?
+
+25
+00:01:07,119 --> 00:01:12,000
+>> There's no other answers.
+
+26
+00:01:09,280 --> 00:01:13,200
+>> What about you?
+
+27
+00:01:12,000 --> 00:01:16,240
+>> Yeah.
+
+28
+00:01:13,200 --> 00:01:18,320
+>> Uh, I'm a [clears throat]
+
+29
+00:01:16,240 --> 00:01:20,640
+I'm working on a private wiki for my
+
+30
+00:01:18,320 --> 00:01:22,080
+employer and I guess that down and make
+
+31
+00:01:20,640 --> 00:01:23,360
+notes out of that and then feed that
+
+32
+00:01:22,080 --> 00:01:26,320
+into a coding agent.
+
+33
+00:01:23,360 --> 00:01:28,799
+>> Okay, nice. Okay, so private wiki
+
+34
+00:01:26,320 --> 00:01:30,880
+question answers. So I think a lot of
+
+35
+00:01:28,799 --> 00:01:32,720
+this lecture will focus on what is
+
+36
+00:01:30,880 --> 00:01:34,720
+challenging about agentic evaluations
+
+37
+00:01:32,720 --> 00:01:38,400
+relative to where things have been
+
+38
+00:01:34,720 --> 00:01:40,320
+before and how things become harder. Um
+
+39
+00:01:38,400 --> 00:01:42,799
+the papers that we'll cover to cover
+
+40
+00:01:40,320 --> 00:01:44,960
+this topic will be uh focused on
+
+41
+00:01:42,799 --> 00:01:48,560
+measuring the ability of these models to
+
+42
+00:01:44,960 --> 00:01:50,240
+complete long tasks uh in terms of
+
+43
+00:01:48,560 --> 00:01:52,079
+what's the length of the task length as
+
+44
+00:01:50,240 --> 00:01:55,840
+in time horizon of the task that the
+
+45
+00:01:52,079 --> 00:01:57,920
+models can uh complete. uh also in terms
+
+46
+00:01:55,840 --> 00:01:59,520
+a second paper that we'll look at is GDP
+
+47
+00:01:57,920 --> 00:02:01,759
+val which was a recent benchmark that
+
+48
+00:01:59,520 --> 00:02:03,759
+was released by open AI. This will focus
+
+49
+00:02:01,759 --> 00:02:05,439
+on how do the models perform on real
+
+50
+00:02:03,759 --> 00:02:06,719
+world economically valuable tasks. So
+
+51
+00:02:05,439 --> 00:02:09,920
+there has been a lot of discussion
+
+52
+00:02:06,719 --> 00:02:12,640
+around uh the models can uh do tasks
+
+53
+00:02:09,920 --> 00:02:15,120
+that real world uh professionals can do.
+
+54
+00:02:12,640 --> 00:02:17,200
+So this is measuring that in a very real
+
+55
+00:02:15,120 --> 00:02:19,440
+sense. And then the last task will very
+
+56
+00:02:17,200 --> 00:02:20,879
+much focus on deep research style tasks.
+
+57
+00:02:19,440 --> 00:02:22,800
+So it is called deep scholar bench.
+
+58
+00:02:20,879 --> 00:02:24,879
+that's out of Stanford and it's a live
+
+59
+00:02:22,800 --> 00:02:26,800
+benchmark that focused on generative
+
+60
+00:02:24,879 --> 00:02:28,959
+research synthesis. So it takes a bunch
+
+61
+00:02:26,800 --> 00:02:31,280
+of papers and then tries to write the
+
+62
+00:02:28,959 --> 00:02:32,959
+related work section a task that I have
+
+63
+00:02:31,280 --> 00:02:35,840
+always wanted the language models to go
+
+64
+00:02:32,959 --> 00:02:38,319
+do for uh the papers that I write. So uh
+
+65
+00:02:35,840 --> 00:02:40,720
+this actually measures how good of a job
+
+66
+00:02:38,319 --> 00:02:43,959
+does the model do in in solving these
+
+67
+00:02:40,720 --> 00:02:43,959
+kind of tasks.
+
+68
+00:02:44,239 --> 00:02:48,560
+So one of the challenges of measuring
+
+69
+00:02:46,239 --> 00:02:52,800
+intelligence or progress of AI is that
+
+70
+00:02:48,560 --> 00:02:55,280
+we have to measure um what matters like
+
+71
+00:02:52,800 --> 00:02:57,680
+how is the how is the how are the models
+
+72
+00:02:55,280 --> 00:02:59,360
+progressing. So when we started about
+
+73
+00:02:57,680 --> 00:03:00,879
+four or five years ago even the fact
+
+74
+00:02:59,360 --> 00:03:03,680
+that the models could generate any
+
+75
+00:03:00,879 --> 00:03:06,879
+explanations was uh such a big deal and
+
+76
+00:03:03,680 --> 00:03:10,159
+now uh we may measure the progress of AI
+
+77
+00:03:06,879 --> 00:03:12,400
+in terms of whether we can uh forecast
+
+78
+00:03:10,159 --> 00:03:14,560
+how it will influence economics or how
+
+79
+00:03:12,400 --> 00:03:17,760
+it will influence safety. traditional
+
+80
+00:03:14,560 --> 00:03:19,840
+benchmarks uh which involve chat bots or
+
+81
+00:03:17,760 --> 00:03:22,400
+which involve say question answering or
+
+82
+00:03:19,840 --> 00:03:24,400
+singleshot just answering uh something
+
+83
+00:03:22,400 --> 00:03:26,480
+that was already in the context are
+
+84
+00:03:24,400 --> 00:03:28,560
+starting to saturate it fairly quickly.
+
+85
+00:03:26,480 --> 00:03:31,360
+However, we do need to measure uh both
+
+86
+00:03:28,560 --> 00:03:33,280
+in terms of capability and economic um
+
+87
+00:03:31,360 --> 00:03:34,799
+uh impact how these models are
+
+88
+00:03:33,280 --> 00:03:37,040
+progressing so that we can see what
+
+89
+00:03:34,799 --> 00:03:38,400
+their uh impact will be in the coming
+
+90
+00:03:37,040 --> 00:03:42,400
+years.
+
+91
+00:03:38,400 --> 00:03:44,319
+So in terms of um measuring capability
+
+92
+00:03:42,400 --> 00:03:46,720
+uh what we covered today is we are
+
+93
+00:03:44,319 --> 00:03:48,720
+looking at the task of how long or how
+
+94
+00:03:46,720 --> 00:03:51,920
+complex of a task can these models
+
+95
+00:03:48,720 --> 00:03:54,640
+accomplish. Um and the second question
+
+96
+00:03:51,920 --> 00:03:57,120
+we ask is what is the economic value of
+
+97
+00:03:54,640 --> 00:03:58,959
+the task that these uh models can do or
+
+98
+00:03:57,120 --> 00:04:01,360
+can they do real world tasks that humans
+
+99
+00:03:58,959 --> 00:04:04,080
+can currently do and the two papers that
+
+100
+00:04:01,360 --> 00:04:06,000
+we are uh referencing here is or the two
+
+101
+00:04:04,080 --> 00:04:08,480
+metrics that we are referencing here is
+
+102
+00:04:06,000 --> 00:04:11,599
+that MER refers to the time horizon
+
+103
+00:04:08,480 --> 00:04:14,720
+metric uh calibrated by uh human
+
+104
+00:04:11,599 --> 00:04:17,359
+professionals and GDP val compares uh
+
+105
+00:04:14,720 --> 00:04:20,160
+the win rate of model performing a task
+
+106
+00:04:17,359 --> 00:04:22,560
+uh relative to experts. So both of them
+
+107
+00:04:20,160 --> 00:04:24,320
+are equally valid metrics in certain
+
+108
+00:04:22,560 --> 00:04:26,560
+ways. Uh and the insights are very
+
+109
+00:04:24,320 --> 00:04:29,280
+similar but the trends that they measure
+
+110
+00:04:26,560 --> 00:04:32,240
+in terms of how models perform are quite
+
+111
+00:04:29,280 --> 00:04:35,360
+different.
+
+112
+00:04:32,240 --> 00:04:38,000
+So let's start with the first one.
+
+113
+00:04:35,360 --> 00:04:40,639
+So when you when you're talking to a
+
+114
+00:04:38,000 --> 00:04:44,000
+chatbot if you were talking to a chatbot
+
+115
+00:04:40,639 --> 00:04:46,160
+say 3 four five years ago
+
+116
+00:04:44,000 --> 00:04:48,000
+usually after a first couple of rounds
+
+117
+00:04:46,160 --> 00:04:50,240
+in multi-turn conversation the model
+
+118
+00:04:48,000 --> 00:04:52,720
+will be lost. it doesn't keep context of
+
+119
+00:04:50,240 --> 00:04:54,639
+what you were talking to it about. Today
+
+120
+00:04:52,720 --> 00:04:56,880
+as you talk to these models the
+
+121
+00:04:54,639 --> 00:04:59,199
+conversation can go pretty long. So it
+
+122
+00:04:56,880 --> 00:05:01,759
+does keep that context and that relates
+
+123
+00:04:59,199 --> 00:05:03,919
+then to the question of what is the
+
+124
+00:05:01,759 --> 00:05:06,320
+duration of the task that the model can
+
+125
+00:05:03,919 --> 00:05:07,759
+complete. So that's just the duration
+
+126
+00:05:06,320 --> 00:05:10,080
+question. And then the second question
+
+127
+00:05:07,759 --> 00:05:14,160
+is what's the percentage success? Can it
+
+128
+00:05:10,080 --> 00:05:16,880
+do do so reliably? So, METR this uh
+
+129
+00:05:14,160 --> 00:05:18,400
+particular benchmark um focuses on
+
+130
+00:05:16,880 --> 00:05:19,919
+duration of the task that model can
+
+131
+00:05:18,400 --> 00:05:22,320
+complete and then it associates a
+
+132
+00:05:19,919 --> 00:05:24,639
+reliability metric of like uh will it
+
+133
+00:05:22,320 --> 00:05:27,280
+complete it with 50% success or will it
+
+134
+00:05:24,639 --> 00:05:28,800
+complete it with 80% success and and so
+
+135
+00:05:27,280 --> 00:05:32,240
+on.
+
+136
+00:05:28,800 --> 00:05:34,479
+Um and the the universal anchor for um
+
+137
+00:05:32,240 --> 00:05:36,479
+these tasks ends up being the how much
+
+138
+00:05:34,479 --> 00:05:39,680
+time will it take humans to complete if
+
+139
+00:05:36,479 --> 00:05:42,000
+they were um professionals in in solving
+
+140
+00:05:39,680 --> 00:05:44,400
+these tasks.
+
+141
+00:05:42,000 --> 00:05:46,400
+So there is three task suites that are
+
+142
+00:05:44,400 --> 00:05:48,800
+used to design um this particular
+
+143
+00:05:46,400 --> 00:05:50,880
+benchmark.
+
+144
+00:05:48,800 --> 00:05:52,880
+One is extremely small. So 1 to 30
+
+145
+00:05:50,880 --> 00:05:54,320
+seconds. It basically focusing on just
+
+146
+00:05:52,880 --> 00:05:56,560
+atomic actions. So in software
+
+147
+00:05:54,320 --> 00:05:58,960
+engineering can you open a file? Can you
+
+148
+00:05:56,560 --> 00:06:01,360
+do something small?
+
+149
+00:05:58,960 --> 00:06:04,960
+The second one is edgecast which focuses
+
+150
+00:06:01,360 --> 00:06:06,639
+on more um 1 minute to 30 hours style of
+
+151
+00:06:04,960 --> 00:06:08,000
+task which is basically talking about
+
+152
+00:06:06,639 --> 00:06:10,400
+different software and research
+
+153
+00:06:08,000 --> 00:06:13,199
+engineering tasks. And then finally
+
+154
+00:06:10,400 --> 00:06:16,160
+rebench that's actually giving a full ML
+
+155
+00:06:13,199 --> 00:06:17,919
+research style tasks which can go on as
+
+156
+00:06:16,160 --> 00:06:19,840
+long as eight hours. So you've seen like
+
+157
+00:06:17,919 --> 00:06:22,880
+AI scientist paper covered in this graph
+
+158
+00:06:19,840 --> 00:06:26,080
+before. So uh similar style of
+
+159
+00:06:22,880 --> 00:06:28,560
+benchmarks. In total it covers about 170
+
+160
+00:06:26,080 --> 00:06:31,199
+tasks um going all the way from say 1
+
+161
+00:06:28,560 --> 00:06:34,720
+seconds to 8 hours. So if you were to
+
+162
+00:06:31,199 --> 00:06:37,199
+look at this um in terms of a division
+
+163
+00:06:34,720 --> 00:06:39,600
+you will see that edgecast has about 97
+
+164
+00:06:37,199 --> 00:06:43,520
+task. the the these are the one minute
+
+165
+00:06:39,600 --> 00:06:45,759
+to 30 hour tasks. SWAA has about 66
+
+166
+00:06:43,520 --> 00:06:47,680
+tasks and then rebench which are more
+
+167
+00:06:45,759 --> 00:06:50,000
+researching tasks that took take much
+
+168
+00:06:47,680 --> 00:06:51,600
+longer are about seven tasks. So the
+
+169
+00:06:50,000 --> 00:06:53,919
+first they do is they they collect these
+
+170
+00:06:51,600 --> 00:06:56,560
+tasks they vet the set of tasks that go
+
+171
+00:06:53,919 --> 00:06:58,800
+into each of these uh benchmark suites.
+
+172
+00:06:56,560 --> 00:07:01,280
+Then they actually have uh time
+
+173
+00:06:58,800 --> 00:07:03,120
+estimates from both human doing the task
+
+174
+00:07:01,280 --> 00:07:04,960
+and then the agent doing the task. From
+
+175
+00:07:03,120 --> 00:07:07,120
+human runs, they actually estimate the
+
+176
+00:07:04,960 --> 00:07:08,639
+amount of time it takes the human to
+
+177
+00:07:07,120 --> 00:07:10,720
+complete that task and whether they
+
+178
+00:07:08,639 --> 00:07:12,639
+found it difficult or not. And then for
+
+179
+00:07:10,720 --> 00:07:15,440
+the agent, uh they're measuring whether
+
+180
+00:07:12,639 --> 00:07:18,080
+they completed it reliably or not. And
+
+181
+00:07:15,440 --> 00:07:19,759
+uh finally based on enough data points,
+
+182
+00:07:18,080 --> 00:07:22,160
+they fit a curve which measures the
+
+183
+00:07:19,759 --> 00:07:23,919
+success rate versus the time estimate.
+
+184
+00:07:22,160 --> 00:07:25,840
+And based on that, they find the time
+
+185
+00:07:23,919 --> 00:07:28,400
+horizon for these models completing the
+
+186
+00:07:25,840 --> 00:07:31,120
+tasks. Um so that that gives a sense of
+
+187
+00:07:28,400 --> 00:07:33,360
+the horizon length relative to model
+
+188
+00:07:31,120 --> 00:07:36,080
+release dates. So what we'll see in
+
+189
+00:07:33,360 --> 00:07:38,160
+terms of trends are um for models
+
+190
+00:07:36,080 --> 00:07:41,280
+released on different dates uh roughly
+
+191
+00:07:38,160 --> 00:07:43,440
+what is the time horizon with which the
+
+192
+00:07:41,280 --> 00:07:46,240
+models complete the tasks 50% of the
+
+193
+00:07:43,440 --> 00:07:50,280
+time or 80% of the time uh 80% of the
+
+194
+00:07:46,240 --> 00:07:50,280
+time questions.
+
+195
+00:07:54,639 --> 00:07:59,759
+What is a task that takes you guys um a
+
+196
+00:07:58,319 --> 00:08:02,000
+couple of minutes and what's a task that
+
+197
+00:07:59,759 --> 00:08:03,599
+takes you guys say a couple of hours
+
+198
+00:08:02,000 --> 00:08:07,400
+that you think the like you would like
+
+199
+00:08:03,599 --> 00:08:07,400
+to delegate to the models
+
+200
+00:08:14,240 --> 00:08:17,840
+of
+
+201
+00:08:15,360 --> 00:08:20,080
+>> yes that that usually would take several
+
+202
+00:08:17,840 --> 00:08:22,240
+hours
+
+203
+00:08:20,080 --> 00:08:26,080
+so that that would be a great task and I
+
+204
+00:08:22,240 --> 00:08:30,080
+would fall somewhere in a cast or reb
+
+205
+00:08:26,080 --> 00:08:32,320
+task. Um any other takers related to
+
+206
+00:08:30,080 --> 00:08:33,919
+what you do?
+
+207
+00:08:32,320 --> 00:08:36,719
+>> Yeah.
+
+208
+00:08:33,919 --> 00:08:37,440
+>> I for each like reference
+
+209
+00:08:36,719 --> 00:08:41,360
+>> say that
+
+210
+00:08:37,440 --> 00:08:42,959
+>> double check the tag for each.
+
+211
+00:08:41,360 --> 00:08:45,600
+>> Okay. So in the paper writing you want
+
+212
+00:08:42,959 --> 00:08:47,760
+the the bip item to be correct. So you
+
+213
+00:08:45,600 --> 00:08:49,920
+wanted to go query the right websites
+
+214
+00:08:47,760 --> 00:08:52,160
+and find the bipe item.
+
+215
+00:08:49,920 --> 00:08:54,480
+>> Okay. How many minutes do you think that
+
+216
+00:08:52,160 --> 00:08:56,480
+was should take? So it falls more in
+
+217
+00:08:54,480 --> 00:08:59,839
+that one the edgecast style like diverse
+
+218
+00:08:56,480 --> 00:09:02,839
+tasks. Okay,
+
+219
+00:08:59,839 --> 00:09:02,839
+cool.
+
+220
+00:09:02,959 --> 00:09:09,880
+Any other task that people think that
+
+221
+00:09:05,279 --> 00:09:09,880
+the model should be like good at?
+
+222
+00:09:12,080 --> 00:09:15,080
+>> Okay.
+
+223
+00:09:18,640 --> 00:09:23,680
+>> Mhm.
+
+224
+00:09:21,519 --> 00:09:26,080
+>> Okay.
+
+225
+00:09:23,680 --> 00:09:28,320
+would be able to faster.
+
+226
+00:09:26,080 --> 00:09:29,600
+>> So refactoring for code can be large or
+
+227
+00:09:28,320 --> 00:09:32,240
+can be small, right?
+
+228
+00:09:29,600 --> 00:09:34,000
+>> Yeah. Depends on
+
+229
+00:09:32,240 --> 00:09:35,760
+>> what the refactor requires. If the logic
+
+230
+00:09:34,000 --> 00:09:38,240
+stays the same as just moving around
+
+231
+00:09:35,760 --> 00:09:39,920
+code, then that perhaps a few hours can
+
+232
+00:09:38,240 --> 00:09:42,240
+be couple of days. Someone has to check
+
+233
+00:09:39,920 --> 00:09:44,640
+correctness of that as well. Makes
+
+234
+00:09:42,240 --> 00:09:46,240
+sense. So that one will fall perhaps
+
+235
+00:09:44,640 --> 00:09:47,600
+like closer to our bench. One can
+
+236
+00:09:46,240 --> 00:09:50,959
+imagine that there will be a version of
+
+237
+00:09:47,600 --> 00:09:52,800
+just like the coding related tasks.
+
+238
+00:09:50,959 --> 00:09:54,640
+Cool.
+
+239
+00:09:52,800 --> 00:09:56,480
+Okay,
+
+240
+00:09:54,640 --> 00:10:00,080
+it's okay. I ask a question about this
+
+241
+00:09:56,480 --> 00:10:03,080
+patient. So for the second step with the
+
+242
+00:10:00,080 --> 00:10:03,080
+for
+
+243
+00:10:04,000 --> 00:10:10,959
+task for this task human
+
+244
+00:10:07,920 --> 00:10:12,320
+people do it faster, some people do it
+
+245
+00:10:10,959 --> 00:10:17,040
+slower. Mhm.
+
+246
+00:10:12,320 --> 00:10:19,440
+>> So I'm just uh wondering so on one on
+
+247
+00:10:17,040 --> 00:10:21,360
+one case you just have one main
+
+248
+00:10:19,440 --> 00:10:22,959
+evaluator and then you have just one
+
+249
+00:10:21,360 --> 00:10:26,160
+result
+
+250
+00:10:22,959 --> 00:10:27,600
+on the other extreme you have like 100
+
+251
+00:10:26,160 --> 00:10:30,640
+you have distribution and you can
+
+252
+00:10:27,600 --> 00:10:33,200
+compare. So where is the head? So I'm
+
+253
+00:10:30,640 --> 00:10:33,839
+just curious where that's most of the
+
+254
+00:10:33,200 --> 00:10:35,839
+process.
+
+255
+00:10:33,839 --> 00:10:38,160
+>> So typically what's done with most of
+
+256
+00:10:35,839 --> 00:10:40,079
+the I mean getting a lot of experts to
+
+257
+00:10:38,160 --> 00:10:42,079
+solve the task is is uh relatively
+
+258
+00:10:40,079 --> 00:10:43,680
+expensive. So typically you will have a
+
+259
+00:10:42,079 --> 00:10:46,160
+few experts solve the task and then you
+
+260
+00:10:43,680 --> 00:10:47,760
+look for interrator agreement or
+
+261
+00:10:46,160 --> 00:10:49,279
+interhuman agreement in this particular
+
+262
+00:10:47,760 --> 00:10:51,519
+case and what you're saying is that
+
+263
+00:10:49,279 --> 00:10:53,760
+generally if the numbers are very far
+
+264
+00:10:51,519 --> 00:10:55,120
+off then you go get more data points and
+
+265
+00:10:53,760 --> 00:10:58,480
+if there is like generally agreement
+
+266
+00:10:55,120 --> 00:11:00,240
+then you kind of move on.
+
+267
+00:10:58,480 --> 00:11:02,160
+So just the example of tasks just
+
+268
+00:11:00,240 --> 00:11:04,160
+related to what the class talked about
+
+269
+00:11:02,160 --> 00:11:07,279
+where you wanted the literature review
+
+270
+00:11:04,160 --> 00:11:10,800
+section or you wanted the bipek um uh
+
+271
+00:11:07,279 --> 00:11:12,720
+being uh accurately classified or or or
+
+272
+00:11:10,800 --> 00:11:14,480
+the refactoring of the codebase. Some of
+
+273
+00:11:12,720 --> 00:11:16,959
+the example tasks of different durations
+
+274
+00:11:14,480 --> 00:11:19,200
+that were in this paper are like find a
+
+275
+00:11:16,959 --> 00:11:21,920
+shell script. So that that's perhaps
+
+276
+00:11:19,200 --> 00:11:23,920
+just take 3 seconds or Wikipedia
+
+277
+00:11:21,920 --> 00:11:26,880
+research. This is closer to the research
+
+278
+00:11:23,920 --> 00:11:29,440
+section that um that you wanted or
+
+279
+00:11:26,880 --> 00:11:31,600
+another one is like detect and fix a bug
+
+280
+00:11:29,440 --> 00:11:33,519
+in the input files for a simulation. So
+
+281
+00:11:31,600 --> 00:11:36,320
+that that takes like 10 minutes for a
+
+282
+00:11:33,519 --> 00:11:38,160
+human. Uh then there is like munching of
+
+283
+00:11:36,320 --> 00:11:39,839
+data. So data munching task where you're
+
+284
+00:11:38,160 --> 00:11:42,560
+transforming some JSON data from one
+
+285
+00:11:39,839 --> 00:11:45,360
+format to another. And then uh CUDA back
+
+286
+00:11:42,560 --> 00:11:47,360
+testing tool uh which basically you are
+
+287
+00:11:45,360 --> 00:11:50,320
+uh implementing custom CUDA kernels can
+
+288
+00:11:47,360 --> 00:11:52,880
+take uh tens of hours. So here it's like
+
+289
+00:11:50,320 --> 00:11:55,360
+8 hours and they're um aiming for a
+
+290
+00:11:52,880 --> 00:11:57,920
+certain performance improvement. So all
+
+291
+00:11:55,360 --> 00:12:00,079
+of these tests are part of um this
+
+292
+00:11:57,920 --> 00:12:02,399
+particular benchmark
+
+293
+00:12:00,079 --> 00:12:04,160
+and the way this actually addresses the
+
+294
+00:12:02,399 --> 00:12:06,160
+question you were asking. The way they
+
+295
+00:12:04,160 --> 00:12:08,079
+are going about um getting the human
+
+296
+00:12:06,160 --> 00:12:10,639
+baseline for task completion is that
+
+297
+00:12:08,079 --> 00:12:12,480
+they go and uh get uh skilled
+
+298
+00:12:10,639 --> 00:12:14,480
+professionals uh with roughly five years
+
+299
+00:12:12,480 --> 00:12:16,160
+of experience in the field to record
+
+300
+00:12:14,480 --> 00:12:18,560
+their completion times for successful
+
+301
+00:12:16,160 --> 00:12:20,399
+attempts and then they take a geometric
+
+302
+00:12:18,560 --> 00:12:22,160
+mean for the task difficulty rating
+
+303
+00:12:20,399 --> 00:12:24,079
+based on the humans that went and solved
+
+304
+00:12:22,160 --> 00:12:25,920
+this. One challenge with this is that
+
+305
+00:12:24,079 --> 00:12:27,760
+people who are experienced in the field
+
+306
+00:12:25,920 --> 00:12:29,519
+are conditioned to like what it means to
+
+307
+00:12:27,760 --> 00:12:31,040
+be successful in this. So they will
+
+308
+00:12:29,519 --> 00:12:32,880
+often underestimate the difficulty of
+
+309
+00:12:31,040 --> 00:12:34,959
+the task which might not correlate to
+
+310
+00:12:32,880 --> 00:12:37,600
+how the model sees whether this task is
+
+311
+00:12:34,959 --> 00:12:40,160
+difficult or not.
+
+312
+00:12:37,600 --> 00:12:42,320
+So in terms of trends what they found is
+
+313
+00:12:40,160 --> 00:12:44,160
+on the x-axis we have the human time to
+
+314
+00:12:42,320 --> 00:12:46,720
+complete and on the y-axis we have the
+
+315
+00:12:44,160 --> 00:12:51,040
+success rate going all the way from 0 to
+
+316
+00:12:46,720 --> 00:12:53,519
+uh one. So the model success rate um for
+
+317
+00:12:51,040 --> 00:12:56,079
+uh if you look at smaller tasks like the
+
+318
+00:12:53,519 --> 00:12:58,800
+1 to 30 secondond tasks which are the uh
+
+319
+00:12:56,079 --> 00:13:00,639
+swaa tasks all the green tasks that's
+
+320
+00:12:58,800 --> 00:13:03,200
+generally on the higher side for
+
+321
+00:13:00,639 --> 00:13:05,120
+edgecast tasks which are basically the
+
+322
+00:13:03,200 --> 00:13:07,680
+tasks which are diverse task going all
+
+323
+00:13:05,120 --> 00:13:09,920
+the way from say few minutes to uh
+
+324
+00:13:07,680 --> 00:13:13,360
+several hours that's all over the place
+
+325
+00:13:09,920 --> 00:13:15,680
+so it's anywhere from uh8 being the
+
+326
+00:13:13,360 --> 00:13:18,240
+highest all the way to zero and then the
+
+327
+00:13:15,680 --> 00:13:19,839
+re bench tasks have some success but
+
+328
+00:13:18,240 --> 00:13:22,560
+like tend to be on the lower side at
+
+329
+00:13:19,839 --> 00:13:24,639
+this point in time. Um there have been
+
+330
+00:13:22,560 --> 00:13:26,480
+uh papers saying that they are making
+
+331
+00:13:24,639 --> 00:13:28,880
+progress on rebench tasks but generally
+
+332
+00:13:26,480 --> 00:13:30,880
+it's a much harder task uh in terms of
+
+333
+00:13:28,880 --> 00:13:33,040
+like uh the human time to complete. It
+
+334
+00:13:30,880 --> 00:13:35,360
+takes long and then the model success
+
+335
+00:13:33,040 --> 00:13:37,600
+rate is also fairly low. So the longer
+
+336
+00:13:35,360 --> 00:13:39,600
+the task the harder it's for models to
+
+337
+00:13:37,600 --> 00:13:42,079
+stay on track and complete and this is
+
+338
+00:13:39,600 --> 00:13:44,240
+partly why agentic evaluations and what
+
+339
+00:13:42,079 --> 00:13:46,800
+you measure um starts to become a
+
+340
+00:13:44,240 --> 00:13:49,360
+challenging aspect.
+
+341
+00:13:46,800 --> 00:13:51,680
+In terms of trends, if you were to uh we
+
+342
+00:13:49,360 --> 00:13:55,440
+we chatted about the fact that if you
+
+343
+00:13:51,680 --> 00:13:58,000
+were to query these models about 2019
+
+344
+00:13:55,440 --> 00:14:00,560
+when GBT2 came out, uh typically the
+
+345
+00:13:58,000 --> 00:14:02,320
+models would really just address tasks
+
+346
+00:14:00,560 --> 00:14:04,320
+that were 2 seconds long. So on the
+
+347
+00:14:02,320 --> 00:14:06,959
+y-axis you have the task time for
+
+348
+00:14:04,320 --> 00:14:08,800
+completion with 50% success rate. So it
+
+349
+00:14:06,959 --> 00:14:13,600
+doesn't have to be completely reliable.
+
+350
+00:14:08,800 --> 00:14:16,800
+Uh so in 2019 when um GP2 came out only
+
+351
+00:14:13,600 --> 00:14:19,839
+2 seconds uh closer to GBD4 which is
+
+352
+00:14:16,800 --> 00:14:24,320
+2023 uh you are starting to see few
+
+353
+00:14:19,839 --> 00:14:26,240
+minutes and uh when we have claw 3.7 and
+
+354
+00:14:24,320 --> 00:14:29,279
+oven at that point you're starting to
+
+355
+00:14:26,240 --> 00:14:32,000
+see a few hours. Now note that this is
+
+356
+00:14:29,279 --> 00:14:35,279
+almost like a doubling because this is
+
+357
+00:14:32,000 --> 00:14:36,880
+um so it's it's doubling every 7 months.
+
+358
+00:14:35,279 --> 00:14:38,240
+But the other thing to note here is that
+
+359
+00:14:36,880 --> 00:14:40,480
+even though these tasks are being
+
+360
+00:14:38,240 --> 00:14:42,720
+completed, the reliability is not high.
+
+361
+00:14:40,480 --> 00:14:44,800
+They are only being completed 50% of the
+
+362
+00:14:42,720 --> 00:14:47,040
+time. So that's like saying that you
+
+363
+00:14:44,800 --> 00:14:48,800
+gave your task to an intern, but it only
+
+364
+00:14:47,040 --> 00:14:50,240
+completes it 50% of the time. So it
+
+365
+00:14:48,800 --> 00:14:52,800
+might come back with an answer or it
+
+366
+00:14:50,240 --> 00:14:55,395
+might might not. So there's always some
+
+367
+00:14:52,800 --> 00:14:56,079
+amount of uncertainty.
+
+368
+00:14:55,395 --> 00:14:58,000
+[snorts]
+
+369
+00:14:56,079 --> 00:15:00,160
+So uh this is just making the same point
+
+370
+00:14:58,000 --> 00:15:02,320
+that going from BGPD2 which was just 2
+
+371
+00:15:00,160 --> 00:15:05,760
+seconds to GPD4 which was like 8
+
+372
+00:15:02,320 --> 00:15:07,920
+minutes. Now cloud 3.7 sonnet in 2025
+
+373
+00:15:05,760 --> 00:15:12,000
+can go all the way to 59 minutes with
+
+374
+00:15:07,920 --> 00:15:14,639
+50% success rate. And what is really
+
+375
+00:15:12,000 --> 00:15:16,160
+driving this improvement? So some of the
+
+376
+00:15:14,639 --> 00:15:18,720
+capabilities that we are seeing in the
+
+377
+00:15:16,160 --> 00:15:21,279
+model that are really helpful in terms
+
+378
+00:15:18,720 --> 00:15:24,000
+of driving these improvements are better
+
+379
+00:15:21,279 --> 00:15:26,240
+logical reasoning. So the models can um
+
+380
+00:15:24,000 --> 00:15:28,480
+we've covered a lot of previous lectures
+
+381
+00:15:26,240 --> 00:15:30,800
+on the models learn how to reason
+
+382
+00:15:28,480 --> 00:15:32,000
+better. So the reasoning capabilities
+
+383
+00:15:30,800 --> 00:15:34,079
+definitely drive some of these
+
+384
+00:15:32,000 --> 00:15:36,079
+improvements. Uh code generation
+
+385
+00:15:34,079 --> 00:15:37,760
+capabilities have improved. So you uh we
+
+386
+00:15:36,079 --> 00:15:39,360
+have covered several lectures where
+
+387
+00:15:37,760 --> 00:15:40,959
+you've seen the models do better on the
+
+388
+00:15:39,360 --> 00:15:42,160
+code generation side. So that's
+
+389
+00:15:40,959 --> 00:15:44,399
+definitely driving some of these
+
+390
+00:15:42,160 --> 00:15:46,880
+improvements. Uh tool use. So we covered
+
+391
+00:15:44,399 --> 00:15:49,759
+React and several papers around just how
+
+392
+00:15:46,880 --> 00:15:52,480
+the models use tools. So that also has
+
+393
+00:15:49,759 --> 00:15:54,000
+added up. And then in general uh there
+
+394
+00:15:52,480 --> 00:15:56,000
+has been a focus on getting these models
+
+395
+00:15:54,000 --> 00:15:58,240
+to be more reliable so that they're not
+
+396
+00:15:56,000 --> 00:16:00,240
+repetitive in just repeating the same
+
+397
+00:15:58,240 --> 00:16:02,079
+behavior over and over again. And
+
+398
+00:16:00,240 --> 00:16:04,000
+finally you want these models to
+
+399
+00:16:02,079 --> 00:16:05,600
+generally recover from errors. I mean if
+
+400
+00:16:04,000 --> 00:16:08,079
+you're going to do an 8-hour task you're
+
+401
+00:16:05,600 --> 00:16:09,839
+going to have some steps which are going
+
+402
+00:16:08,079 --> 00:16:11,839
+to be wrong. So you have to recover from
+
+403
+00:16:09,839 --> 00:16:14,160
+those errors and you need a better
+
+404
+00:16:11,839 --> 00:16:17,199
+awareness of what is your final goal and
+
+405
+00:16:14,160 --> 00:16:19,279
+some notion of state of or memory of um
+
+406
+00:16:17,199 --> 00:16:20,800
+what is the final goal and how far along
+
+407
+00:16:19,279 --> 00:16:24,480
+are you in make terms of making progress
+
+408
+00:16:20,800 --> 00:16:26,240
+towards that goal. Um other aspects of
+
+409
+00:16:24,480 --> 00:16:30,920
+what folks have seen is driving these
+
+410
+00:16:26,240 --> 00:16:30,920
+improvements. Any comments?
+
+411
+00:16:32,720 --> 00:16:38,600
+Why do you think cloud code does better
+
+412
+00:16:34,240 --> 00:16:38,600
+today relative to say last year?
+
+413
+00:16:40,800 --> 00:16:44,800
+How many people use code or codex?
+
+414
+00:16:42,880 --> 00:16:46,399
+>> I think there's new trend for context
+
+415
+00:16:44,800 --> 00:16:48,560
+engineering. People are just learning
+
+416
+00:16:46,399 --> 00:16:51,040
+how to structure the context better so
+
+417
+00:16:48,560 --> 00:16:52,639
+that the tooling just becomes better and
+
+418
+00:16:51,040 --> 00:16:54,160
+improves the improve make the
+
+419
+00:16:52,639 --> 00:16:55,519
+improvements.
+
+420
+00:16:54,160 --> 00:16:57,519
+>> So what you're saying is I'm just
+
+421
+00:16:55,519 --> 00:16:59,199
+repeating for the class that context
+
+422
+00:16:57,519 --> 00:17:02,000
+engineering or being able to structure
+
+423
+00:16:59,199 --> 00:17:03,920
+the context better over multiple time
+
+424
+00:17:02,000 --> 00:17:05,439
+steps is is starting to improve which
+
+425
+00:17:03,920 --> 00:17:07,919
+also helps.
+
+426
+00:17:05,439 --> 00:17:09,679
+>> Thank you. you see like compaction
+
+427
+00:17:07,919 --> 00:17:14,559
+window that happens when blog basically
+
+428
+00:17:09,679 --> 00:17:15,199
+gets to the end of its um context.
+
+429
+00:17:14,559 --> 00:17:17,280
+>> Yes.
+
+430
+00:17:15,199 --> 00:17:20,480
+>> I think just like maybe from feedback of
+
+431
+00:17:17,280 --> 00:17:22,000
+actual people using it and then like I I
+
+432
+00:17:20,480 --> 00:17:24,160
+I know that for cursor they have this
+
+433
+00:17:22,000 --> 00:17:26,640
+like online RL thing right for tab
+
+434
+00:17:24,160 --> 00:17:28,480
+combinations. So I wonder maybe I don't
+
+435
+00:17:26,640 --> 00:17:30,480
+know for how that works with with board
+
+436
+00:17:28,480 --> 00:17:32,240
+for cloud code but I guess supposedly
+
+437
+00:17:30,480 --> 00:17:35,039
+they get some sort of feedback that from
+
+438
+00:17:32,240 --> 00:17:38,000
+the user logs and then try to either
+
+439
+00:17:35,039 --> 00:17:40,880
+back back probably or just kind of
+
+440
+00:17:38,000 --> 00:17:43,360
+figuratively in the workflow that
+
+441
+00:17:40,880 --> 00:17:47,559
+>> so you address the classic problems that
+
+442
+00:17:43,360 --> 00:17:47,559
+are starting to show up. Um
+
+443
+00:17:48,400 --> 00:17:54,080
+>> yes.
+
+444
+00:17:50,320 --> 00:17:57,520
+>> So when the problems the um is like very
+
+445
+00:17:54,080 --> 00:17:59,520
+compact nowaday
+
+446
+00:17:57,520 --> 00:18:01,600
+so when when problems are really complex
+
+447
+00:17:59,520 --> 00:18:04,320
+nowadays the coding agents um you can
+
+448
+00:18:01,600 --> 00:18:06,880
+trigger like explicit ping stuff. And so
+
+449
+00:18:04,320 --> 00:18:08,480
+that kind of helps them like when
+
+450
+00:18:06,880 --> 00:18:10,559
+problems are really hard and so just
+
+451
+00:18:08,480 --> 00:18:13,679
+stick to the planning and this kind of
+
+452
+00:18:10,559 --> 00:18:14,480
+reduces some trial and errors with fixed
+
+453
+00:18:13,679 --> 00:18:17,039
+plan.
+
+454
+00:18:14,480 --> 00:18:19,120
+>> Nice. So what he's saying is that if you
+
+455
+00:18:17,039 --> 00:18:21,360
+look at when the problem is very complex
+
+456
+00:18:19,120 --> 00:18:22,720
+the model as a first step does some
+
+457
+00:18:21,360 --> 00:18:25,600
+planning. So it breaks down the problem
+
+458
+00:18:22,720 --> 00:18:27,200
+into multiple steps and often times when
+
+459
+00:18:25,600 --> 00:18:28,960
+it uh goes and executes some of the
+
+460
+00:18:27,200 --> 00:18:30,799
+steps it might actually trigger
+
+461
+00:18:28,960 --> 00:18:33,039
+replanning. So it might actually come up
+
+462
+00:18:30,799 --> 00:18:36,080
+with a new set of steps to go do uh
+
+463
+00:18:33,039 --> 00:18:38,559
+based on the data it's collected.
+
+464
+00:18:36,080 --> 00:18:42,240
+That's very good insight.
+
+465
+00:18:38,559 --> 00:18:44,000
+>> So when you use cross code sometimes the
+
+466
+00:18:42,240 --> 00:18:47,440
+code has error. Mhm.
+
+467
+00:18:44,000 --> 00:18:54,120
+>> I mean the code is the code doesn't have
+
+468
+00:18:47,440 --> 00:18:54,120
+problem. So user but user may include
+
+469
+00:18:57,520 --> 00:19:02,720
+the code and then the code will know
+
+470
+00:19:00,640 --> 00:19:06,480
+that code has
+
+471
+00:19:02,720 --> 00:19:08,799
+>> so that mean that receiving the two user
+
+472
+00:19:06,480 --> 00:19:10,640
+>> yes so there's always the user feedback
+
+473
+00:19:08,799 --> 00:19:12,720
+where the user says what you give me is
+
+474
+00:19:10,640 --> 00:19:15,200
+is not right so then [snorts]
+
+475
+00:19:12,720 --> 00:19:16,960
+the model has to redo the job
+
+476
+00:19:15,200 --> 00:19:18,720
+>> that's same as doing like someone has
+
+477
+00:19:16,960 --> 00:19:20,240
+given you an assignment And then if it's
+
+478
+00:19:18,720 --> 00:19:25,120
+not to the satisfaction, you got to
+
+479
+00:19:20,240 --> 00:19:28,080
+redo, right? Uh, okay, that's fair. How
+
+480
+00:19:25,120 --> 00:19:32,120
+does memory play out in all of this or
+
+481
+00:19:28,080 --> 00:19:32,120
+context? What's in context?
+
+482
+00:19:32,400 --> 00:19:36,720
+We covered like we had a whole lecture
+
+483
+00:19:34,000 --> 00:19:39,200
+on memory.
+
+484
+00:19:36,720 --> 00:19:42,400
+>> Why is memory important?
+
+485
+00:19:39,200 --> 00:19:46,000
+>> Okay. So sometimes the agents have like
+
+486
+00:19:42,400 --> 00:19:48,160
+atomic memory nominal
+
+487
+00:19:46,000 --> 00:19:51,600
+code base. So like that's kind of like
+
+488
+00:19:48,160 --> 00:19:52,960
+sampling from the updating the partner
+
+489
+00:19:51,600 --> 00:19:56,240
+so it knows better like what the
+
+490
+00:19:52,960 --> 00:19:59,760
+environment looks like.
+
+491
+00:19:56,240 --> 00:20:02,080
+>> Okay. So what is saying is that uh
+
+492
+00:19:59,760 --> 00:20:03,840
+sometimes the agent might actually uh
+
+493
+00:20:02,080 --> 00:20:05,440
+need to understand what the environment
+
+494
+00:20:03,840 --> 00:20:07,120
+is better. So for example an
+
+495
+00:20:05,440 --> 00:20:09,039
+understanding of the code bases. So
+
+496
+00:20:07,120 --> 00:20:10,240
+having memory helps uh keep that
+
+497
+00:20:09,039 --> 00:20:13,520
+understanding of if it's going to
+
+498
+00:20:10,240 --> 00:20:15,694
+operate over similar codebase. Um okay
+
+499
+00:20:13,520 --> 00:20:19,120
+thank you.
+
+500
+00:20:15,694 --> 00:20:21,120
+[snorts] Okay let's keep going. So now
+
+501
+00:20:19,120 --> 00:20:24,320
+let's take a look at reliability aspect
+
+502
+00:20:21,120 --> 00:20:26,000
+of it. So capability is only one u axis
+
+503
+00:20:24,320 --> 00:20:28,400
+along which we want these models to do
+
+504
+00:20:26,000 --> 00:20:30,559
+better. Reliability is the other one. So
+
+505
+00:20:28,400 --> 00:20:32,559
+what we are measuring here is again
+
+506
+00:20:30,559 --> 00:20:34,880
+x-axis is the model release date and now
+
+507
+00:20:32,559 --> 00:20:36,799
+we want to see how the models do at 80%
+
+508
+00:20:34,880 --> 00:20:39,840
+success rate. So the gray line is the
+
+509
+00:20:36,799 --> 00:20:43,120
+50% uh reliability one and then the blue
+
+510
+00:20:39,840 --> 00:20:45,919
+line is the 80% success rate um and
+
+511
+00:20:43,120 --> 00:20:48,480
+y-axis is uh the time taken by the
+
+512
+00:20:45,919 --> 00:20:50,320
+models to complete u the tasks. So what
+
+513
+00:20:48,480 --> 00:20:52,400
+you see here is that while we were
+
+514
+00:20:50,320 --> 00:20:55,280
+claiming that you can get all the way up
+
+515
+00:20:52,400 --> 00:20:57,840
+to 59 minutes in 2025 with the latest
+
+516
+00:20:55,280 --> 00:20:59,840
+and greatest models, uh if you want high
+
+517
+00:20:57,840 --> 00:21:02,480
+reliability, you are still at a few
+
+518
+00:20:59,840 --> 00:21:05,200
+minutes or or uh maybe tens of minutes.
+
+519
+00:21:02,480 --> 00:21:07,120
+And uh so to get 80% success rate with
+
+520
+00:21:05,200 --> 00:21:08,720
+the models, there's a big delta between
+
+521
+00:21:07,120 --> 00:21:10,480
+the 59 minutes that we were claiming
+
+522
+00:21:08,720 --> 00:21:12,880
+claiming with the best [snorts] model
+
+523
+00:21:10,480 --> 00:21:16,000
+versus uh at 80% success rate, you're
+
+524
+00:21:12,880 --> 00:21:18,400
+still closer to say somewhere around
+
+525
+00:21:16,000 --> 00:21:19,919
+8 to 10 minutes. So, so that that's big
+
+526
+00:21:18,400 --> 00:21:21,600
+delta roughly tells you that there's a
+
+527
+00:21:19,919 --> 00:21:24,000
+lot of headroom to make in terms of
+
+528
+00:21:21,600 --> 00:21:28,679
+reliability so that the model comes back
+
+529
+00:21:24,000 --> 00:21:28,679
+and is successful most of the time.
+
+530
+00:21:30,080 --> 00:21:33,919
+>> Yes.
+
+531
+00:21:31,679 --> 00:21:35,440
+>> So, do you [clears throat] believe this
+
+532
+00:21:33,919 --> 00:21:36,799
+based on your experience?
+
+533
+00:21:35,440 --> 00:21:38,880
+>> Let's ask that question at the end of
+
+534
+00:21:36,799 --> 00:21:41,520
+the lecture because you will have a lot
+
+535
+00:21:38,880 --> 00:21:43,840
+more. I mean the whole lecture is about
+
+536
+00:21:41,520 --> 00:21:46,080
+this.
+
+537
+00:21:43,840 --> 00:21:47,520
+Oh, just wondering what paper is this
+
+538
+00:21:46,080 --> 00:21:49,919
+brought from.
+
+539
+00:21:47,520 --> 00:21:50,480
+>> This is from the paper. Paper is posted
+
+540
+00:21:49,919 --> 00:21:52,720
+online.
+
+541
+00:21:50,480 --> 00:21:55,520
+>> Oh, the the first paper.
+
+542
+00:21:52,720 --> 00:21:59,480
+>> Yeah. Yeah. I the both the paper and the
+
+543
+00:21:55,520 --> 00:21:59,480
+slides are online right now.
+
+544
+00:21:59,600 --> 00:22:05,120
+>> So, basically uh 80% horizon is uh basic
+
+545
+00:22:02,960 --> 00:22:07,760
+uh is still showing doubling time uh
+
+546
+00:22:05,120 --> 00:22:10,159
+similar uh time horizons uh but it is
+
+547
+00:22:07,760 --> 00:22:12,480
+saying that you have uh five five it's
+
+548
+00:22:10,159 --> 00:22:14,960
+five weeks shorter. So the 15 minutes is
+
+549
+00:22:12,480 --> 00:22:17,600
+what cloud 3.7 can achieve 80% of the
+
+550
+00:22:14,960 --> 00:22:20,320
+time versus 59 minutes uh 50% of the
+
+551
+00:22:17,600 --> 00:22:22,400
+time. So this gap basically says that if
+
+552
+00:22:20,320 --> 00:22:24,640
+you're trying to deploy these uh models
+
+553
+00:22:22,400 --> 00:22:26,159
+in real world tasks then this is um
+
+554
+00:22:24,640 --> 00:22:28,080
+there will be reliability challenges
+
+555
+00:22:26,159 --> 00:22:30,320
+even for moderately complex tasks. So
+
+556
+00:22:28,080 --> 00:22:32,240
+that requires bu there's definitely a
+
+557
+00:22:30,320 --> 00:22:35,440
+lot of headroom in how we build systems
+
+558
+00:22:32,240 --> 00:22:37,520
+on top of these models.
+
+559
+00:22:35,440 --> 00:22:39,760
+And an important question to ask is what
+
+560
+00:22:37,520 --> 00:22:42,480
+are the kind of failures that we uh run
+
+561
+00:22:39,760 --> 00:22:44,240
+into with these models and this is uh
+
+562
+00:22:42,480 --> 00:22:46,080
+looking at both GPD4 which is a
+
+563
+00:22:44,240 --> 00:22:47,840
+non-reasoning model and 01 which is a
+
+564
+00:22:46,080 --> 00:22:49,440
+reasoning model. Now this paper is a bit
+
+565
+00:22:47,840 --> 00:22:51,360
+older and you can like refer to things
+
+566
+00:22:49,440 --> 00:22:54,000
+that are a bit newer but at the same
+
+567
+00:22:51,360 --> 00:22:56,159
+time the kind of failure modes are very
+
+568
+00:22:54,000 --> 00:22:57,760
+similar in in many cases. So we can take
+
+569
+00:22:56,159 --> 00:23:00,720
+a look here. So the kind of failure
+
+570
+00:22:57,760 --> 00:23:02,400
+modes that they found are closer to uh
+
+571
+00:23:00,720 --> 00:23:04,559
+either poor planning. So the model
+
+572
+00:23:02,400 --> 00:23:07,760
+doesn't know how to break the task it
+
+573
+00:23:04,559 --> 00:23:09,760
+was given down into steps. Um poor tool
+
+574
+00:23:07,760 --> 00:23:12,320
+choice so that the set of tools that it
+
+575
+00:23:09,760 --> 00:23:14,159
+tries to choose here uh may or may not
+
+576
+00:23:12,320 --> 00:23:17,360
+be correct and and there were errors
+
+577
+00:23:14,159 --> 00:23:20,240
+along both these axes in the uh GBD4 and
+
+578
+00:23:17,360 --> 00:23:22,720
+01. Um a second failure type is
+
+579
+00:23:20,240 --> 00:23:25,440
+incorrect mental math or reasoning style
+
+580
+00:23:22,720 --> 00:23:27,440
+task. So here the model is basically
+
+581
+00:23:25,440 --> 00:23:29,520
+doing some sort of math or reasoning but
+
+582
+00:23:27,440 --> 00:23:31,520
+it's doing it incorrectly.
+
+583
+00:23:29,520 --> 00:23:34,159
+Another failure type is that prematurely
+
+584
+00:23:31,520 --> 00:23:35,840
+it abandons the tasks because it goes
+
+585
+00:23:34,159 --> 00:23:37,760
+around some repetitive behavior but is
+
+586
+00:23:35,840 --> 00:23:41,039
+not quite able to figure out what it
+
+587
+00:23:37,760 --> 00:23:43,520
+means for the task to be successful. Um
+
+588
+00:23:41,039 --> 00:23:44,960
+another failure mode uh is that the the
+
+589
+00:23:43,520 --> 00:23:46,720
+model will basically get into a
+
+590
+00:23:44,960 --> 00:23:49,039
+repetitive loop. So it will basically go
+
+591
+00:23:46,720 --> 00:23:50,559
+do some actions and then um that's still
+
+592
+00:23:49,039 --> 00:23:52,400
+the highest probability action even
+
+593
+00:23:50,559 --> 00:23:54,720
+after it has failed. So it then goes and
+
+594
+00:23:52,400 --> 00:23:56,720
+does that action again. Um so it might
+
+595
+00:23:54,720 --> 00:23:58,720
+basically be with high probability
+
+596
+00:23:56,720 --> 00:24:01,520
+repeating the same action. So with GBD4
+
+597
+00:23:58,720 --> 00:24:03,679
+this was uh pretty high for for O1 this
+
+598
+00:24:01,520 --> 00:24:05,760
+has u become lower and then there's
+
+599
+00:24:03,679 --> 00:24:07,840
+other category of tasks that they showed
+
+600
+00:24:05,760 --> 00:24:09,520
+um there are other categories of
+
+601
+00:24:07,840 --> 00:24:11,360
+failures that they showed are also
+
+602
+00:24:09,520 --> 00:24:14,640
+prevalent but this gives you a sense of
+
+603
+00:24:11,360 --> 00:24:17,600
+like planning tool choice um reasoning
+
+604
+00:24:14,640 --> 00:24:19,679
+errors um not being able to figure out
+
+605
+00:24:17,600 --> 00:24:21,360
+when to when the task is completed and
+
+606
+00:24:19,679 --> 00:24:22,720
+then just repetitive loops tend to be
+
+607
+00:24:21,360 --> 00:24:25,600
+some of the failure modes for these
+
+608
+00:24:22,720 --> 00:24:27,919
+models and failure mode analysis is very
+
+609
+00:24:25,600 --> 00:24:31,640
+useful in understanding where the models
+
+610
+00:24:27,919 --> 00:24:31,640
+can or cannot improve.
+
+611
+00:24:32,080 --> 00:24:35,200
+>> Okay.
+
+612
+00:24:32,799 --> 00:24:38,000
+>> Is this a common
+
+613
+00:24:35,200 --> 00:24:39,440
+typically
+
+614
+00:24:38,000 --> 00:24:43,440
+different categories or
+
+615
+00:24:39,440 --> 00:24:45,520
+>> Yes. Okay. So that you like
+
+616
+00:24:43,440 --> 00:24:47,679
+>> not similar categories but it's common
+
+617
+00:24:45,520 --> 00:24:48,559
+to evaluate the models and then if
+
+618
+00:24:47,679 --> 00:24:50,640
+you're saying that you have a
+
+619
+00:24:48,559 --> 00:24:53,039
+challenging benchmark then you would
+
+620
+00:24:50,640 --> 00:24:55,360
+showcase where do the models fail what
+
+621
+00:24:53,039 --> 00:24:59,360
+is the common failure pattern
+
+622
+00:24:55,360 --> 00:25:03,520
+>> and the thing is human
+
+623
+00:24:59,360 --> 00:25:05,440
+>> human or or self-inflicted pain.
+
+624
+00:25:03,520 --> 00:25:08,559
+So you go evaluate the model yourself
+
+625
+00:25:05,440 --> 00:25:10,559
+and see where it's failing. I think we
+
+626
+00:25:08,559 --> 00:25:13,520
+have been asking you guys to do that for
+
+627
+00:25:10,559 --> 00:25:16,000
+homeworks where you go actually try to
+
+628
+00:25:13,520 --> 00:25:20,600
+do the selfative refinement then you
+
+629
+00:25:16,000 --> 00:25:20,600
+have to evaluate where the model failed.
+
+630
+00:25:21,200 --> 00:25:26,159
+Okay. So uh some of the some of the
+
+631
+00:25:23,760 --> 00:25:29,039
+challenges in uh this benchmark so like
+
+632
+00:25:26,159 --> 00:25:31,120
+the so no benchmark is ever perfect. U
+
+633
+00:25:29,039 --> 00:25:33,440
+every benchmark has some challenges. So
+
+634
+00:25:31,120 --> 00:25:34,960
+some of the things um that METR did get
+
+635
+00:25:33,440 --> 00:25:37,039
+right is that it's a first attempt at
+
+636
+00:25:34,960 --> 00:25:39,919
+measuring what is the time horizon of
+
+637
+00:25:37,039 --> 00:25:42,320
+tasks that these models can complete and
+
+638
+00:25:39,919 --> 00:25:45,679
+some of the challenges u that the model
+
+639
+00:25:42,320 --> 00:25:48,000
+does um does not quite solve is that it
+
+640
+00:25:45,679 --> 00:25:50,240
+has lower performance on tasks that are
+
+641
+00:25:48,000 --> 00:25:52,000
+messy like where there's not one single
+
+642
+00:25:50,240 --> 00:25:55,200
+correct answer or there's some amount of
+
+643
+00:25:52,000 --> 00:25:57,760
+complexity involved. uh but if you have
+
+644
+00:25:55,200 --> 00:25:59,760
+some amount of messiness then um like
+
+645
+00:25:57,760 --> 00:26:02,480
+similar trends will be there at in
+
+646
+00:25:59,760 --> 00:26:04,880
+different categories of tasks. Another
+
+647
+00:26:02,480 --> 00:26:07,360
+one is that if you try to do a look at
+
+648
+00:26:04,880 --> 00:26:09,200
+SWE um
+
+649
+00:26:07,360 --> 00:26:11,200
+SWEBench similar has a similar trend to
+
+650
+00:26:09,200 --> 00:26:14,400
+what we were showing in in in the all
+
+651
+00:26:11,200 --> 00:26:16,880
+the plots before but um the annotators
+
+652
+00:26:14,400 --> 00:26:18,799
+generally underestimate SWEBench and the
+
+653
+00:26:16,880 --> 00:26:21,200
+models also have seen most of the GitHub
+
+654
+00:26:18,799 --> 00:26:23,279
+repositories. So a lot of the um
+
+655
+00:26:21,200 --> 00:26:25,679
+estimates that are made on swbanch tend
+
+656
+00:26:23,279 --> 00:26:27,919
+to be shorter in terms of doubling time
+
+657
+00:26:25,679 --> 00:26:30,159
+relative to if if it was in completely
+
+658
+00:26:27,919 --> 00:26:33,039
+unseen repository.
+
+659
+00:26:30,159 --> 00:26:35,440
+A third uh challenge with the with the
+
+660
+00:26:33,039 --> 00:26:37,679
+benchmark is that if you actually have
+
+661
+00:26:35,440 --> 00:26:40,159
+internal uh pull requests. So this is
+
+662
+00:26:37,679 --> 00:26:41,520
+for like internal code bases. Then what
+
+663
+00:26:40,159 --> 00:26:43,279
+has been found is that if you put
+
+664
+00:26:41,520 --> 00:26:44,880
+contractors on the job, people who don't
+
+665
+00:26:43,279 --> 00:26:47,360
+have context who have not been working
+
+666
+00:26:44,880 --> 00:26:49,279
+on that codebase versus you put code
+
+667
+00:26:47,360 --> 00:26:51,360
+maintainers on the job, the contractors
+
+668
+00:26:49,279 --> 00:26:54,240
+can be anywhere from 5 to 18x times
+
+669
+00:26:51,360 --> 00:26:56,240
+slower. And model performance is cons
+
+670
+00:26:54,240 --> 00:26:57,760
+consistent closer to contractor times
+
+671
+00:26:56,240 --> 00:27:00,720
+because it's basically never seen that
+
+672
+00:26:57,760 --> 00:27:03,039
+codebase before. So this suggests that
+
+673
+00:27:00,720 --> 00:27:05,360
+um when you're dealing with these models
+
+674
+00:27:03,039 --> 00:27:06,960
+going and solving these tasks this is
+
+675
+00:27:05,360 --> 00:27:09,679
+still very valuable but at the same time
+
+676
+00:27:06,960 --> 00:27:12,080
+it's operating more as not someone who
+
+677
+00:27:09,679 --> 00:27:14,320
+is an expert in that area or has the
+
+678
+00:27:12,080 --> 00:27:17,679
+context of that area it's more as a low
+
+679
+00:27:14,320 --> 00:27:19,520
+context human um who's basically been
+
+680
+00:27:17,679 --> 00:27:21,919
+asked to solve that problem similar to a
+
+681
+00:27:19,520 --> 00:27:24,799
+contractor.
+
+682
+00:27:21,919 --> 00:27:27,600
+So that's summarizing the first um
+
+683
+00:27:24,799 --> 00:27:29,200
+paper. Um but hopefully that gives you a
+
+684
+00:27:27,600 --> 00:27:31,360
+flavor of when we are measuring the
+
+685
+00:27:29,200 --> 00:27:33,039
+progress in AI, one of the axes in
+
+686
+00:27:31,360 --> 00:27:36,320
+agentic evaluations that becomes
+
+687
+00:27:33,039 --> 00:27:38,400
+important is to measure how long are the
+
+688
+00:27:36,320 --> 00:27:40,640
+tasks that uh the AI can complete
+
+689
+00:27:38,400 --> 00:27:42,559
+reliably.
+
+690
+00:27:40,640 --> 00:27:46,200
+Any questions or comments before we move
+
+691
+00:27:42,559 --> 00:27:46,200
+to the next section?
+
+692
+00:27:51,360 --> 00:27:54,559
+Okay.
+
+693
+00:27:52,960 --> 00:27:56,880
+Okay. So the next paper that we will
+
+694
+00:27:54,559 --> 00:27:59,600
+look at is GDP val which is evaluating
+
+695
+00:27:56,880 --> 00:28:02,559
+the model performance on real world uh
+
+696
+00:27:59,600 --> 00:28:05,600
+economically valuable tasks. So instead
+
+697
+00:28:02,559 --> 00:28:07,120
+of asking the question can AI do this
+
+698
+00:28:05,600 --> 00:28:09,840
+where you have a task that you want to
+
+699
+00:28:07,120 --> 00:28:12,399
+delegate to AI. Uh here the question is
+
+700
+00:28:09,840 --> 00:28:14,960
+very much around if we were to give this
+
+701
+00:28:12,399 --> 00:28:17,679
+task to the model instead of a human is
+
+702
+00:28:14,960 --> 00:28:19,360
+the output good enough and um the win
+
+703
+00:28:17,679 --> 00:28:22,480
+rate will be directly against industry
+
+704
+00:28:19,360 --> 00:28:24,480
+experts. Um so it will actually take the
+
+705
+00:28:22,480 --> 00:28:26,240
+task suite is designed as real work from
+
+706
+00:28:24,480 --> 00:28:29,679
+professionals who have more than a
+
+707
+00:28:26,240 --> 00:28:31,840
+decade of experience in their fields and
+
+708
+00:28:29,679 --> 00:28:33,440
+so you will see here that the kind of uh
+
+709
+00:28:31,840 --> 00:28:35,760
+professions that were used for task
+
+710
+00:28:33,440 --> 00:28:37,679
+suite design are pretty broad ranging
+
+711
+00:28:35,760 --> 00:28:40,480
+here. So it goes anywhere from say real
+
+712
+00:28:37,679 --> 00:28:42,240
+estate uh where you take a broad uh so a
+
+713
+00:28:40,480 --> 00:28:43,760
+broad range of tasks to government to
+
+714
+00:28:42,240 --> 00:28:45,520
+manufacturing
+
+715
+00:28:43,760 --> 00:28:48,559
+u professional scientific and technical
+
+716
+00:28:45,520 --> 00:28:51,279
+services healthcare finance retail
+
+717
+00:28:48,559 --> 00:28:53,120
+wholesale and information uh including
+
+718
+00:28:51,279 --> 00:28:54,960
+film and video editors. So it's actually
+
+719
+00:28:53,120 --> 00:28:57,120
+a pretty broad range of tasks and given
+
+720
+00:28:54,960 --> 00:29:00,399
+the models have become multimodal this
+
+721
+00:28:57,120 --> 00:29:02,320
+is does make sense. Um
+
+722
+00:29:00,399 --> 00:29:03,760
+the models will not be good at all of
+
+723
+00:29:02,320 --> 00:29:06,640
+these tasks. They will only be good at
+
+724
+00:29:03,760 --> 00:29:09,520
+some of these tasks of course. So let's
+
+725
+00:29:06,640 --> 00:29:12,080
+take a look at some example tasks here
+
+726
+00:29:09,520 --> 00:29:13,919
+and um also think about the tasks that
+
+727
+00:29:12,080 --> 00:29:16,720
+you think that the models u might be
+
+728
+00:29:13,919 --> 00:29:18,960
+good at as you uh go through this list.
+
+729
+00:29:16,720 --> 00:29:21,279
+So in manufacturing engineer it's being
+
+730
+00:29:18,960 --> 00:29:24,399
+asked to design a 3D model of a cable
+
+731
+00:29:21,279 --> 00:29:26,799
+reel stand uh for assembly line. In
+
+732
+00:29:24,399 --> 00:29:29,200
+financial and investment analyst, it's
+
+733
+00:29:26,799 --> 00:29:30,799
+being asked to uh create the competitive
+
+734
+00:29:29,200 --> 00:29:33,120
+landscape. So, it's a research heavy
+
+735
+00:29:30,799 --> 00:29:35,840
+task. In registered nurse, it's
+
+736
+00:29:33,120 --> 00:29:38,320
+basically assessing the images of a uh
+
+737
+00:29:35,840 --> 00:29:40,000
+issue and um creating a consultation
+
+738
+00:29:38,320 --> 00:29:43,679
+report.
+
+739
+00:29:40,000 --> 00:29:47,039
+Um in film and video editor, it's asking
+
+740
+00:29:43,679 --> 00:29:50,080
+um to create a intro real given some set
+
+741
+00:29:47,039 --> 00:29:53,440
+of script. In customer service, it's
+
+742
+00:29:50,080 --> 00:29:56,399
+being asked to draft an email response
+
+743
+00:29:53,440 --> 00:29:58,480
+uh for dissatisfi dissatisfied customer.
+
+744
+00:29:56,399 --> 00:30:01,279
+In concurge, it's basically creating an
+
+745
+00:29:58,480 --> 00:30:03,919
+itenary for a family of four.
+
+746
+00:30:01,279 --> 00:30:06,799
+Um in audit uh it's basically figuring
+
+747
+00:30:03,919 --> 00:30:08,799
+out pricing uh inconsistencies between
+
+748
+00:30:06,799 --> 00:30:10,960
+given uh a few different purchase
+
+749
+00:30:08,799 --> 00:30:12,799
+orders. For a real estate agent, it's
+
+750
+00:30:10,960 --> 00:30:14,799
+designing a sales brochure for a new
+
+751
+00:30:12,799 --> 00:30:17,520
+property. And in a recreation worker,
+
+752
+00:30:14,799 --> 00:30:22,960
+it's basically asked to optimize the
+
+753
+00:30:17,520 --> 00:30:25,120
+layout for a uh a vendor fair.
+
+754
+00:30:22,960 --> 00:30:27,200
+What do people think? These are very
+
+755
+00:30:25,120 --> 00:30:29,520
+real tasks from like act actually
+
+756
+00:30:27,200 --> 00:30:33,360
+sourced from professionals uh in their
+
+757
+00:30:29,520 --> 00:30:36,640
+fields. Very interesting, right?
+
+758
+00:30:33,360 --> 00:30:39,520
+Many things is like very subjective to
+
+759
+00:30:36,640 --> 00:30:42,480
+>> very subjective to
+
+760
+00:30:39,520 --> 00:30:43,279
+I mean what I feel is going to be what
+
+761
+00:30:42,480 --> 00:30:45,200
+YouTube
+
+762
+00:30:43,279 --> 00:30:47,120
+>> yeah so that's why the success metric
+
+763
+00:30:45,200 --> 00:30:48,960
+here will be win rate right it's not
+
+764
+00:30:47,120 --> 00:30:51,360
+like if you put humans on the job versus
+
+765
+00:30:48,960 --> 00:30:53,120
+you put uh models on the job what is the
+
+766
+00:30:51,360 --> 00:30:54,960
+win rate and and there might be specific
+
+767
+00:30:53,120 --> 00:30:58,960
+style and that the model chooses that
+
+768
+00:30:54,960 --> 00:31:00,960
+doesn't quite hold for all cases
+
+769
+00:30:58,960 --> 00:31:03,039
+yes so it's subjective and at the same
+
+770
+00:31:00,960 --> 00:31:05,200
+time that subject Objective nature also
+
+771
+00:31:03,039 --> 00:31:07,360
+makes makes one of the challenges right
+
+772
+00:31:05,200 --> 00:31:09,760
+that's why real world work requires both
+
+773
+00:31:07,360 --> 00:31:13,000
+context and subjectivity in how things
+
+774
+00:31:09,760 --> 00:31:13,000
+get evaluated
+
+775
+00:31:13,360 --> 00:31:17,919
+what are other real world tasks that
+
+776
+00:31:14,880 --> 00:31:20,720
+people have seen that are interesting
+
+777
+00:31:17,919 --> 00:31:22,320
+related to this
+
+778
+00:31:20,720 --> 00:31:25,840
+you brought up about like you put
+
+779
+00:31:22,320 --> 00:31:28,240
+private wiki QA and and use that to
+
+780
+00:31:25,840 --> 00:31:29,600
+query the knowledge base in your in your
+
+781
+00:31:28,240 --> 00:31:32,000
+job
+
+782
+00:31:29,600 --> 00:31:34,080
+>> that feeling of coming in That's what
+
+783
+00:31:32,000 --> 00:31:36,080
+we're finding. It's actually better
+
+784
+00:31:34,080 --> 00:31:39,279
+finding dead parts of the wiki that are
+
+785
+00:31:36,080 --> 00:31:41,519
+no longer useful.
+
+786
+00:31:39,279 --> 00:31:44,519
+>> It's only wiki.
+
+787
+00:31:41,519 --> 00:31:44,519
+>> Nice.
+
+788
+00:31:47,840 --> 00:31:51,320
+>> Any other ideas?
+
+789
+00:31:53,279 --> 00:31:59,120
+>> Other tasks. Yeah. So doctor is not
+
+790
+00:31:55,919 --> 00:32:02,799
+claiming they has no respect. I feel for
+
+791
+00:31:59,120 --> 00:32:05,519
+controversial topics if not there
+
+792
+00:32:02,799 --> 00:32:07,679
+is something
+
+793
+00:32:05,519 --> 00:32:11,120
+>> or like on the lawyer side whether this
+
+794
+00:32:07,679 --> 00:32:12,799
+person based on those context are like
+
+795
+00:32:11,120 --> 00:32:15,360
+commitment
+
+796
+00:32:12,799 --> 00:32:18,000
+>> so I think lawyers are here uh for
+
+797
+00:32:15,360 --> 00:32:20,080
+example there are tasks I think uh we
+
+798
+00:32:18,000 --> 00:32:21,440
+should separate out there's definitely a
+
+799
+00:32:20,080 --> 00:32:23,120
+question around whether the models are
+
+800
+00:32:21,440 --> 00:32:27,039
+good at it and whether we want to use
+
+801
+00:32:23,120 --> 00:32:28,880
+them for ethics and and actual um
+
+802
+00:32:27,039 --> 00:32:30,720
+compliance reasons. So I think those two
+
+803
+00:32:28,880 --> 00:32:34,480
+questions need to be separated out from
+
+804
+00:32:30,720 --> 00:32:36,960
+what models can do today and um so this
+
+805
+00:32:34,480 --> 00:32:39,919
+is more about is the model output good
+
+806
+00:32:36,960 --> 00:32:42,399
+enough in the subjective areas I'm
+
+807
+00:32:39,919 --> 00:32:45,039
+trying to see if uh doctors so there's
+
+808
+00:32:42,399 --> 00:32:47,120
+registered nurses um there's a lot of
+
+809
+00:32:45,039 --> 00:32:48,880
+tasks but they put registered nurses and
+
+810
+00:32:47,120 --> 00:32:50,880
+nurse practitioners in healthcare more
+
+811
+00:32:48,880 --> 00:32:53,440
+than doctors. Okay. What about the
+
+812
+00:32:50,880 --> 00:32:56,720
+people who do like for the information s
+
+813
+00:32:53,440 --> 00:32:57,919
+they don't mention like musician
+
+814
+00:32:56,720 --> 00:33:00,240
+>> say that again
+
+815
+00:32:57,919 --> 00:33:02,480
+>> compose a song
+
+816
+00:33:00,240 --> 00:33:04,159
+>> or birthday song or for someone
+
+817
+00:33:02,480 --> 00:33:07,519
+>> I see okay
+
+818
+00:33:04,159 --> 00:33:09,039
+>> so they yes that's correct so maybe
+
+819
+00:33:07,519 --> 00:33:10,799
+there's an emotion task that will show
+
+820
+00:33:09,039 --> 00:33:13,519
+up but that's not part of this benchmark
+
+821
+00:33:10,799 --> 00:33:15,840
+just yet
+
+822
+00:33:13,519 --> 00:33:18,240
+>> one comment on that maybe for like music
+
+823
+00:33:15,840 --> 00:33:20,799
+like composing music the verification is
+
+824
+00:33:18,240 --> 00:33:22,960
+quite subjective or it's harder to say
+
+825
+00:33:20,799 --> 00:33:25,760
+like I guess you can make sort of like
+
+826
+00:33:22,960 --> 00:33:27,919
+main music and among them it's hard to
+
+827
+00:33:25,760 --> 00:33:30,399
+differentiate and I feel like maybe like
+
+828
+00:33:27,919 --> 00:33:32,159
+what you're trying to like so that they
+
+829
+00:33:30,399 --> 00:33:34,880
+can kind of there is a deliverable
+
+830
+00:33:32,159 --> 00:33:35,840
+that's fairly clear if it is working or
+
+831
+00:33:34,880 --> 00:33:38,840
+not.
+
+832
+00:33:35,840 --> 00:33:38,840
+>> Mhm.
+
+833
+00:33:40,320 --> 00:33:45,919
+>> Okay. So top down uh this data set this
+
+834
+00:33:43,760 --> 00:33:48,159
+evaluation data set targets about nine
+
+835
+00:33:45,919 --> 00:33:50,640
+sectors and they actually went for top
+
+836
+00:33:48,159 --> 00:33:52,320
+5% of the GDP. So they're asking what
+
+837
+00:33:50,640 --> 00:33:53,919
+are the most economically valuable tasks
+
+838
+00:33:52,320 --> 00:33:56,720
+and whether the models are good enough
+
+839
+00:33:53,919 --> 00:34:00,320
+at that. They cover about 44 occupations
+
+840
+00:33:56,720 --> 00:34:03,679
+and sourced about 30 20 tasks through
+
+841
+00:34:00,320 --> 00:34:05,360
+that um and two uh 200 of them or 220 of
+
+842
+00:34:03,679 --> 00:34:07,200
+them are actually in an open goal set
+
+843
+00:34:05,360 --> 00:34:10,079
+that is on hiking phase. Uh
+
+844
+00:34:07,200 --> 00:34:13,760
+predominantly went for um digital tasks.
+
+845
+00:34:10,079 --> 00:34:18,079
+So tasks on computer uh which is um 60%
+
+846
+00:34:13,760 --> 00:34:20,240
+of the so Ostar net is a texonomy of all
+
+847
+00:34:18,079 --> 00:34:23,440
+tasks um that are related to
+
+848
+00:34:20,240 --> 00:34:25,760
+occupations. So 60% of the OAR net tasks
+
+849
+00:34:23,440 --> 00:34:28,079
+that are computer- based uh and digital
+
+850
+00:34:25,760 --> 00:34:31,119
+made it into this evaluation data set
+
+851
+00:34:28,079 --> 00:34:33,359
+and this basically uh is a pretty
+
+852
+00:34:31,119 --> 00:34:35,599
+representative coverage of uh various
+
+853
+00:34:33,359 --> 00:34:37,520
+set of tasks that uh an occupational
+
+854
+00:34:35,599 --> 00:34:40,000
+expert will need to do in these
+
+855
+00:34:37,520 --> 00:34:42,079
+particular sectors.
+
+856
+00:34:40,000 --> 00:34:45,040
+And in terms of uh the characteristics
+
+857
+00:34:42,079 --> 00:34:46,960
+of tasks that people went after, uh they
+
+858
+00:34:45,040 --> 00:34:49,040
+might have as long as seven hours of
+
+859
+00:34:46,960 --> 00:34:52,000
+completion time on average, but some
+
+860
+00:34:49,040 --> 00:34:54,079
+might require weeks. Um
+
+861
+00:34:52,000 --> 00:34:56,399
+the tasks were both text based and
+
+862
+00:34:54,079 --> 00:34:58,480
+multimodal. So like CAD, video, audio,
+
+863
+00:34:56,399 --> 00:35:00,320
+spreadsheets, presentations. Uh the
+
+864
+00:34:58,480 --> 00:35:02,640
+average value of the task at least in
+
+865
+00:35:00,320 --> 00:35:05,760
+the gold subset was anywhere from say
+
+866
+00:35:02,640 --> 00:35:08,160
+$400 uh per task. Um but if anyone has
+
+867
+00:35:05,760 --> 00:35:10,400
+se seen swelancer there's also like much
+
+868
+00:35:08,160 --> 00:35:13,200
+higher value tasks. So this one also has
+
+869
+00:35:10,400 --> 00:35:15,359
+high value and low value tasks. Many of
+
+870
+00:35:13,200 --> 00:35:17,280
+these tasks about 70% of these tasks
+
+871
+00:35:15,359 --> 00:35:18,960
+require interaction with the reference
+
+872
+00:35:17,280 --> 00:35:21,280
+files. So you have to interact with some
+
+873
+00:35:18,960 --> 00:35:25,040
+reference files to uh arrive at a final
+
+874
+00:35:21,280 --> 00:35:28,320
+output. And um the all of these tasks
+
+875
+00:35:25,040 --> 00:35:30,560
+were vetted through experts. So uh about
+
+876
+00:35:28,320 --> 00:35:32,480
+89% of the tasks were actually vetted by
+
+877
+00:35:30,560 --> 00:35:34,720
+experts as being very well specified. So
+
+878
+00:35:32,480 --> 00:35:36,640
+they were not like ill specified and and
+
+879
+00:35:34,720 --> 00:35:39,119
+extremely hard for the model just
+
+880
+00:35:36,640 --> 00:35:42,000
+because they're illsp specified. So if
+
+881
+00:35:39,119 --> 00:35:44,240
+you look at the trend uh so on the
+
+882
+00:35:42,000 --> 00:35:47,920
+x-axis now you see different models all
+
+883
+00:35:44,240 --> 00:35:51,200
+the way from GPD 40 to GPD5 high to cla
+
+884
+00:35:47,920 --> 00:35:54,160
+uh opus 4.1 and on the y-axis you're
+
+885
+00:35:51,200 --> 00:35:55,920
+looking at win rate versus um the
+
+886
+00:35:54,160 --> 00:35:57,359
+industry professional. So basically if
+
+887
+00:35:55,920 --> 00:35:59,520
+you had an expert with more than a
+
+888
+00:35:57,359 --> 00:36:02,560
+decade of experience uh solving it
+
+889
+00:35:59,520 --> 00:36:04,560
+versus uh the model solving it. So light
+
+890
+00:36:02,560 --> 00:36:06,560
+blue is wins plus ties and dark blue is
+
+891
+00:36:04,560 --> 00:36:10,000
+wins only. Uh there's a pair-wise
+
+892
+00:36:06,560 --> 00:36:12,320
+preferences. Uh so if you look at GPD40
+
+893
+00:36:10,000 --> 00:36:14,240
+on an average the average numbers don't
+
+894
+00:36:12,320 --> 00:36:17,440
+mean that every single task was solved
+
+895
+00:36:14,240 --> 00:36:22,079
+like that go anywhere from say 12.4%. So
+
+896
+00:36:17,440 --> 00:36:24,560
+that's 2024 uh to it starts to get to 25
+
+897
+00:36:22,079 --> 00:36:27,200
+and then more recently it is in 30s and
+
+898
+00:36:24,560 --> 00:36:30,000
+then now with claude opus 4.1 it starts
+
+899
+00:36:27,200 --> 00:36:32,000
+to get to like 47.6. So that's a very
+
+900
+00:36:30,000 --> 00:36:33,440
+different trend compared to METR where
+
+901
+00:36:32,000 --> 00:36:35,920
+we were talking about this doubling
+
+902
+00:36:33,440 --> 00:36:38,160
+trend every seven months. It's more of a
+
+903
+00:36:35,920 --> 00:36:40,079
+linear uh trend roughly compared to the
+
+904
+00:36:38,160 --> 00:36:42,720
+exponential trend that METR was talking
+
+905
+00:36:40,079 --> 00:36:44,400
+about. And at the same time uh this is
+
+906
+00:36:42,720 --> 00:36:46,000
+real work where you are comparing
+
+907
+00:36:44,400 --> 00:36:47,680
+relative to an expert. So the
+
+908
+00:36:46,000 --> 00:36:49,200
+measurement is very much based on
+
+909
+00:36:47,680 --> 00:36:50,800
+whether this task whether the model
+
+910
+00:36:49,200 --> 00:36:53,520
+output was good enough or not. So the
+
+911
+00:36:50,800 --> 00:36:57,440
+reliability or rather the model output
+
+912
+00:36:53,520 --> 00:36:59,920
+being useful matters here.
+
+913
+00:36:57,440 --> 00:37:01,440
+questions.
+
+914
+00:36:59,920 --> 00:37:02,320
+>> Yes.
+
+915
+00:37:01,440 --> 00:37:05,440
+>> Is this [clears throat]
+
+916
+00:37:02,320 --> 00:37:08,079
+trend directly comparable to the meter
+
+917
+00:37:05,440 --> 00:37:10,160
+one though? Because here the by accident
+
+918
+00:37:08,079 --> 00:37:13,520
+is like win rate versus industry
+
+919
+00:37:10,160 --> 00:37:15,839
+professional as opposed to you know the
+
+920
+00:37:13,520 --> 00:37:18,800
+uh time prize and
+
+921
+00:37:15,839 --> 00:37:20,240
+>> that's in the in the other case. So yeah
+
+922
+00:37:18,800 --> 00:37:22,079
+should I really think about them and
+
+923
+00:37:20,240 --> 00:37:24,720
+disagreeing?
+
+924
+00:37:22,079 --> 00:37:25,920
+I would say that this say green versus
+
+925
+00:37:24,720 --> 00:37:28,480
+not because they're measuring different
+
+926
+00:37:25,920 --> 00:37:31,680
+metric as we said earlier on but I think
+
+927
+00:37:28,480 --> 00:37:34,480
+uh what it's roughly emphasizing is that
+
+928
+00:37:31,680 --> 00:37:37,280
+uh when you see an exponential trend uh
+
+929
+00:37:34,480 --> 00:37:39,599
+people often assume that okay so now the
+
+930
+00:37:37,280 --> 00:37:40,960
+now AI can do one hour so next it will
+
+931
+00:37:39,599 --> 00:37:42,320
+be able to do couple of hours and the
+
+932
+00:37:40,960 --> 00:37:44,400
+next it will be able to do couple of
+
+933
+00:37:42,320 --> 00:37:46,880
+days so there is that exponential trend
+
+934
+00:37:44,400 --> 00:37:50,160
+that gets people what this is saying is
+
+935
+00:37:46,880 --> 00:37:52,400
+that if you look at tasks that require
+
+936
+00:37:50,160 --> 00:37:55,119
+say several hours or a couple of days or
+
+937
+00:37:52,400 --> 00:37:57,200
+a couple of weeks then the models are
+
+938
+00:37:55,119 --> 00:37:59,200
+only so reliable in doing that and it's
+
+939
+00:37:57,200 --> 00:38:01,680
+actually breaking it down by profession.
+
+940
+00:37:59,200 --> 00:38:04,400
+So it kind of makes it more realistic by
+
+941
+00:38:01,680 --> 00:38:07,040
+nailing it down not just by numbers of
+
+942
+00:38:04,400 --> 00:38:11,800
+uh hours but more by this is real work
+
+943
+00:38:07,040 --> 00:38:11,800
+and can the AI models do it or not
+
+944
+00:38:13,040 --> 00:38:16,320
+>> other comments? Yeah,
+
+945
+00:38:14,079 --> 00:38:18,079
+>> I guess like this chart is like on the
+
+946
+00:38:16,320 --> 00:38:18,640
+aggregate level right across all the
+
+947
+00:38:18,079 --> 00:38:20,480
+professions.
+
+948
+00:38:18,640 --> 00:38:22,160
+>> We will look at the specific ones as
+
+949
+00:38:20,480 --> 00:38:24,000
+well. So there might be maybe ones that
+
+950
+00:38:22,160 --> 00:38:27,000
+are more susceptible or ignorant. I
+
+951
+00:38:24,000 --> 00:38:27,000
+guess
+
+952
+00:38:27,359 --> 00:38:31,440
+>> another set of comments with respect to
+
+953
+00:38:29,520 --> 00:38:34,400
+uh say the model specific strengths is
+
+954
+00:38:31,440 --> 00:38:36,320
+that broad always tends to be better I'd
+
+955
+00:38:34,400 --> 00:38:38,160
+say aesthetics document formatting
+
+956
+00:38:36,320 --> 00:38:41,040
+understanding PDFs spreadsheets and
+
+957
+00:38:38,160 --> 00:38:42,640
+presentations while um GBD5 often tends
+
+958
+00:38:41,040 --> 00:38:44,720
+to be better at say instruction
+
+959
+00:38:42,640 --> 00:38:46,400
+following correct calculations and just
+
+960
+00:38:44,720 --> 00:38:48,880
+textbased tasks. So that's something
+
+961
+00:38:46,400 --> 00:38:50,400
+that was noticed by this particular um
+
+962
+00:38:48,880 --> 00:38:52,480
+evaluation. [snorts]
+
+963
+00:38:50,400 --> 00:38:54,560
+And then if you look at failure modes
+
+964
+00:38:52,480 --> 00:38:56,480
+which is very important to analyze in uh
+
+965
+00:38:54,560 --> 00:38:58,640
+most of these benchmarks then often
+
+966
+00:38:56,480 --> 00:39:01,200
+times the common area of failure ends up
+
+967
+00:38:58,640 --> 00:39:03,760
+being instruction following. So uh a lot
+
+968
+00:39:01,200 --> 00:39:05,359
+of u a lot of the blue bars show
+
+969
+00:39:03,760 --> 00:39:09,040
+different instruction following errors
+
+970
+00:39:05,359 --> 00:39:11,040
+in in different models. Um often times u
+
+971
+00:39:09,040 --> 00:39:12,960
+the models will promise to look at the
+
+972
+00:39:11,040 --> 00:39:15,280
+reference data but then actually not
+
+973
+00:39:12,960 --> 00:39:16,880
+look at it. um they will override it
+
+974
+00:39:15,280 --> 00:39:19,119
+with whatever hallucination they want to
+
+975
+00:39:16,880 --> 00:39:21,520
+come up with and then uh there's also
+
+976
+00:39:19,119 --> 00:39:24,960
+formatting errors that tend to be a bit
+
+977
+00:39:21,520 --> 00:39:26,800
+of a problem um but GBD5 tends to have
+
+978
+00:39:24,960 --> 00:39:28,960
+fewer instruction following error is is
+
+979
+00:39:26,800 --> 00:39:30,400
+what was uh measured by this particular
+
+980
+00:39:28,960 --> 00:39:32,480
+benchmark [sighs]
+
+981
+00:39:30,400 --> 00:39:34,800
+uh related to the reference data. So our
+
+982
+00:39:32,480 --> 00:39:37,119
+next uh particular section of the uh
+
+983
+00:39:34,800 --> 00:39:39,040
+lecture will actually discuss more about
+
+984
+00:39:37,119 --> 00:39:40,960
+that like being able to consult a
+
+985
+00:39:39,040 --> 00:39:43,572
+knowledge base or a reference uh data
+
+986
+00:39:40,960 --> 00:39:47,240
+and why that's like an important
+
+987
+00:39:43,572 --> 00:39:47,240
+[snorts] skill to go test.
+
+988
+00:39:47,280 --> 00:39:51,280
+Okay. And then in terms of more on the
+
+989
+00:39:49,200 --> 00:39:54,480
+uh failure modes. So this was basically
+
+990
+00:39:51,280 --> 00:39:55,839
+measuring whether GPD5 um if you look at
+
+991
+00:39:54,480 --> 00:39:57,599
+the percentage of tasks that will
+
+992
+00:39:55,839 --> 00:39:59,440
+generally be seen as acceptable but
+
+993
+00:39:57,599 --> 00:40:02,079
+subpar if you like delegated that task
+
+994
+00:39:59,440 --> 00:40:04,079
+to the model uh what they found was that
+
+995
+00:40:02,079 --> 00:40:06,880
+roughly half the tasks were acceptable
+
+996
+00:40:04,079 --> 00:40:09,040
+but subpowered but then uh only 20% of
+
+997
+00:40:06,880 --> 00:40:12,960
+the tasks fell somewhere like okay the
+
+998
+00:40:09,040 --> 00:40:15,599
+model would genuinely be better. Um
+
+999
+00:40:12,960 --> 00:40:18,240
+and in 20 29% of the tasks were like bad
+
+1000
+00:40:15,599 --> 00:40:20,400
+or catastrophic where the model output
+
+1001
+00:40:18,240 --> 00:40:22,720
+was really not acceptable at all and
+
+1002
+00:40:20,400 --> 00:40:26,240
+there was some amount of uh disagreement
+
+1003
+00:40:22,720 --> 00:40:28,320
+between human graders uh with respect to
+
+1004
+00:40:26,240 --> 00:40:29,760
+whether they agree on um what the
+
+1005
+00:40:28,320 --> 00:40:31,440
+assessment of the model output is or
+
+1006
+00:40:29,760 --> 00:40:34,440
+not. So that also affects some of this
+
+1007
+00:40:31,440 --> 00:40:34,440
+analysis.
+
+1008
+00:40:34,720 --> 00:40:38,800
+Okay. Um and then another interesting
+
+1009
+00:40:37,040 --> 00:40:40,640
+thing is the is something that since
+
+1010
+00:40:38,800 --> 00:40:44,480
+this is a self-improving agents class.
+
+1011
+00:40:40,640 --> 00:40:45,920
+So um a lot of times if you basically do
+
+1012
+00:40:44,480 --> 00:40:47,599
+parallel sampling so if you try
+
+1013
+00:40:45,920 --> 00:40:50,960
+something or sequential sampling where
+
+1014
+00:40:47,599 --> 00:40:52,480
+you do something end times um then ask
+
+1015
+00:40:50,960 --> 00:40:54,480
+the model to fix itself based on
+
+1016
+00:40:52,480 --> 00:40:56,880
+whatever it was seeing that loop can
+
+1017
+00:40:54,480 --> 00:40:58,960
+often uh really improve. So what this
+
+1018
+00:40:56,880 --> 00:41:01,680
+particular table is showing is that you
+
+1019
+00:40:58,960 --> 00:41:03,599
+can either do naive just one trial or
+
+1020
+00:41:01,680 --> 00:41:06,079
+you can do uh so you can try one time or
+
+1021
+00:41:03,599 --> 00:41:07,680
+you can try n times where you basically
+
+1022
+00:41:06,079 --> 00:41:10,480
+uh every single time you do something
+
+1023
+00:41:07,680 --> 00:41:12,960
+you can improve uh the last iteration.
+
+1024
+00:41:10,480 --> 00:41:16,160
+So in terms of speed improvement uh what
+
+1025
+00:41:12,960 --> 00:41:19,200
+they found was that GBD5 was overall uh
+
+1026
+00:41:16,160 --> 00:41:22,240
+about 1.6x in in cost improvement if you
+
+1027
+00:41:19,200 --> 00:41:24,160
+could try end times and about 1.4 in
+
+1028
+00:41:22,240 --> 00:41:26,560
+speed improvement relative to an unaded
+
+1029
+00:41:24,160 --> 00:41:28,960
+expert. But there is still where it's
+
+1030
+00:41:26,560 --> 00:41:30,560
+successful. It is still less than 10% of
+
+1031
+00:41:28,960 --> 00:41:32,400
+the human expert salary. So there's
+
+1032
+00:41:30,560 --> 00:41:34,319
+definitely some subset of professions
+
+1033
+00:41:32,400 --> 00:41:37,680
+where the models are doing a pretty
+
+1034
+00:41:34,319 --> 00:41:39,359
+strong job uh and and are have the
+
+1035
+00:41:37,680 --> 00:41:41,440
+capability to take on that tasks
+
+1036
+00:41:39,359 --> 00:41:44,640
+completely.
+
+1037
+00:41:41,440 --> 00:41:47,440
+>> So so people also imagine exactly which
+
+1038
+00:41:44,640 --> 00:41:51,839
+>> we will get there.
+
+1039
+00:41:47,440 --> 00:41:54,400
+>> Um that's exactly where we're going.
+
+1040
+00:41:51,839 --> 00:41:56,880
+So in terms of performance variation um
+
+1041
+00:41:54,400 --> 00:42:00,079
+so by sectors in government, retail and
+
+1042
+00:41:56,880 --> 00:42:01,359
+wholesale um I think the broad items the
+
+1043
+00:42:00,079 --> 00:42:03,760
+broad categories are not that
+
+1044
+00:42:01,359 --> 00:42:06,880
+illustrative looking at a specific task
+
+1045
+00:42:03,760 --> 00:42:09,680
+help but they are the performance was
+
+1046
+00:42:06,880 --> 00:42:11,760
+near par relative to human experts by
+
+1047
+00:42:09,680 --> 00:42:13,920
+duration. uh the models were better at
+
+1048
+00:42:11,760 --> 00:42:16,240
+shorter tasks up to a few hours u
+
+1049
+00:42:13,920 --> 00:42:18,000
+definitely declines with longer tasks
+
+1050
+00:42:16,240 --> 00:42:20,319
+and uh we already discussed that on
+
+1051
+00:42:18,000 --> 00:42:21,760
+modality there some models were better
+
+1052
+00:42:20,319 --> 00:42:24,560
+at multimodal while others were better
+
+1053
+00:42:21,760 --> 00:42:26,880
+at text okay this is going to be an
+
+1054
+00:42:24,560 --> 00:42:28,400
+extremely dense uh plot but I think the
+
+1055
+00:42:26,880 --> 00:42:30,240
+thing to notice here in all of these
+
+1056
+00:42:28,400 --> 00:42:33,200
+plots is that the red line is the one
+
+1057
+00:42:30,240 --> 00:42:35,040
+where we are saying the human experts uh
+
+1058
+00:42:33,200 --> 00:42:36,880
+are and then all of these different
+
+1059
+00:42:35,040 --> 00:42:39,760
+colors are corresponding to different
+
+1060
+00:42:36,880 --> 00:42:42,960
+models. So if you look at places where
+
+1061
+00:42:39,760 --> 00:42:44,800
+the models are better or at least are
+
+1062
+00:42:42,960 --> 00:42:46,720
+almost at par with the human experts,
+
+1063
+00:42:44,800 --> 00:42:48,560
+you see that counter and rental clerk.
+
+1064
+00:42:46,720 --> 00:42:50,800
+So some of those tasks have already
+
+1065
+00:42:48,560 --> 00:42:53,280
+started to hit that. Real estate brokers
+
+1066
+00:42:50,800 --> 00:42:56,079
+for example, uh shipping, receiving and
+
+1067
+00:42:53,280 --> 00:42:58,000
+in inventory clerks, for example, buyers
+
+1068
+00:42:56,079 --> 00:43:01,599
+and purchasing agents, you can imagine
+
+1069
+00:42:58,000 --> 00:43:03,599
+why. Um computer and IT system managers
+
+1070
+00:43:01,599 --> 00:43:05,760
+are definitely like it's starting to hit
+
+1071
+00:43:03,599 --> 00:43:08,079
+where human an average human expertise
+
+1072
+00:43:05,760 --> 00:43:10,480
+would be. When I say average, this is
+
+1073
+00:43:08,079 --> 00:43:12,240
+not like um the best expert in the
+
+1074
+00:43:10,480 --> 00:43:14,480
+field. And then software developers
+
+1075
+00:43:12,240 --> 00:43:16,640
+definitely u a lot of the models are
+
+1076
+00:43:14,480 --> 00:43:19,760
+starting to hit capability in in typical
+
+1077
+00:43:16,640 --> 00:43:22,960
+software engineering tasks.
+
+1078
+00:43:19,760 --> 00:43:25,760
+I'm seeing some um interesting
+
+1079
+00:43:22,960 --> 00:43:27,680
+reactions from students in in class. Can
+
+1080
+00:43:25,760 --> 00:43:29,760
+I have some comments?
+
+1081
+00:43:27,680 --> 00:43:32,400
+for the software I know that you
+
+1082
+00:43:29,760 --> 00:43:34,960
+mentioned previously is like human is
+
+1083
+00:43:32,400 --> 00:43:39,520
+the 14 years of experience
+
+1084
+00:43:34,960 --> 00:43:42,079
+>> but software you it can be like the the
+
+1085
+00:43:39,520 --> 00:43:43,520
+range can be pretty wide so
+
+1086
+00:43:42,079 --> 00:43:45,119
+>> I I I think in case of software
+
+1087
+00:43:43,520 --> 00:43:46,960
+developers they probably went for more
+
+1088
+00:43:45,119 --> 00:43:48,720
+of the maintainers of the repository as
+
+1089
+00:43:46,960 --> 00:43:50,560
+opposed to like the decade of experience
+
+1090
+00:43:48,720 --> 00:43:52,160
+I think there are fields here where I
+
+1091
+00:43:50,560 --> 00:43:54,240
+mean for example industrial engineer
+
+1092
+00:43:52,160 --> 00:43:55,440
+mechanical engineer the the decade of
+
+1093
+00:43:54,240 --> 00:43:58,400
+experience matters and software
+
+1094
+00:43:55,440 --> 00:44:00,800
+developer knowing the software copies in
+
+1095
+00:43:58,400 --> 00:44:04,200
+in and out and in cases of that that
+
+1096
+00:44:00,800 --> 00:44:04,200
+part as well.
+
+1097
+00:44:05,680 --> 00:44:10,079
+Okay, this is another one of those plots
+
+1098
+00:44:07,520 --> 00:44:11,760
+but let's just focus on uh where uh
+
+1099
+00:44:10,079 --> 00:44:13,760
+we're seeing the models do extremely
+
+1100
+00:44:11,760 --> 00:44:16,720
+well. So again in government the
+
+1101
+00:44:13,760 --> 00:44:19,280
+administrative service managers um in
+
+1102
+00:44:16,720 --> 00:44:22,720
+compliance officers multiple uh models
+
+1103
+00:44:19,280 --> 00:44:24,480
+are doing extremely well. Um and then in
+
+1104
+00:44:22,720 --> 00:44:26,160
+medical and health service managers
+
+1105
+00:44:24,480 --> 00:44:28,240
+those tasks multiple models are doing
+
+1106
+00:44:26,160 --> 00:44:30,000
+extremely well in personal personal
+
+1107
+00:44:28,240 --> 00:44:32,000
+financial advisor and customer service
+
+1108
+00:44:30,000 --> 00:44:33,359
+representatives also you're starting to
+
+1109
+00:44:32,000 --> 00:44:35,359
+see that the models are starting to do
+
+1110
+00:44:33,359 --> 00:44:37,440
+extremely well but in general this give
+
+1111
+00:44:35,359 --> 00:44:39,599
+you gives you a glossery or a taxonomy
+
+1112
+00:44:37,440 --> 00:44:41,440
+of set of tasks that the models are
+
+1113
+00:44:39,599 --> 00:44:43,520
+starting to perform well in. And if
+
+1114
+00:44:41,440 --> 00:44:45,359
+you're looking at other tasks where the
+
+1115
+00:44:43,520 --> 00:44:47,200
+models are failing, I think this is a
+
+1116
+00:44:45,359 --> 00:44:51,480
+very good way to get a starting point on
+
+1117
+00:44:47,200 --> 00:44:51,480
+like what are the models failing at
+
+1118
+00:44:52,160 --> 00:44:56,960
+questions or comments.
+
+1119
+00:44:54,880 --> 00:45:00,160
+Okay, this is the last round I promise.
+
+1120
+00:44:56,960 --> 00:45:02,319
+Um, so first line supervisors and retail
+
+1121
+00:45:00,160 --> 00:45:04,640
+sales workers I think and in general in
+
+1122
+00:45:02,319 --> 00:45:07,119
+retail trading we are starting to see uh
+
+1123
+00:45:04,640 --> 00:45:10,640
+some uh some of those tasks taken on by
+
+1124
+00:45:07,119 --> 00:45:12,400
+the models as useful. Same for non-
+
+1125
+00:45:10,640 --> 00:45:14,800
+retail sales workers. So in general on
+
+1126
+00:45:12,400 --> 00:45:16,319
+the sales side in terms of editing tasks
+
+1127
+00:45:14,800 --> 00:45:18,960
+we are seeing the models do extremely
+
+1128
+00:45:16,319 --> 00:45:22,560
+well. Um in terms of research based
+
+1129
+00:45:18,960 --> 00:45:25,119
+tasks um uh both investigative and
+
+1130
+00:45:22,560 --> 00:45:27,760
+detection based detective based and news
+
+1131
+00:45:25,119 --> 00:45:29,760
+analysts and then sales representatives
+
+1132
+00:45:27,760 --> 00:45:32,319
+um wholesale and manufacturing those
+
+1133
+00:45:29,760 --> 00:45:34,960
+tasks seem to uh suggest that the models
+
+1134
+00:45:32,319 --> 00:45:36,400
+are doing extremely well. Um so these
+
+1135
+00:45:34,960 --> 00:45:38,319
+this gives you a flavor of the kind of
+
+1136
+00:45:36,400 --> 00:45:40,480
+task that the models are are performing
+
+1137
+00:45:38,319 --> 00:45:43,200
+strongly at.
+
+1138
+00:45:40,480 --> 00:45:44,800
+Overall if you underspecify the prompts
+
+1139
+00:45:43,200 --> 00:45:47,280
+so if you actually remove context from
+
+1140
+00:45:44,800 --> 00:45:49,680
+the prompt then the models do end up uh
+
+1141
+00:45:47,280 --> 00:45:51,599
+not doing that well. Um in their
+
+1142
+00:45:49,680 --> 00:45:54,079
+particular case there was a few points
+
+1143
+00:45:51,599 --> 00:45:55,920
+uh lower in terms of win rate but in
+
+1144
+00:45:54,079 --> 00:45:57,599
+terms of actual model output the models
+
+1145
+00:45:55,920 --> 00:45:59,760
+actually struggle to figure out what to
+
+1146
+00:45:57,599 --> 00:46:01,520
+work on. So there's definitely uh some
+
+1147
+00:45:59,760 --> 00:46:03,599
+amount of when you're doing real work
+
+1148
+00:46:01,520 --> 00:46:06,160
+and you can specify all the context that
+
+1149
+00:46:03,599 --> 00:46:08,160
+the human had in their head to go do the
+
+1150
+00:46:06,160 --> 00:46:10,160
+work and it's mostly about reasoning and
+
+1151
+00:46:08,160 --> 00:46:11,680
+they just going and executing a certain
+
+1152
+00:46:10,160 --> 00:46:13,599
+set of tool calls and the models can do
+
+1153
+00:46:11,680 --> 00:46:16,800
+the job but there's a lot of figuring
+
+1154
+00:46:13,599 --> 00:46:18,560
+out what needs to be worked on how that
+
+1155
+00:46:16,800 --> 00:46:20,319
+context needs to be used what needs to
+
+1156
+00:46:18,560 --> 00:46:22,240
+be in the context and a lot of that
+
+1157
+00:46:20,319 --> 00:46:25,599
+doesn't get captured by the model on its
+
+1158
+00:46:22,240 --> 00:46:28,400
+own. So that's definitely one area where
+
+1159
+00:46:25,599 --> 00:46:31,520
+um the humans have to orchestrate what
+
+1160
+00:46:28,400 --> 00:46:34,560
+is it what is the actual thing to go
+
+1161
+00:46:31,520 --> 00:46:36,800
+work on.
+
+1162
+00:46:34,560 --> 00:46:38,960
+So humans are basically architecting
+
+1163
+00:46:36,800 --> 00:46:43,880
+what is the set of problems and then the
+
+1164
+00:46:38,960 --> 00:46:43,880
+model can go solve it in certain cases.
+
+1165
+00:46:44,400 --> 00:46:48,240
+And and this is further exemplified by
+
+1166
+00:46:46,400 --> 00:46:50,079
+what we covered before where if you had
+
+1167
+00:46:48,240 --> 00:46:51,760
+a repository maintainer versus an
+
+1168
+00:46:50,079 --> 00:46:53,359
+external contractor, the speed at which
+
+1169
+00:46:51,760 --> 00:46:55,200
+the repository maintainer is able to
+
+1170
+00:46:53,359 --> 00:46:57,040
+solve problems is generally much faster.
+
+1171
+00:46:55,200 --> 00:46:58,640
+So if you have an expert who has uh
+
+1172
+00:46:57,040 --> 00:47:01,839
+domain knowledge, they will generally be
+
+1173
+00:46:58,640 --> 00:47:04,720
+faster uh compared to someone who has no
+
+1174
+00:47:01,839 --> 00:47:06,720
+context. So real work is often context
+
+1175
+00:47:04,720 --> 00:47:08,880
+heavy and what we are measuring in this
+
+1176
+00:47:06,720 --> 00:47:10,960
+particular evaluation is more around can
+
+1177
+00:47:08,880 --> 00:47:13,280
+a smart person do this or can someone
+
+1178
+00:47:10,960 --> 00:47:15,920
+embedded in this work can do this but if
+
+1179
+00:47:13,280 --> 00:47:18,000
+you have to go get context for that task
+
+1180
+00:47:15,920 --> 00:47:19,599
+that models are not yet able to do and
+
+1181
+00:47:18,000 --> 00:47:22,400
+then this evaluation is not measuring
+
+1182
+00:47:19,599 --> 00:47:24,319
+that
+
+1183
+00:47:22,400 --> 00:47:26,240
+so in near term what this means is that
+
+1184
+00:47:24,319 --> 00:47:27,839
+AI assistance is already happening in
+
+1185
+00:47:26,240 --> 00:47:30,240
+professional workflows we have covered
+
+1186
+00:47:27,839 --> 00:47:32,160
+some of the agentic workflows in early
+
+1187
+00:47:30,240 --> 00:47:33,680
+part of the lecture and is definitely
+
+1188
+00:47:32,160 --> 00:47:36,160
+cost effective when you couple it with
+
+1189
+00:47:33,680 --> 00:47:37,839
+human oversight. Like if the humans are
+
+1190
+00:47:36,160 --> 00:47:39,839
+architecting what the models need to go
+
+1191
+00:47:37,839 --> 00:47:42,560
+work on, the AI assistance is definitely
+
+1192
+00:47:39,839 --> 00:47:46,800
+helping. Um in certain occupations, this
+
+1193
+00:47:42,560 --> 00:47:48,240
+is more um impactful than not. But as uh
+
+1194
+00:47:46,800 --> 00:47:50,480
+but you do have to choose different
+
+1195
+00:47:48,240 --> 00:47:52,160
+models and um different models are
+
+1196
+00:47:50,480 --> 00:47:53,680
+stronger at different task types as
+
+1197
+00:47:52,160 --> 00:47:56,160
+well.
+
+1198
+00:47:53,680 --> 00:48:00,520
+Okay,
+
+1199
+00:47:56,160 --> 00:48:00,520
+questions or comments?
+
+1200
+00:48:02,079 --> 00:48:07,520
+Yes.
+
+1201
+00:48:03,280 --> 00:48:11,560
+>> Um how like much weight should you put
+
+1202
+00:48:07,520 --> 00:48:11,560
+on the actual dollar value?
+
+1203
+00:48:12,240 --> 00:48:18,319
+>> Yeah.
+
+1204
+00:48:15,040 --> 00:48:22,160
+>> Um why do you ask that question?
+
+1205
+00:48:18,319 --> 00:48:25,280
+>> Well, because it seems like uh
+
+1206
+00:48:22,160 --> 00:48:27,440
+like it's a relevant way of uh
+
+1207
+00:48:25,280 --> 00:48:30,319
+quantifying actual economic impact. say,
+
+1208
+00:48:27,440 --> 00:48:33,599
+"Oh, the AI can now do like, you know,
+
+1209
+00:48:30,319 --> 00:48:38,079
+$100,000 of work like that." [snorts]
+
+1210
+00:48:33,599 --> 00:48:40,240
+Uh, but if these numbers are collected
+
+1211
+00:48:38,079 --> 00:48:42,160
+in a way that seems unreliable or
+
+1212
+00:48:40,240 --> 00:48:46,880
+misleading, then
+
+1213
+00:48:42,160 --> 00:48:48,960
+>> uh, you know, what?
+
+1214
+00:48:46,880 --> 00:48:51,040
+>> I think to me it's not so much about the
+
+1215
+00:48:48,960 --> 00:48:56,319
+dollar. I mean they did go after the top
+
+1216
+00:48:51,040 --> 00:48:58,000
+5% of the GP uh tasks uh for the past um
+
+1217
+00:48:56,319 --> 00:48:59,599
+I mean several decades of knowledge work
+
+1218
+00:48:58,000 --> 00:49:01,599
+has been one of the key areas that has
+
+1219
+00:48:59,599 --> 00:49:02,720
+seen the highest grade profession and in
+
+1220
+00:49:01,599 --> 00:49:05,680
+knowledge work there are certain
+
+1221
+00:49:02,720 --> 00:49:08,240
+categories of tasks will be very good at
+
+1222
+00:49:05,680 --> 00:49:10,480
+um deep research being one of them
+
+1223
+00:49:08,240 --> 00:49:12,559
+perhaps um another one being like code
+
+1224
+00:49:10,480 --> 00:49:14,400
+generation so in each of or
+
+1225
+00:49:12,559 --> 00:49:16,160
+understanding a diverse set of
+
+1226
+00:49:14,400 --> 00:49:18,079
+information sources so the models will
+
+1227
+00:49:16,160 --> 00:49:20,160
+generally be good at those set of tasks
+
+1228
+00:49:18,079 --> 00:49:23,200
+so I think the question I would ask is
+
+1229
+00:49:20,160 --> 00:49:24,800
+what is the category uh of task that the
+
+1230
+00:49:23,200 --> 00:49:26,480
+models are likely to be good at just
+
+1231
+00:49:24,800 --> 00:49:27,920
+because at any given point in time
+
+1232
+00:49:26,480 --> 00:49:30,480
+humans are strong at certain set of
+
+1233
+00:49:27,920 --> 00:49:33,680
+things and machines just by way of being
+
+1234
+00:49:30,480 --> 00:49:35,839
+able to uh crunch um with electricity
+
+1235
+00:49:33,680 --> 00:49:38,079
+are just better at certain set of things
+
+1236
+00:49:35,839 --> 00:49:39,839
+right so this is more along those lines
+
+1237
+00:49:38,079 --> 00:49:43,280
+so there are certain category of tasks
+
+1238
+00:49:39,839 --> 00:49:45,680
+that will definitely um
+
+1239
+00:49:43,280 --> 00:49:47,440
+be valuable delegating to the model is
+
+1240
+00:49:45,680 --> 00:49:48,880
+is the way to look at it and and which
+
+1241
+00:49:47,440 --> 00:49:50,880
+are the professions in which those cate
+
+1242
+00:49:48,880 --> 00:49:54,720
+category of task fall is what this
+
+1243
+00:49:50,880 --> 00:49:56,880
+benchmark is is showcasing.
+
+1244
+00:49:54,720 --> 00:49:59,040
+Before this uh benchmark came out,
+
+1245
+00:49:56,880 --> 00:50:00,559
+people would talk about this area of
+
+1246
+00:49:59,040 --> 00:50:01,920
+like okay this is going to impact a lot
+
+1247
+00:50:00,559 --> 00:50:03,920
+of professions but there was no
+
+1248
+00:50:01,920 --> 00:50:05,520
+quantitative way to measure what set of
+
+1249
+00:50:03,920 --> 00:50:07,440
+tasks in each of these professions and
+
+1250
+00:50:05,520 --> 00:50:09,839
+it seemed like a humongous task to go do
+
+1251
+00:50:07,440 --> 00:50:12,000
+that. So this is a very verifiable
+
+1252
+00:50:09,839 --> 00:50:13,680
+quantifiable way to even like have a
+
+1253
+00:50:12,000 --> 00:50:15,680
+texonomy
+
+1254
+00:50:13,680 --> 00:50:17,040
+to list the set of tasks in each of the
+
+1255
+00:50:15,680 --> 00:50:20,640
+professions and what does it mean for
+
+1256
+00:50:17,040 --> 00:50:22,640
+the model to go do them. Um earlier um
+
+1257
+00:50:20,640 --> 00:50:24,400
+when we were doing the class um in the
+
+1258
+00:50:22,640 --> 00:50:27,200
+previous iteration we were only talking
+
+1259
+00:50:24,400 --> 00:50:28,880
+about MLB and rebing given that um our
+
+1260
+00:50:27,200 --> 00:50:31,520
+backgrounds are say more ML or more
+
+1261
+00:50:28,880 --> 00:50:34,400
+research or more uh software it's easier
+
+1262
+00:50:31,520 --> 00:50:38,880
+for us to understand the uh progress of
+
+1263
+00:50:34,400 --> 00:50:38,880
+um these models in those those domains.
+
+1264
+00:50:41,040 --> 00:50:46,800
+I'm just curious how like when the model
+
+1265
+00:50:44,880 --> 00:50:49,440
+perform
+
+1266
+00:50:46,800 --> 00:50:52,480
+it just means
+
+1267
+00:50:49,440 --> 00:50:54,000
+like the human not necessarily those
+
+1268
+00:50:52,480 --> 00:50:56,160
+profession
+
+1269
+00:50:54,000 --> 00:50:58,640
+anymore. I mean this is where I was
+
+1270
+00:50:56,160 --> 00:51:00,319
+adding these caveats right so when a
+
+1271
+00:50:58,640 --> 00:51:02,400
+model is outperformed the human you
+
+1272
+00:51:00,319 --> 00:51:04,720
+should go look at the prompt and what
+
+1273
+00:51:02,400 --> 00:51:07,520
+they're saying is that for a human who
+
+1274
+00:51:04,720 --> 00:51:09,280
+has a lot of context um if they were to
+
+1275
+00:51:07,520 --> 00:51:12,079
+specify all the context in their head to
+
+1276
+00:51:09,280 --> 00:51:15,200
+specify it in a prompt then the models
+
+1277
+00:51:12,079 --> 00:51:17,760
+can also do those tasks right
+
+1278
+00:51:15,200 --> 00:51:20,160
+u while if but a lot of actual work
+
+1279
+00:51:17,760 --> 00:51:22,240
+experience or a lot of workplace uh
+
+1280
+00:51:20,160 --> 00:51:24,000
+challenges often are about figuring out
+
+1281
+00:51:22,240 --> 00:51:25,359
+what to prioritize what are the set of
+
+1282
+00:51:24,000 --> 00:51:29,720
+problems to solve
+
+1283
+00:51:25,359 --> 00:51:29,720
+uh where to put uh resources.
+
+1284
+00:51:34,240 --> 00:51:39,200
+Okay. Uh we will move to the last um
+
+1285
+00:51:36,960 --> 00:51:41,680
+benchmark which will be focused on new
+
+1286
+00:51:39,200 --> 00:51:43,920
+scholar bench. Um this was a task that
+
+1287
+00:51:41,680 --> 00:51:45,839
+one of our classmates requested early on
+
+1288
+00:51:43,920 --> 00:51:47,599
+where they want AI to write the
+
+1289
+00:51:45,839 --> 00:51:50,400
+literature review section of their
+
+1290
+00:51:47,599 --> 00:51:53,440
+paper. So here we are. Let's benchmark
+
+1291
+00:51:50,400 --> 00:51:55,520
+that task. Um this was written at
+
+1292
+00:51:53,440 --> 00:51:59,599
+Stanford and this is basically measuring
+
+1293
+00:51:55,520 --> 00:52:02,480
+the um the question of instead of asking
+
+1294
+00:51:59,599 --> 00:52:05,119
+uh how long will um the task take to
+
+1295
+00:52:02,480 --> 00:52:07,599
+solve um is the model output good enough
+
+1296
+00:52:05,119 --> 00:52:09,760
+they're actually asking can AI perform
+
+1297
+00:52:07,599 --> 00:52:12,160
+deep research synthesis can I go study a
+
+1298
+00:52:09,760 --> 00:52:14,000
+bunch of references and retrieve the
+
+1299
+00:52:12,160 --> 00:52:16,240
+relevant information and then synthesize
+
+1300
+00:52:14,000 --> 00:52:18,480
+the findings into a coherent set of
+
+1301
+00:52:16,240 --> 00:52:22,319
+reports so that and and have verifiable
+
+1302
+00:52:18,480 --> 00:52:23,839
+citations and there have been several um
+
+1303
+00:52:22,319 --> 00:52:25,680
+industry prototypes that have come out.
+
+1304
+00:52:23,839 --> 00:52:27,760
+So there's OpenAI deep research, Gemini
+
+1305
+00:52:25,680 --> 00:52:30,400
+Deep Research, Perplexity uh has a deep
+
+1306
+00:52:27,760 --> 00:52:33,359
+research thing. Storm is from Stanford.
+
+1307
+00:52:30,400 --> 00:52:35,680
+There's Open Scholar. Um you folks built
+
+1308
+00:52:33,359 --> 00:52:37,599
+a deep research agent in homework 3 and
+
+1309
+00:52:35,680 --> 00:52:39,760
+maybe you got a flavor of like what that
+
+1310
+00:52:37,599 --> 00:52:41,680
+feels like. So in general there has been
+
+1311
+00:52:39,760 --> 00:52:43,200
+a lot of research activity in this area
+
+1312
+00:52:41,680 --> 00:52:44,640
+and it still continues to be a
+
+1313
+00:52:43,200 --> 00:52:48,680
+challenging area is what this paper
+
+1314
+00:52:44,640 --> 00:52:48,680
+shows. Um
+
+1315
+00:52:49,200 --> 00:52:53,599
+so the task that this uh paper addresses
+
+1316
+00:52:51,920 --> 00:52:56,240
+is to generate the related work section
+
+1317
+00:52:53,599 --> 00:52:58,640
+for academic papers. Um the reason they
+
+1318
+00:52:56,240 --> 00:53:00,880
+care about this task is because um this
+
+1319
+00:52:58,640 --> 00:53:02,880
+is a task that most of us require when
+
+1320
+00:53:00,880 --> 00:53:04,559
+we are writing papers. Uh and it
+
+1321
+00:53:02,880 --> 00:53:07,119
+requires continuous updates with fresh
+
+1322
+00:53:04,559 --> 00:53:08,880
+queries. So there is not no staleness.
+
+1323
+00:53:07,119 --> 00:53:11,760
+The way they went about constructing
+
+1324
+00:53:08,880 --> 00:53:13,920
+this data set is they uh used recent
+
+1325
+00:53:11,760 --> 00:53:18,000
+archive papers with PhD level difficulty
+
+1326
+00:53:13,920 --> 00:53:20,400
+across 22 domains and um they rerun it
+
+1327
+00:53:18,000 --> 00:53:22,800
+monthly with new papers. So uh it stays
+
+1328
+00:53:20,400 --> 00:53:25,440
+live. So it's it's very nice in that
+
+1329
+00:53:22,800 --> 00:53:27,599
+respect as well and it avoids uh data
+
+1330
+00:53:25,440 --> 00:53:31,599
+contamination. They only look at papers
+
+1331
+00:53:27,599 --> 00:53:35,760
+that are post um training uh of a major
+
+1332
+00:53:31,599 --> 00:53:38,079
+model. So that's very nice. What they're
+
+1333
+00:53:35,760 --> 00:53:39,680
+evaluating the models on is uh three
+
+1334
+00:53:38,079 --> 00:53:41,200
+particular axes. So the first thing
+
+1335
+00:53:39,680 --> 00:53:42,559
+they're evaluating the model on is
+
+1336
+00:53:41,200 --> 00:53:44,480
+knowledge synthesis. So what they're
+
+1337
+00:53:42,559 --> 00:53:47,440
+basically saying is that is the model
+
+1338
+00:53:44,480 --> 00:53:48,800
+output uh organizing and is coherent in
+
+1339
+00:53:47,440 --> 00:53:50,720
+organizing the knowledge that is
+
+1340
+00:53:48,800 --> 00:53:52,800
+presenting and is it capturing all the
+
+1341
+00:53:50,720 --> 00:53:54,559
+key facts. So is it capturing the key
+
+1342
+00:53:52,800 --> 00:53:57,920
+nuggets.
+
+1343
+00:53:54,559 --> 00:54:00,559
+The second axis it's u evaluating the
+
+1344
+00:53:57,920 --> 00:54:02,079
+model on is retrieval quality. So if
+
+1345
+00:54:00,559 --> 00:54:05,040
+it's looking at a particular set of
+
+1346
+00:54:02,079 --> 00:54:07,440
+references, how relevant they are to
+
+1347
+00:54:05,040 --> 00:54:08,960
+what you wanted to do research on. For
+
+1348
+00:54:07,440 --> 00:54:12,960
+example, if you're writing a related
+
+1349
+00:54:08,960 --> 00:54:15,280
+work section for your uh project for for
+
+1350
+00:54:12,960 --> 00:54:18,480
+your final project uh and you have say
+
+1351
+00:54:15,280 --> 00:54:20,880
+10 references that uh this uh model or
+
+1352
+00:54:18,480 --> 00:54:22,960
+agent went and and fetched, are they
+
+1353
+00:54:20,880 --> 00:54:26,079
+relevant to what you actually want to
+
+1354
+00:54:22,960 --> 00:54:28,480
+present in your final report or not? Uh
+
+1355
+00:54:26,079 --> 00:54:30,079
+citation counts. uh it's kind of well
+
+1356
+00:54:28,480 --> 00:54:32,079
+known that you want highly authentic
+
+1357
+00:54:30,079 --> 00:54:34,640
+sources. So whether the papers are
+
+1358
+00:54:32,079 --> 00:54:36,319
+important uh in terms of covering um
+
+1359
+00:54:34,640 --> 00:54:38,480
+those in the retrieval and then
+
+1360
+00:54:36,319 --> 00:54:40,400
+reference coverage u so this is ref
+
+1361
+00:54:38,480 --> 00:54:44,240
+similar to like is it finding important
+
+1362
+00:54:40,400 --> 00:54:46,640
+papers or not um and then the third axis
+
+1363
+00:54:44,240 --> 00:54:49,040
+it uh it's measuring is verifiability.
+
+1364
+00:54:46,640 --> 00:54:52,319
+So um do the citations support the
+
+1365
+00:54:49,040 --> 00:54:54,480
+claims? So even if it finds good papers
+
+1366
+00:54:52,319 --> 00:54:57,359
+and it's citing some aspect of that
+
+1367
+00:54:54,480 --> 00:55:00,240
+paper is the claim uh supported by that
+
+1368
+00:54:57,359 --> 00:55:01,839
+citation and then uh our claims backed
+
+1369
+00:55:00,240 --> 00:55:03,680
+by the citation. So these two are very
+
+1370
+00:55:01,839 --> 00:55:06,319
+similar but one is bas measuring
+
+1371
+00:55:03,680 --> 00:55:08,480
+precision and one is measuring coverage
+
+1372
+00:55:06,319 --> 00:55:11,839
+and each of these metrics are actually
+
+1373
+00:55:08,480 --> 00:55:14,559
+validated um by humans. So they got
+
+1374
+00:55:11,839 --> 00:55:18,800
+about 70 to 80% of human agreement when
+
+1375
+00:55:14,559 --> 00:55:20,240
+they got humans to evaluate this.
+
+1376
+00:55:18,800 --> 00:55:21,920
+Now the fun thing is that most
+
+1377
+00:55:20,240 --> 00:55:23,440
+benchmarks get saturated. So when we
+
+1378
+00:55:21,920 --> 00:55:25,760
+look at benchmarks we're like okay well
+
+1379
+00:55:23,440 --> 00:55:27,440
+it's already at 70% or 80% so there is
+
+1380
+00:55:25,760 --> 00:55:29,839
+no headroom. The fun thing about this
+
+1381
+00:55:27,440 --> 00:55:32,240
+particular benchmark is that none of the
+
+1382
+00:55:29,839 --> 00:55:33,760
+existing systems actually exceeds 19%.
+
+1383
+00:55:32,240 --> 00:55:35,520
+So if this were to show up in your
+
+1384
+00:55:33,760 --> 00:55:37,599
+homework for the next iteration of the
+
+1385
+00:55:35,520 --> 00:55:39,228
+class a lot of headroom for you folks to
+
+1386
+00:55:37,599 --> 00:55:39,920
+actually make it a final project.
+
+1387
+00:55:39,228 --> 00:55:43,119
+[snorts]
+
+1388
+00:55:39,920 --> 00:55:45,440
+um in terms of if you look at u each of
+
+1389
+00:55:43,119 --> 00:55:47,359
+these axes on which they are breaking
+
+1390
+00:55:45,440 --> 00:55:49,119
+down the model performance in terms of
+
+1391
+00:55:47,359 --> 00:55:51,440
+knowledge synthesis they they found that
+
+1392
+00:55:49,119 --> 00:55:53,119
+open aid research does a pretty good job
+
+1393
+00:55:51,440 --> 00:55:55,839
+but almost all of the models
+
+1394
+00:55:53,119 --> 00:55:57,760
+consistently uh miss key facts so even
+
+1395
+00:55:55,839 --> 00:55:59,680
+though they write coherently so it's
+
+1396
+00:55:57,760 --> 00:56:02,079
+great English but not necessarily
+
+1397
+00:55:59,680 --> 00:56:06,079
+covering all the key facts uh the
+
+1398
+00:56:02,079 --> 00:56:09,520
+retrieval quality tends to be u overall
+
+1399
+00:56:06,079 --> 00:56:11,119
+um okayish so all systems um currently
+
+1400
+00:56:09,520 --> 00:56:13,119
+struggle to find comprehensive and
+
+1401
+00:56:11,119 --> 00:56:15,920
+important set of sources. Uh the
+
+1402
+00:56:13,119 --> 00:56:19,440
+document importance um in all of them is
+
+1403
+00:56:15,920 --> 00:56:21,440
+less than 12.5%. And then finally um if
+
+1404
+00:56:19,440 --> 00:56:22,960
+you look at verifiability they found
+
+1405
+00:56:21,440 --> 00:56:25,280
+that
+
+1406
+00:56:22,960 --> 00:56:28,640
+say deep scholar base uh got up to like
+
+1407
+00:56:25,280 --> 00:56:30,640
+90 90% precision but open deep research
+
+1408
+00:56:28,640 --> 00:56:32,079
+has lower verifiability despite the fact
+
+1409
+00:56:30,640 --> 00:56:35,440
+that it does a really good job at
+
+1410
+00:56:32,079 --> 00:56:40,640
+writing um really nice English. So the
+
+1411
+00:56:35,440 --> 00:56:40,640
+uh the synthesis is extremely coherent.
+
+1412
+00:56:40,799 --> 00:56:43,839
+Now if you look at the failure modes and
+
+1413
+00:56:42,400 --> 00:56:46,319
+and that's where a lot of the learnings
+
+1414
+00:56:43,839 --> 00:56:48,480
+lie. Um
+
+1415
+00:56:46,319 --> 00:56:50,640
+typically the failure modes come from
+
+1416
+00:56:48,480 --> 00:56:52,400
+not finding comprehensive sources. So
+
+1417
+00:56:50,640 --> 00:56:54,240
+even when they do find relevant
+
+1418
+00:56:52,400 --> 00:56:56,160
+documents they're not always finding the
+
+1419
+00:56:54,240 --> 00:56:57,760
+foundational papers. So this is where if
+
+1420
+00:56:56,160 --> 00:56:59,920
+you are an expert in the area you kind
+
+1421
+00:56:57,760 --> 00:57:01,599
+of know from experience that there are
+
+1422
+00:56:59,920 --> 00:57:03,680
+all these foundational papers because
+
+1423
+00:57:01,599 --> 00:57:06,240
+they you kind of build that context and
+
+1424
+00:57:03,680 --> 00:57:08,960
+and bookmark all the important papers.
+
+1425
+00:57:06,240 --> 00:57:10,880
+uh the uh deep research agents do a
+
+1426
+00:57:08,960 --> 00:57:12,880
+reasonably strong job but they struggle
+
+1427
+00:57:10,880 --> 00:57:14,480
+to assess the document importance uh
+
+1428
+00:57:12,880 --> 00:57:17,280
+beyond whether that's relevant to the
+
+1429
+00:57:14,480 --> 00:57:18,720
+context or not. Uh they surface
+
+1430
+00:57:17,280 --> 00:57:20,720
+essential facts. So even with good
+
+1431
+00:57:18,720 --> 00:57:23,280
+retrieval they don't always uh extract
+
+1432
+00:57:20,720 --> 00:57:26,319
+the key information efficiently. If you
+
+1433
+00:57:23,280 --> 00:57:28,000
+do give the perfect sources um so even
+
+1434
+00:57:26,319 --> 00:57:29,760
+if you say that okay here are all the
+
+1435
+00:57:28,000 --> 00:57:31,680
+papers that should have been included
+
+1436
+00:57:29,760 --> 00:57:33,920
+even then if you try to get them to
+
+1437
+00:57:31,680 --> 00:57:36,000
+extract the key facts even then they get
+
+1438
+00:57:33,920 --> 00:57:39,280
+about 50% coverage and without knowing
+
+1439
+00:57:36,000 --> 00:57:40,880
+the exact papers they get lower coverage
+
+1440
+00:57:39,280 --> 00:57:43,040
+and then finally if you're trying to
+
+1441
+00:57:40,880 --> 00:57:44,960
+balance out the qual synthesis quality
+
+1442
+00:57:43,040 --> 00:57:47,200
+versus verifiability
+
+1443
+00:57:44,960 --> 00:57:49,280
+none of the systems actually uh excels
+
+1444
+00:57:47,200 --> 00:57:51,359
+at both like the quality of synthesis
+
+1445
+00:57:49,280 --> 00:57:54,960
+and the verifiability in certain ways.
+
+1446
+00:57:51,359 --> 00:57:57,680
+So you can see that uh being able to
+
+1447
+00:57:54,960 --> 00:57:59,359
+refer to reference data in in the
+
+1448
+00:57:57,680 --> 00:58:00,880
+Asianic evaluation tasks is a
+
+1449
+00:57:59,359 --> 00:58:02,960
+non-trivial problem. So it's not just
+
+1450
+00:58:00,880 --> 00:58:05,119
+about how long a task is or whether it's
+
+1451
+00:58:02,960 --> 00:58:06,880
+real world economic value or not. If you
+
+1452
+00:58:05,119 --> 00:58:09,680
+have to reference some reference data to
+
+1453
+00:58:06,880 --> 00:58:12,240
+look go look at it's non-trivial because
+
+1454
+00:58:09,680 --> 00:58:14,000
+you might not get the context that an
+
+1455
+00:58:12,240 --> 00:58:15,920
+expert has. So you might not have that
+
+1456
+00:58:14,000 --> 00:58:17,760
+much foundational knowledge available.
+
+1457
+00:58:15,920 --> 00:58:19,599
+It might not extract the key information
+
+1458
+00:58:17,760 --> 00:58:22,000
+well enough. So it does something but
+
+1459
+00:58:19,599 --> 00:58:24,720
+not uh it so it's good with human AI
+
+1460
+00:58:22,000 --> 00:58:26,480
+assistance and the verifiability with
+
+1461
+00:58:24,720 --> 00:58:28,319
+respect to citations may not have the
+
+1462
+00:58:26,480 --> 00:58:32,440
+right precision recall trade-off that's
+
+1463
+00:58:28,319 --> 00:58:32,440
+acceptable for that occupation.
+
+1464
+00:58:33,599 --> 00:58:38,079
+So what that roughly means so this is
+
+1465
+00:58:35,680 --> 00:58:40,319
+transitioning uh to summarize across all
+
+1466
+00:58:38,079 --> 00:58:42,400
+the papers but before I go there let me
+
+1467
+00:58:40,319 --> 00:58:46,839
+uh open up for questions just on the
+
+1468
+00:58:42,400 --> 00:58:46,839
+deep scholarbench style of tasks.
+
+1469
+00:58:46,960 --> 00:58:50,839
+Any questions or comments?
+
+1470
+00:58:53,440 --> 00:58:58,400
+>> Yeah.
+
+1471
+00:58:55,680 --> 00:58:59,839
+>> Seems like a much more specific narrow
+
+1472
+00:58:58,400 --> 00:59:00,319
+thing than the other two.
+
+1473
+00:58:59,839 --> 00:59:03,200
+>> Yes.
+
+1474
+00:59:00,319 --> 00:59:06,720
+>> Um like why talk about this one in
+
+1475
+00:59:03,200 --> 00:59:08,400
+particular as opposed to any other any
+
+1476
+00:59:06,720 --> 00:59:10,400
+other.
+
+1477
+00:59:08,400 --> 00:59:14,079
+So I think the broad theme of the
+
+1478
+00:59:10,400 --> 00:59:16,000
+lecture was very much focused on um what
+
+1479
+00:59:14,079 --> 00:59:18,640
+what do we care about in agentic
+
+1480
+00:59:16,000 --> 00:59:20,400
+evaluations per se right so we covered
+
+1481
+00:59:18,640 --> 00:59:22,319
+about the length of the tasks we talked
+
+1482
+00:59:20,400 --> 00:59:24,400
+about the economic value of the tasks
+
+1483
+00:59:22,319 --> 00:59:25,920
+but for real world tasks to be
+
+1484
+00:59:24,400 --> 00:59:28,400
+meaningful we do have to look at
+
+1485
+00:59:25,920 --> 00:59:30,480
+knowledge bases in useful ways so this
+
+1486
+00:59:28,400 --> 00:59:33,480
+is a representative task for that
+
+1487
+00:59:30,480 --> 00:59:33,480
+category
+
+1488
+00:59:36,480 --> 00:59:41,200
+>> bottles for like the the most
+
+1489
+00:59:38,960 --> 00:59:42,799
+foundational papers. So like this I
+
+1490
+00:59:41,200 --> 00:59:45,520
+guess like for the benchmark there's a
+
+1491
+00:59:42,799 --> 00:59:47,359
+list that's connected from human experts
+
+1492
+00:59:45,520 --> 00:59:50,319
+right like they like these are the
+
+1493
+00:59:47,359 --> 00:59:52,640
+papers that people like the PhDs think
+
+1494
+00:59:50,319 --> 00:59:54,720
+like the model can hit and then you were
+
+1495
+00:59:52,640 --> 00:59:57,839
+trying to see like how many were
+
+1496
+00:59:54,720 --> 01:00:01,839
+actually like retrieved or whatever like
+
+1497
+00:59:57,839 --> 01:00:03,440
+by the the model being tested is that
+
+1498
+01:00:01,839 --> 01:00:05,680
+>> I mean at any given point in time
+
+1499
+01:00:03,440 --> 01:00:07,920
+they're basically saying um yes so
+
+1500
+01:00:05,680 --> 01:00:10,079
+there's a human aspect of like here are
+
+1501
+01:00:07,920 --> 01:00:13,920
+the list of papers that there but You're
+
+1502
+01:00:10,079 --> 01:00:15,920
+also looking at whether it's I mean
+
+1503
+01:00:13,920 --> 01:00:17,839
+it's not just the number of uh the set
+
+1504
+01:00:15,920 --> 01:00:19,680
+of papers right it's also talking about
+
+1505
+01:00:17,839 --> 01:00:21,119
+are you supporting if you want to make a
+
+1506
+01:00:19,680 --> 01:00:22,480
+set of claims when you write the related
+
+1507
+01:00:21,119 --> 01:00:24,319
+work section you're answering the
+
+1508
+01:00:22,480 --> 01:00:25,680
+question of like how is this work
+
+1509
+01:00:24,319 --> 01:00:27,440
+related so you want to make a set of
+
+1510
+01:00:25,680 --> 01:00:29,520
+claims my paper is different from these
+
+1511
+01:00:27,440 --> 01:00:31,359
+other papers and let's say agree on a
+
+1512
+01:00:29,520 --> 01:00:32,960
+set of topics with the model you still
+
+1513
+01:00:31,359 --> 01:00:34,799
+have to make a bunch of claims and then
+
+1514
+01:00:32,960 --> 01:00:36,640
+you have to look at the citations and
+
+1515
+01:00:34,799 --> 01:00:37,920
+back those claims up and then say that
+
+1516
+01:00:36,640 --> 01:00:39,359
+your paper is different in this
+
+1517
+01:00:37,920 --> 01:00:42,400
+particular regards and then this is what
+
+1518
+01:00:39,359 --> 01:00:44,319
+being covered by the field. So even the
+
+1519
+01:00:42,400 --> 01:00:46,079
+the key information coverage and then
+
+1520
+01:00:44,319 --> 01:00:50,079
+which papers get referenced for those
+
+1521
+01:00:46,079 --> 01:00:51,920
+claims don't have sufficient um coverage
+
+1522
+01:00:50,079 --> 01:00:53,760
+and so on.
+
+1523
+01:00:51,920 --> 01:00:55,440
+So it's both retrieval quality and then
+
+1524
+01:00:53,760 --> 01:00:58,599
+what gets written down in terms of the
+
+1525
+01:00:55,440 --> 01:00:58,599
+key funds.
+
+1526
+01:01:00,000 --> 01:01:05,119
+Does that make sense?
+
+1527
+01:01:03,599 --> 01:01:07,760
+Okay.
+
+1528
+01:01:05,119 --> 01:01:10,240
+So let's try to summarize across a
+
+1529
+01:01:07,760 --> 01:01:11,760
+different set of tasks. So um and this
+
+1530
+01:01:10,240 --> 01:01:15,040
+is kind of also addressing the question
+
+1531
+01:01:11,760 --> 01:01:18,640
+that our classmate asked. Um so in the
+
+1532
+01:01:15,040 --> 01:01:20,799
+time horizon sense um research synthesis
+
+1533
+01:01:18,640 --> 01:01:24,079
+tasks uh can be anywhere from 30 minutes
+
+1534
+01:01:20,799 --> 01:01:25,920
+to 8 hours but uh the current capability
+
+1535
+01:01:24,079 --> 01:01:27,920
+range is somewhere around 50 minutes but
+
+1536
+01:01:25,920 --> 01:01:29,599
+the quality at this horizon might still
+
+1537
+01:01:27,920 --> 01:01:33,040
+be poor. You might still end up with say
+
+1538
+01:01:29,599 --> 01:01:34,559
+50% success rates. So uh what this is
+
+1539
+01:01:33,040 --> 01:01:37,599
+roughly saying is that if research
+
+1540
+01:01:34,559 --> 01:01:39,760
+synthesis tasks are in uh long horizon
+
+1541
+01:01:37,599 --> 01:01:43,359
+in MTR and even though they look good on
+
+1542
+01:01:39,760 --> 01:01:46,160
+that plot they might not be um might not
+
+1543
+01:01:43,359 --> 01:01:49,040
+be high quality in terms of economic
+
+1544
+01:01:46,160 --> 01:01:51,359
+value. Um I mean research synthesis
+
+1545
+01:01:49,040 --> 01:01:53,599
+tasks show up in say financial investig
+
+1546
+01:01:51,359 --> 01:01:56,960
+uh financial research. They show up in a
+
+1547
+01:01:53,599 --> 01:01:58,799
+lot of different research tasks, but um
+
+1548
+01:01:56,960 --> 01:02:01,200
+so they have clear economic value, but
+
+1549
+01:01:58,799 --> 01:02:02,960
+they definitely require capabilities um
+
+1550
+01:02:01,200 --> 01:02:04,799
+that current models are not always
+
+1551
+01:02:02,960 --> 01:02:06,960
+hitting. And often times the gaps are
+
+1552
+01:02:04,799 --> 01:02:08,720
+coming from say multi-step reasoning
+
+1553
+01:02:06,960 --> 01:02:11,760
+from being able to do a comprehensive
+
+1554
+01:02:08,720 --> 01:02:13,680
+job at information gathering to maintain
+
+1555
+01:02:11,760 --> 01:02:14,960
+verifiability while you're synthesizing
+
+1556
+01:02:13,680 --> 01:02:17,200
+this information. So if you remember
+
+1557
+01:02:14,960 --> 01:02:18,960
+from homework three when you basically
+
+1558
+01:02:17,200 --> 01:02:20,880
+combine information from multiple
+
+1559
+01:02:18,960 --> 01:02:22,880
+different agent calls you still have to
+
+1560
+01:02:20,880 --> 01:02:25,839
+maintain certain amount of verifiability
+
+1561
+01:02:22,880 --> 01:02:27,280
+and then you are combining the context.
+
+1562
+01:02:25,839 --> 01:02:28,880
+So there's context engineering from a
+
+1563
+01:02:27,280 --> 01:02:30,319
+distributed set of sources. Maybe you
+
+1564
+01:02:28,880 --> 01:02:32,079
+did a bunch of different tool calls. You
+
+1565
+01:02:30,319 --> 01:02:34,160
+maybe you did went and did read red read
+
+1566
+01:02:32,079 --> 01:02:35,680
+redid the tool calls. So all of that
+
+1567
+01:02:34,160 --> 01:02:38,240
+information needs uh you have to
+
+1568
+01:02:35,680 --> 01:02:40,880
+maintain the context in in each of those
+
+1569
+01:02:38,240 --> 01:02:43,119
+multi-step uh scenarios. So we are not
+
+1570
+01:02:40,880 --> 01:02:46,000
+just limited by task duration. How well
+
+1571
+01:02:43,119 --> 01:02:49,119
+we do in terms of quality of synthesis
+
+1572
+01:02:46,000 --> 01:02:52,760
+um at these time horizons also has a lot
+
+1573
+01:02:49,119 --> 01:02:52,760
+of headroom for improvement.
+
+1574
+01:02:53,440 --> 01:02:58,160
+And how does this vary from a real world
+
+1575
+01:02:55,760 --> 01:03:00,319
+task? So I mean as I said before so
+
+1576
+01:02:58,160 --> 01:03:03,040
+benchmarks are never perfect. They are a
+
+1577
+01:03:00,319 --> 01:03:06,559
+representation of what we think is uh
+
+1578
+01:03:03,040 --> 01:03:08,319
+measurable today. And um so METR is uh
+
+1579
+01:03:06,559 --> 01:03:10,000
+automatically scored. Uh there's no
+
+1580
+01:03:08,319 --> 01:03:12,240
+multi- aent interaction. So it's
+
+1581
+01:03:10,000 --> 01:03:15,599
+basically uh targeting a set of tasks
+
+1582
+01:03:12,240 --> 01:03:17,520
+that are sort of um single agent uh and
+
+1583
+01:03:15,599 --> 01:03:19,039
+it's not punishing of mistakes and the
+
+1584
+01:03:17,520 --> 01:03:21,200
+resource constraints there's no resource
+
+1585
+01:03:19,039 --> 01:03:23,760
+constraints in terms of like uh how much
+
+1586
+01:03:21,200 --> 01:03:26,960
+resources can be used. So it's basically
+
+1587
+01:03:23,760 --> 01:03:28,960
+um in real work you might actually have
+
+1588
+01:03:26,960 --> 01:03:31,280
+um more subjective constraints and how
+
+1589
+01:03:28,960 --> 01:03:33,119
+things are scored. You might be able to
+
+1590
+01:03:31,280 --> 01:03:35,520
+break down the task into multiple agents
+
+1591
+01:03:33,119 --> 01:03:37,280
+which might actually lead to a better
+
+1592
+01:03:35,520 --> 01:03:39,359
+evaluation and then there might be
+
+1593
+01:03:37,280 --> 01:03:41,760
+actual resource constraints or cost of
+
+1594
+01:03:39,359 --> 01:03:44,480
+mistakes.
+
+1595
+01:03:41,760 --> 01:03:46,319
+Uh in the second set of paper that we
+
+1596
+01:03:44,480 --> 01:03:48,319
+covered called GDP val which focuses
+
+1597
+01:03:46,319 --> 01:03:50,960
+very much on economically valuable tasks
+
+1598
+01:03:48,319 --> 01:03:53,280
+the the the key aspect there is that the
+
+1599
+01:03:50,960 --> 01:03:54,960
+tasks are extremely well specified like
+
+1600
+01:03:53,280 --> 01:03:57,280
+all the context that the human would
+
+1601
+01:03:54,960 --> 01:03:59,440
+have in their head gets specified in the
+
+1602
+01:03:57,280 --> 01:04:00,960
+task and it's one shot. So there's no
+
+1603
+01:03:59,440 --> 01:04:05,200
+iterative back and forth where you get
+
+1604
+01:04:00,960 --> 01:04:06,799
+to uh fix what the model did. Um and it
+
+1605
+01:04:05,200 --> 01:04:08,799
+requires the model to have some amount
+
+1606
+01:04:06,799 --> 01:04:10,319
+of tacet knowledge. So it needs the
+
+1607
+01:04:08,799 --> 01:04:13,359
+knowledge to be there already in the
+
+1608
+01:04:10,319 --> 01:04:14,880
+model. And that gap gets covered more by
+
+1609
+01:04:13,359 --> 01:04:17,280
+the third benchmark that where we were
+
+1610
+01:04:14,880 --> 01:04:19,200
+looking at research synthesis. Uh here
+
+1611
+01:04:17,280 --> 01:04:20,799
+the challenges are that it's the models
+
+1612
+01:04:19,200 --> 01:04:23,839
+still struggle with like finding
+
+1613
+01:04:20,799 --> 01:04:26,000
+comprehensive highquality sources and uh
+
+1614
+01:04:23,839 --> 01:04:27,920
+surfacing key facts and then verifying
+
+1615
+01:04:26,000 --> 01:04:29,760
+them. And these are things that if a
+
+1616
+01:04:27,920 --> 01:04:31,839
+human is an expert in the field and does
+
+1617
+01:04:29,760 --> 01:04:33,520
+this day in and day out, they'll be much
+
+1618
+01:04:31,839 --> 01:04:37,599
+faster at because they just have that
+
+1619
+01:04:33,520 --> 01:04:39,680
+context in their head all the time.
+
+1620
+01:04:37,599 --> 01:04:41,520
+So what do we know now in terms of model
+
+1621
+01:04:39,680 --> 01:04:44,079
+capabilities and where there's headroom
+
+1622
+01:04:41,520 --> 01:04:45,599
+for improvement? So we kind of know that
+
+1623
+01:04:44,079 --> 01:04:47,839
+the models have been improving on
+
+1624
+01:04:45,599 --> 01:04:49,200
+isolated well specified tasks. If you if
+
+1625
+01:04:47,839 --> 01:04:51,359
+you have a set of tasks that are well
+
+1626
+01:04:49,200 --> 01:04:53,039
+specified and fall in [snorts] uh the
+
+1627
+01:04:51,359 --> 01:04:55,440
+set of domains where the models are good
+
+1628
+01:04:53,039 --> 01:04:57,520
+at, then they do a really good job. uh
+
+1629
+01:04:55,440 --> 01:04:59,119
+software engineering and ML research are
+
+1630
+01:04:57,520 --> 01:05:01,920
+two domains where we have seen
+
+1631
+01:04:59,119 --> 01:05:03,440
+significant progress perhaps because as
+
+1632
+01:05:01,920 --> 01:05:04,960
+computer scientists and computer
+
+1633
+01:05:03,440 --> 01:05:06,400
+engineers we tend to understand those
+
+1634
+01:05:04,960 --> 01:05:09,760
+domains better. So we are automating
+
+1635
+01:05:06,400 --> 01:05:12,079
+away our own jobs. Uh
+
+1636
+01:05:09,760 --> 01:05:14,559
+uh but uh so we definitely are seeing
+
+1637
+01:05:12,079 --> 01:05:16,559
+these models do a a really good job in
+
+1638
+01:05:14,559 --> 01:05:19,359
+terms of say uh solving hourlong tasks
+
+1639
+01:05:16,559 --> 01:05:21,520
+there and um the stronger models can
+
+1640
+01:05:19,359 --> 01:05:23,839
+generate very well organized outputs
+
+1641
+01:05:21,520 --> 01:05:25,280
+even if um not all parts of that outputs
+
+1642
+01:05:23,839 --> 01:05:27,440
+are correct.
+
+1643
+01:05:25,280 --> 01:05:29,520
+What we have lower confidence in if you
+
+1644
+01:05:27,440 --> 01:05:32,799
+look at model capabilities is that um
+
+1645
+01:05:29,520 --> 01:05:35,200
+the models uh perform uh performance on
+
+1646
+01:05:32,799 --> 01:05:36,960
+uh tasks where you need a lot of context
+
+1647
+01:05:35,200 --> 01:05:39,440
+is low. So if you don't have the context
+
+1648
+01:05:36,960 --> 01:05:41,280
+in the model's uh prompt then the model
+
+1649
+01:05:39,440 --> 01:05:43,359
+doesn't quite know what to go work on.
+
+1650
+01:05:41,280 --> 01:05:46,000
+It doesn't quite figure out am uh
+
+1651
+01:05:43,359 --> 01:05:48,960
+ambiguous um prompts and just figure out
+
+1652
+01:05:46,000 --> 01:05:51,280
+what it needs to uh figure out to solve
+
+1653
+01:05:48,960 --> 01:05:54,000
+the problem. um the performance in
+
+1654
+01:05:51,280 --> 01:05:57,119
+adversarial environments are not uh is
+
+1655
+01:05:54,000 --> 01:05:59,359
+not necessarily great. Uh overall if you
+
+1656
+01:05:57,119 --> 01:06:02,319
+want 95% reliability the models are not
+
+1657
+01:05:59,359 --> 01:06:04,319
+quite there and generally we have not
+
+1658
+01:06:02,319 --> 01:06:05,920
+yet seen a lot of generalization beyond
+
+1659
+01:06:04,319 --> 01:06:08,400
+software and knowledge work where
+
+1660
+01:06:05,920 --> 01:06:12,880
+knowledge work encompasses a lot of the
+
+1661
+01:06:08,400 --> 01:06:15,359
+digital work workloads today. Um
+
+1662
+01:06:12,880 --> 01:06:17,359
+we also think that the models um are
+
+1663
+01:06:15,359 --> 01:06:19,119
+still not strong at uh finding
+
+1664
+01:06:17,359 --> 01:06:20,880
+comprehensive high-quality sources when
+
+1665
+01:06:19,119 --> 01:06:23,839
+they have to reference uh knowledge
+
+1666
+01:06:20,880 --> 01:06:26,319
+bases and uh surface key facts and then
+
+1667
+01:06:23,839 --> 01:06:28,079
+verify what they surfaced as high
+
+1668
+01:06:26,319 --> 01:06:31,039
+accuracy and high coverage in the
+
+1669
+01:06:28,079 --> 01:06:34,480
+knowledge base. So all of these um are
+
+1670
+01:06:31,039 --> 01:06:37,280
+still gap areas and model capabilities.
+
+1671
+01:06:34,480 --> 01:06:39,760
+So if we were to uh summarize across the
+
+1672
+01:06:37,280 --> 01:06:42,880
+three uh papers that we uh talked about
+
+1673
+01:06:39,760 --> 01:06:44,799
+today in METR we talked about uh the
+
+1674
+01:06:42,880 --> 01:06:47,680
+seven-month doubling horizon in terms of
+
+1675
+01:06:44,799 --> 01:06:51,440
+model capabilities um as in the models
+
+1676
+01:06:47,680 --> 01:06:54,240
+can complete the tasks um with 50%
+
+1677
+01:06:51,440 --> 01:06:56,240
+reliability. uh that time horizon has
+
+1678
+01:06:54,240 --> 01:06:59,599
+been doubling every 7 months and the
+
+1679
+01:06:56,240 --> 01:07:01,839
+forecast is that say 2028 to 2031 it
+
+1680
+01:06:59,599 --> 01:07:06,000
+will almost be a one month task can be
+
+1681
+01:07:01,839 --> 01:07:08,319
+completed by the model u but that view
+
+1682
+01:07:06,000 --> 01:07:10,400
+gets uh contradicted in some ways by GDP
+
+1683
+01:07:08,319 --> 01:07:12,000
+val win rate which shows more of a
+
+1684
+01:07:10,400 --> 01:07:14,880
+linear improvement over the last two
+
+1685
+01:07:12,000 --> 01:07:17,520
+years um where even though the win rate
+
+1686
+01:07:14,880 --> 01:07:20,319
+for certain set of tasks is 48% at the
+
+1687
+01:07:17,520 --> 01:07:22,400
+same time um you will see that there are
+
+1688
+01:07:20,319 --> 01:07:25,039
+many category of tasks that don't high
+
+1689
+01:07:22,400 --> 01:07:26,559
+win rates and then the other gap area
+
+1690
+01:07:25,039 --> 01:07:29,119
+that you see is that a lot of the tasks
+
+1691
+01:07:26,559 --> 01:07:31,039
+in GDB val actually require context or
+
+1692
+01:07:29,119 --> 01:07:32,799
+require looking at reference data and
+
+1693
+01:07:31,039 --> 01:07:34,559
+deep scholar bench uh the research
+
+1694
+01:07:32,799 --> 01:07:36,640
+synthesis task kind of shows you that
+
+1695
+01:07:34,559 --> 01:07:38,480
+there's critical gaps when you have to
+
+1696
+01:07:36,640 --> 01:07:40,480
+go retrieve some set of context or look
+
+1697
+01:07:38,480 --> 01:07:42,160
+at a knowledge base and generally the
+
+1698
+01:07:40,480 --> 01:07:45,280
+quality and the verifiability don't
+
+1699
+01:07:42,160 --> 01:07:48,240
+quite um match up u compared to what a
+
+1700
+01:07:45,280 --> 01:07:51,200
+human would be able to do.
+
+1701
+01:07:48,240 --> 01:07:52,880
+So in general uh the reliability and the
+
+1702
+01:07:51,200 --> 01:07:54,480
+error recovery of the models should
+
+1703
+01:07:52,880 --> 01:07:57,599
+continue to improve but the performance
+
+1704
+01:07:54,480 --> 01:07:59,039
+will vary still over task uh types like
+
+1705
+01:07:57,599 --> 01:08:02,640
+which category of tasks we are looking
+
+1706
+01:07:59,039 --> 01:08:04,319
+at. Uh so even if the models are solving
+
+1707
+01:08:02,640 --> 01:08:05,680
+longer and longer horizon tasks that
+
+1708
+01:08:04,319 --> 01:08:07,680
+doesn't necessarily mean they're always
+
+1709
+01:08:05,680 --> 01:08:11,440
+giving highly reliable or quality
+
+1710
+01:08:07,680 --> 01:08:13,440
+outputs. So we need uh metrics which are
+
+1711
+01:08:11,440 --> 01:08:15,760
+duration based, economic value based and
+
+1712
+01:08:13,440 --> 01:08:17,120
+also synthesis quality based and and you
+
+1713
+01:08:15,760 --> 01:08:20,560
+still need to validate them against
+
+1714
+01:08:17,120 --> 01:08:22,480
+humans who can solve these tasks.
+
+1715
+01:08:20,560 --> 01:08:25,640
+Okay, with that I will actually open up
+
+1716
+01:08:22,480 --> 01:08:25,640
+for questions.
+
+1717
+01:08:27,759 --> 01:08:32,799
+Go back to the question I asked what
+
+1718
+01:08:29,920 --> 01:08:36,799
+does the team so what do you think about
+
+1719
+01:08:32,799 --> 01:08:39,679
+the developility like for
+
+1720
+01:08:36,799 --> 01:08:42,319
+show
+
+1721
+01:08:39,679 --> 01:08:45,600
+>> similar to like
+
+1722
+01:08:42,319 --> 01:08:47,920
+more slow so I'm just curious because
+
+1723
+01:08:45,600 --> 01:08:50,560
+you are not experts and like what do you
+
+1724
+01:08:47,920 --> 01:08:52,239
+think
+
+1725
+01:08:50,560 --> 01:08:54,080
+>> so I think there was two answers to your
+
+1726
+01:08:52,239 --> 01:08:56,159
+question I mean swing bench definitely
+
+1727
+01:08:54,080 --> 01:08:59,120
+show swing bench verify for example has
+
+1728
+01:08:56,159 --> 01:09:02,480
+shown a really strong role in general in
+
+1729
+01:08:59,120 --> 01:09:04,319
+coding area. Um we will continue
+
+1730
+01:09:02,480 --> 01:09:06,719
+continue to see improvements and still
+
+1731
+01:09:04,319 --> 01:09:10,880
+there's a large category of tasks uh
+
+1732
+01:09:06,719 --> 01:09:13,440
+which are um not just p request based
+
+1733
+01:09:10,880 --> 01:09:16,080
+and so on and these are hard tasks. So
+
+1734
+01:09:13,440 --> 01:09:17,920
+um there's a longtail task that will
+
+1735
+01:09:16,080 --> 01:09:21,600
+continue to be challenging for the
+
+1736
+01:09:17,920 --> 01:09:24,159
+models. I mean the first 80% was hard to
+
+1737
+01:09:21,600 --> 01:09:27,159
+do easy to do and then last 20% took a
+
+1738
+01:09:24,159 --> 01:09:27,159
+decade.
+
+1739
+01:09:28,560 --> 01:09:32,799
+distributed systems being one of the
+
+1740
+01:09:30,319 --> 01:09:34,239
+areas in which computer science where
+
+1741
+01:09:32,799 --> 01:09:37,239
+it's very hard for the models to get it
+
+1742
+01:09:34,239 --> 01:09:37,239
+right.
+
+1743
+01:09:38,880 --> 01:09:44,440
+You mentioned a couple times like uh on
+
+1744
+01:09:44,799 --> 01:09:52,000
+what your sense
+
+1745
+01:09:47,440 --> 01:09:54,159
+of like what um how you expect your own
+
+1746
+01:09:52,000 --> 01:09:55,920
+brand to look different like 2 years
+
+1747
+01:09:54,159 --> 01:09:57,840
+from now.
+
+1748
+01:09:55,920 --> 01:10:00,239
+>> Um
+
+1749
+01:09:57,840 --> 01:10:04,320
+so I I think timelines are moving
+
+1750
+01:10:00,239 --> 01:10:06,000
+extremely fast uh in ways where u it's
+
+1751
+01:10:04,320 --> 01:10:08,800
+very hard to predict something one year
+
+1752
+01:10:06,000 --> 01:10:10,960
+from now. I think one of my task would
+
+1753
+01:10:08,800 --> 01:10:13,199
+end up being self equal to what an AI
+
+1754
+01:10:10,960 --> 01:10:15,120
+scientist does. An AI scientist being
+
+1755
+01:10:13,199 --> 01:10:16,800
+able to come up with hypothesis and run
+
+1756
+01:10:15,120 --> 01:10:20,400
+the experiments and then like complete
+
+1757
+01:10:16,800 --> 01:10:22,960
+the whole loop is um still something of
+
+1758
+01:10:20,400 --> 01:10:25,120
+that that that is our definition of AGI
+
+1759
+01:10:22,960 --> 01:10:27,199
+is to like when AI can build the next
+
+1760
+01:10:25,120 --> 01:10:29,600
+generation of models themselves then we
+
+1761
+01:10:27,199 --> 01:10:32,000
+don't have to even be in the room. Uh
+
+1762
+01:10:29,600 --> 01:10:34,560
+but I I don't think that is quite there
+
+1763
+01:10:32,000 --> 01:10:36,560
+yet. uh that it's definitely been
+
+1764
+01:10:34,560 --> 01:10:38,800
+fascinating to see the level of progress
+
+1765
+01:10:36,560 --> 01:10:40,640
+in terms of how the AI models do have
+
+1766
+01:10:38,800 --> 01:10:43,520
+the knowledge base and often are
+
+1767
+01:10:40,640 --> 01:10:45,920
+extremely strong uh brainstorming uh
+
+1768
+01:10:43,520 --> 01:10:49,920
+partners. So it's AI co-scientist at
+
+1769
+01:10:45,920 --> 01:10:53,440
+this point in time um which has a better
+
+1770
+01:10:49,920 --> 01:10:57,600
+um better value for for a lot of the use
+
+1771
+01:10:53,440 --> 01:11:00,800
+cases uh is is how I see it.
+
+1772
+01:10:57,600 --> 01:11:03,360
+I also generally feel that in most areas
+
+1773
+01:11:00,800 --> 01:11:04,640
+um getting reliability uh or the long
+
+1774
+01:11:03,360 --> 01:11:06,960
+tail of reliability is going to be
+
+1775
+01:11:04,640 --> 01:11:09,280
+extremely challenging. Um so so that's
+
+1776
+01:11:06,960 --> 01:11:11,440
+that's the area in which the the fine
+
+1777
+01:11:09,280 --> 01:11:14,440
+the last one was is hard to get
+
+1778
+01:11:11,440 --> 01:11:14,440
+progress.
+
+1779
+01:11:16,480 --> 01:11:21,679
+>> I thought more of a clarification
+
+1780
+01:11:19,199 --> 01:11:23,360
+question about the meter paper. Um so
+
+1781
+01:11:21,679 --> 01:11:26,560
+they they talk about this concept of
+
+1782
+01:11:23,360 --> 01:11:29,040
+like 50% task completion rate. Um I was
+
+1783
+01:11:26,560 --> 01:11:31,600
+wondering like if the 50% is like an
+
+1784
+01:11:29,040 --> 01:11:33,280
+average kind of like success rate maybe
+
+1785
+01:11:31,600 --> 01:11:36,320
+let's say so there let's say that there
+
+1786
+01:11:33,280 --> 01:11:38,400
+are like 100 test instances right um and
+
+1787
+01:11:36,320 --> 01:11:40,800
+then for each test instance like the AI
+
+1788
+01:11:38,400 --> 01:11:42,480
+will try 10 times and then you see you
+
+1789
+01:11:40,800 --> 01:11:44,000
+count you know how many times then it
+
+1790
+01:11:42,480 --> 01:11:45,520
+fails or it succeeds
+
+1791
+01:11:44,000 --> 01:11:48,640
+>> and then you kind of take the average
+
+1792
+01:11:45,520 --> 01:11:50,800
+over you know the 10 the 100 times 10 or
+
+1793
+01:11:48,640 --> 01:11:52,960
+is it sort of more like you want to be
+
+1794
+01:11:50,800 --> 01:11:55,679
+like make sure for every task it has at
+
+1795
+01:11:52,960 --> 01:11:57,840
+least like 50% cuz I feel like the will
+
+1796
+01:11:55,679 --> 01:11:58,640
+be much more stringent right and harder
+
+1797
+01:11:57,840 --> 01:12:00,239
+to achieve.
+
+1798
+01:11:58,640 --> 01:12:01,840
+>> I think it's multiple attempts for sure
+
+1799
+01:12:00,239 --> 01:12:03,440
+because if you remember we showed this
+
+1800
+01:12:01,840 --> 01:12:06,239
+bot right so there are multiple agent
+
+1801
+01:12:03,440 --> 01:12:09,679
+runs and it's basically saying how how
+
+1802
+01:12:06,239 --> 01:12:11,679
+many times it completed successfully.
+
+1803
+01:12:09,679 --> 01:12:13,440
+So like you have like maybe like so yeah
+
+1804
+01:12:11,679 --> 01:12:15,520
+so here let's say like there are like 97
+
+1805
+01:12:13,440 --> 01:12:18,159
+tasks. So each task you will calculate
+
+1806
+01:12:15,520 --> 01:12:20,320
+like a success rate right of the agent
+
+1807
+01:12:18,159 --> 01:12:23,280
+and then you will take the average of
+
+1808
+01:12:20,320 --> 01:12:26,000
+the individual like task success rate
+
+1809
+01:12:23,280 --> 01:12:27,679
+across the 97 is that like kind of what
+
+1810
+01:12:26,000 --> 01:12:29,760
+do you think they're doing to get the
+
+1811
+01:12:27,679 --> 01:12:33,600
+final 50%.
+
+1812
+01:12:29,760 --> 01:12:36,080
+So uh yes roughly right like for each
+
+1813
+01:12:33,600 --> 01:12:39,360
+horizon they're basically drawing these
+
+1814
+01:12:36,080 --> 01:12:41,199
+points and the points are the the the
+
+1815
+01:12:39,360 --> 01:12:44,320
+success rate for each task is coming
+
+1816
+01:12:41,199 --> 01:12:46,159
+from what percentage of uh attempts were
+
+1817
+01:12:44,320 --> 01:12:48,640
+successful.
+
+1818
+01:12:46,159 --> 01:12:51,520
+So 50% success rate for a particular
+
+1819
+01:12:48,640 --> 01:12:52,960
+task roughly would mean that 50% of the
+
+1820
+01:12:51,520 --> 01:12:58,520
+time it might come back with a good
+
+1821
+01:12:52,960 --> 01:12:58,520
+answer 30% maybe not. So it's of
+
+1822
+01:13:08,480 --> 01:13:14,960
+those results like so it's doing much
+
+1823
+01:13:12,560 --> 01:13:17,840
+better
+
+1824
+01:13:14,960 --> 01:13:20,560
+self engineer learning time was
+
+1825
+01:13:17,840 --> 01:13:22,960
+otherwise experience.
+
+1826
+01:13:20,560 --> 01:13:26,719
+>> Okay let's take that off for the class.
+
+1827
+01:13:22,960 --> 01:13:28,080
+>> Okay. Yeah. Um I think the computer
+
+1828
+01:13:26,719 --> 01:13:30,159
+science as a profession is not going
+
+1829
+01:13:28,080 --> 01:13:32,880
+anywhere. Um and if you're able to
+
+1830
+01:13:30,159 --> 01:13:36,480
+reason for fundamentals, um that is very
+
+1831
+01:13:32,880 --> 01:13:38,560
+important skill to have. Um AI as you
+
+1832
+01:13:36,480 --> 01:13:40,159
+saw needs needs to figure out the
+
+1833
+01:13:38,560 --> 01:13:43,520
+context to solve anything. So you need
+
+1834
+01:13:40,159 --> 01:13:48,040
+to be able to give it the context.
+
+1835
+01:13:43,520 --> 01:13:48,040
+So that that's my belief.
+
+1836
+01:13:50,800 --> 01:13:54,960
+>> Okay.
+
+1837
+01:13:53,040 --> 01:13:58,560
+>> All right. I I have a question. What's
+
+1838
+01:13:54,960 --> 01:14:01,600
+what do you think are stopping AI from
+
+1839
+01:13:58,560 --> 01:14:04,000
+uh tackling those long tail
+
+1840
+01:14:01,600 --> 01:14:05,600
+problem? There's a lack of data or what
+
+1841
+01:14:04,000 --> 01:14:07,199
+else? I mean what's the fundamental
+
+1842
+01:14:05,600 --> 01:14:07,760
+implications?
+
+1843
+01:14:07,199 --> 01:14:10,880
+This
+
+1844
+01:14:07,760 --> 01:14:12,560
+>> um I mean it's it's a mix of both a data
+
+1845
+01:14:10,880 --> 01:14:15,280
+problem and a fundamental model
+
+1846
+01:14:12,560 --> 01:14:17,040
+capabilities, right? in certain cases uh
+
+1847
+01:14:15,280 --> 01:14:18,400
+if you
+
+1848
+01:14:17,040 --> 01:14:21,040
+I think there are several startups that
+
+1849
+01:14:18,400 --> 01:14:23,040
+are tackling things um and building
+
+1850
+01:14:21,040 --> 01:14:25,520
+environments and whatnot but coming up
+
+1851
+01:14:23,040 --> 01:14:27,679
+with tasks that are uh representative
+
+1852
+01:14:25,520 --> 01:14:29,600
+and then uh stop gapping the model
+
+1853
+01:14:27,679 --> 01:14:31,440
+capabilities in each of these tasks
+
+1854
+01:14:29,600 --> 01:14:33,040
+continues to be an area which is
+
+1855
+01:14:31,440 --> 01:14:35,199
+challenging at this point in time right
+
+1856
+01:14:33,040 --> 01:14:37,600
+so um I think when they are brought
+
+1857
+01:14:35,199 --> 01:14:39,600
+across categories like say legal
+
+1858
+01:14:37,600 --> 01:14:42,800
+research or financial research those
+
+1859
+01:14:39,600 --> 01:14:44,320
+have seen much faster adoption and and
+
+1860
+01:14:42,800 --> 01:14:46,080
+improvement ments but they're when
+
+1861
+01:14:44,320 --> 01:14:49,199
+they're very very specific like and
+
+1862
+01:14:46,080 --> 01:14:50,640
+having enough data to or having the
+
+1863
+01:14:49,199 --> 01:14:52,400
+right model having the model progress
+
+1864
+01:14:50,640 --> 01:14:54,159
+and the right model capabilities is hard
+
+1865
+01:14:52,400 --> 01:14:55,920
+for example if you look at robotics
+
+1866
+01:14:54,159 --> 01:14:58,800
+other domain right which is um the
+
+1867
+01:14:55,920 --> 01:15:00,640
+embodied AI stuff there's like a whole
+
+1868
+01:14:58,800 --> 01:15:02,560
+suite of startups that are just going
+
+1869
+01:15:00,640 --> 01:15:05,440
+after data collection as the primary
+
+1870
+01:15:02,560 --> 01:15:08,840
+hypothesis to close the gap based on top
+
+1871
+01:15:05,440 --> 01:15:08,840
+of these models
+
+1872
+01:15:09,040 --> 01:15:12,960
+okay
+
+1873
+01:15:10,800 --> 01:15:12,960
+thank

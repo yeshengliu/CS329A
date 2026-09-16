@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS329A · Self-Improving AI Agents · 学习文档</title>
+<style>
+:root{
+  --bg:#0f1117; --bg2:#151823; --bg3:#1c2030; --line:#272c3d;
+  --fg:#e6e9f2; --fg2:#a7aec4; --fg3:#6f7793;
+  --acc:#7aa2ff; --acc2:#5ee1c4; --warn:#ffb86b; --hit:#3a4a2f; --hit2:#c8f08a;
+  --radius:12px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+[data-theme="light"]{
+  --bg:#f6f7fb; --bg2:#ffffff; --bg3:#eef1f7; --line:#dfe3ee;
+  --fg:#1a1f2e; --fg2:#4b5468; --fg3:#8b93a7;
+  --acc:#2f5fd0; --acc2:#0e8a72; --warn:#b06000; --hit:#fff2b8; --hit2:#7a5b00;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--acc);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea{font:inherit}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));z-index:60;transition:width .1s}
+
+header.top{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+  padding:10px 18px;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;letter-spacing:.2px;white-space:nowrap}
+.brand small{display:block;font-weight:400;color:var(--fg3);font-size:11px;letter-spacing:.4px}
+.searchwrap{position:relative;flex:1;max-width:620px}
+.searchwrap input{width:100%;padding:9px 34px 9px 36px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--fg);outline:none}
+.searchwrap input:focus{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
+.searchwrap .ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--fg3)}
+.searchwrap kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font:11px var(--mono);
+  color:var(--fg3);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.tools{display:flex;gap:6px;align-items:center;margin-left:auto}
+.tbtn{padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg2);color:var(--fg2);font-size:13px;white-space:nowrap}
+.tbtn:hover{color:var(--fg);border-color:var(--acc)}
+.tbtn.on{color:var(--acc);border-color:var(--acc)}
+
+.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:0;min-height:calc(100vh - 58px)}
+aside{position:sticky;top:58px;align-self:start;height:calc(100vh - 58px);overflow:auto;
+  border-right:1px solid var(--line);background:var(--bg2);padding:14px}
+aside h4{margin:6px 6px 8px;font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--fg3)}
+.partitem{display:grid;grid-template-columns:30px 1fr auto;gap:9px;align-items:start;width:100%;
+  text-align:left;padding:9px 10px;border-radius:10px;color:var(--fg2);margin-bottom:3px}
+.partitem:hover{background:var(--bg3);color:var(--fg)}
+.partitem.active{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--fg)}
+.partitem .num{font:12px/1.5 var(--mono);color:var(--fg3);padding-top:1px}
+.partitem.active .num{color:var(--acc)}
+.partitem .tt{font-size:13.5px;line-height:1.35}
+.partitem .mt{font-size:11px;color:var(--fg3);margin-top:2px}
+.badges{display:flex;gap:5px;align-items:center;padding-top:2px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--acc2);display:none}
+.dot.on{display:block}
+.dot.note{background:var(--warn)}
+
+.outline{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+.olink{display:block;width:100%;text-align:left;padding:5px 8px;border-radius:7px;color:var(--fg3);font-size:12.5px;
+  border-left:2px solid transparent;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.olink:hover{color:var(--fg);background:var(--bg3)}
+.olink.active{color:var(--acc);border-left-color:var(--acc)}
+
+main{padding:26px 30px 120px;max-width:1080px}
+.phead{margin-bottom:14px}
+.phead h1{margin:0 0 6px;font-size:27px;line-height:1.25}
+.pmeta{display:flex;gap:14px;flex-wrap:wrap;color:var(--fg3);font-size:13px;align-items:center}
+.pmeta .pill{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg2)}
+.pbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px}
+.chip{font-size:12.5px;color:var(--fg2);border:1px solid var(--line);background:var(--bg2);
+  border-radius:999px;padding:4px 11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip:hover{border-color:var(--acc);color:var(--acc)}
+.chip b{color:var(--fg3);font:11px var(--mono);margin-right:6px}
+
+.para{margin:0 0 10px;padding:4px 8px 4px 6px;border-radius:8px;scroll-margin-top:76px}
+.para .ts{font:11.5px/1 var(--mono);color:var(--fg3);margin-right:9px;vertical-align:1px;user-select:none}
+.para .ts:hover{color:var(--acc)}
+.para .txt{color:var(--fg)}
+body.nots .para .ts{display:none}
+body.compact .para{margin-bottom:3px}
+body.compact .para .txt{color:var(--fg2)}
+.para.hit{background:color-mix(in srgb,var(--acc) 12%,transparent);outline:1px solid color-mix(in srgb,var(--acc) 40%,transparent)}
+.para.flash{animation:flash 1.4s ease}
+@keyframes flash{0%{background:color-mix(in srgb,var(--acc) 30%,transparent)}100%{background:transparent}}
+mark{background:var(--hit);color:var(--hit2);border-radius:3px;padding:0 2px}
+
+.empty{padding:80px 10px;text-align:center;color:var(--fg3)}
+.empty h2{color:var(--fg2)}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;opacity:0;pointer-events:none;transition:opacity .18s}
+.overlay.open{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;height:100%;width:min(680px,94vw);background:var(--bg2);
+  border-left:1px solid var(--line);z-index:80;transform:translateX(102%);transition:transform .22s;display:flex;flex-direction:column}
+.panel.open{transform:none}
+.panel header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel header h3{margin:0;font-size:16px;flex:1}
+.panel .body{overflow:auto;padding:16px}
+.panel footer{border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:8px}
+.close{font-size:20px;color:var(--fg3);line-height:1;padding:2px 6px}
+.close:hover{color:var(--fg)}
+
+.result{width:100%;text-align:left;padding:10px 12px;border-radius:9px;border:1px solid transparent;display:block;margin-bottom:6px}
+.result:hover{background:var(--bg3);border-color:var(--line)}
+.result .rq{font-size:11.5px;color:var(--fg3);font:11.5px var(--mono);margin-bottom:3px}
+.result .rq b{color:var(--acc)}
+.result .rt{font-size:13.5px;color:var(--fg2)}
+.result .rt mark{color:var(--hit2)}
+.nores{color:var(--fg3);padding:20px 4px}
+
+.gsec{margin-bottom:22px}
+.gsec h4{margin:0 0 10px;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--fg3)}
+.gtags{display:flex;gap:7px;flex-wrap:wrap}
+.gtag{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 10px;font-size:13px;color:var(--fg2)}
+.gtag:hover{border-color:var(--acc2);color:var(--fg)}
+.gtag i{font-style:normal;color:var(--fg3);font:11px var(--mono);margin-left:6px}
+.gfilter{width:100%;padding:8px 11px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);margin-bottom:16px}
+
+textarea.notes{width:100%;min-height:220px;resize:vertical;background:var(--bg);color:var(--fg);
+  border:1px solid var(--line);border-radius:10px;padding:11px;line-height:1.6}
+.stat{color:var(--fg3);font-size:12.5px;margin-top:8px}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  aside{position:static;height:auto;max-height:none;border-right:0;border-bottom:1px solid var(--line)}
+  main{padding:18px}
+  .brand small{display:none}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header class="top">
+  <div class="brand">CS329A · Self-Improving AI Agents<small>Stanford Online · 学习文档</small></div>
+  <div class="searchwrap">
+    <span class="ic">⌕</span>
+    <input id="q" type="search" placeholder="搜索全部字幕…（术语 / 概念 / 原句）" autocomplete="off" spellcheck="false">
+    <kbd>/</kbd>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnGlossary" title="术语与概念索引">概念</button>
+    <button class="tbtn" id="btnNotes" title="本讲笔记">笔记</button>
+    <button class="tbtn" id="btnTheme" title="切换主题">◐</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <h4>Lectures</h4>
+    <div id="partlist"></div>
+    <div class="outline" id="outlinebox" hidden>
+      <h4>On this page</h4>
+      <div id="outlinelist"></div>
+    </div>
+  </aside>
+  <main id="main"><div class="empty"><h2>选择左侧任意一讲开始</h2><p>字幕已全部离线内嵌，可直接搜索、跳转、记笔记。</p></div></main>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<section class="panel" id="searchPanel">
+  <header><h3>搜索结果</h3><span id="searchMeta" style="color:var(--fg3);font-size:12.5px"></span><button class="close" data-close>×</button></header>
+  <div class="body" id="searchResults"></div>
+</section>
+
+<section class="panel" id="glossaryPanel">
+  <header><h3>术语 / 概念索引</h3><button class="close" data-close>×</button></header>
+  <div class="body">
+    <input class="gfilter" id="gfilter" placeholder="过滤术语…">
+    <p class="stat" id="gstat"></p>
+    <div class="gsec"><h4>Acronyms</h4><div class="gtags" id="gAcro"></div></div>
+    <div class="gsec"><h4>Concepts &amp; Phrases</h4><div class="gtags" id="gConc"></div></div>
+  </div>
+</section>
+
+<section class="panel" id="notesPanel">
+  <header><h3 id="notesTitle">笔记</h3><button class="close" data-close>×</button></header>
+  <div class="body">
+    <textarea class="notes" id="notesArea" placeholder="记录这一讲的理解、疑问、待补漏点…（自动保存到本地）"></textarea>
+    <p class="stat" id="notesStat"></p>
+  </div>
+  <footer>
+    <button class="tbtn" id="notesExport">导出全部笔记</button>
+    <button class="tbtn" id="notesClear">清空本讲</button>
+  </footer>
+</section>
+
+<script>
+const DATA = /*__DATA__*/null;
+const S = {
+  part: null, ts: true, compact: false,
+  ls: {
+    get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } },
+    set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+  }
+};
+const readSet = new Set(S.ls.get('cs329a:read', []));
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const fmt = s => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60), h = Math.floor(m / 60);
+  return (h ? h + ':' + String(m % 60).padStart(2, '0') : m) + ':' + String(s % 60).padStart(2, '0'); };
+const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const yt = (id, t) => `https://www.youtube.com/watch?v=${id}&t=${Math.floor(t)}s`;
+const noteKey = n => `cs329a:note:${n}`;
+
+function markText(text, q) {
+  if (!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+}
+
+function snippet(text, q, span = 190) {
+  const i = text.toLowerCase().indexOf(q);
+  let s = Math.max(0, i - 60), e = Math.min(text.length, i + q.length + span);
+  let out = (s > 0 ? '…' : '') + text.slice(s, e) + (e < text.length ? '…' : '');
+  return markText(out, q);
+}
+
+/* ---------- sidebar ---------- */
+function renderParts() {
+  $('#partlist').innerHTML = DATA.parts.map(p => {
+    const read = readSet.has(p.n), note = !!S.ls.get(noteKey(p.n), '');
+    return `<button class="partitem" data-n="${p.n}">
+      <span class="num">${p.n}</span>
+      <span><span class="tt">${esc(p.title)}</span><span class="mt">${fmt(p.duration)} · ${p.paras.length} 段</span></span>
+      <span class="badges"><span class="dot ${read ? 'on' : ''}" title="已读"></span><span class="dot note ${note ? 'on' : ''}" title="有笔记"></span></span>
+    </button>`;
+  }).join('');
+  $$('.partitem').forEach(b => b.onclick = () => openPart(+b.dataset.n));
+}
+
+function renderOutline(part) {
+  if (!part.outline.length) { $('#outlinebox').hidden = true; return; }
+  $('#outlinebox').hidden = false;
+  $('#outlinelist').innerHTML = part.outline.map((o, i) =>
+    `<button class="olink" data-t="${o.t}" data-i="${i}" title="${fmt(o.t)}">${fmt(o.t)} · ${esc(o.label)}</button>`).join('');
+  $$('#outlinelist .olink').forEach(b => b.onclick = () => gotoTime(+b.dataset.t));
+}
+
+/* ---------- reader ---------- */
+function openPart(n, opts = {}) {
+  const part = DATA.parts.find(p => p.n === n); if (!part) return;
+  S.part = part;
+  readSet.add(n); S.ls.set('cs329a:read', [...readSet]);
+  renderParts();
+  const prev = DATA.parts.find(p => p.n === n - 1), next = DATA.parts.find(p => p.n === n + 1);
+  $('#main').innerHTML = `
+    <div class="phead">
+      <h1>Part ${part.n} · ${esc(part.title)}</h1>
+      <div class="pmeta">
+        <span class="pill">${fmt(part.duration)}</span>
+        <span class="pill">${part.paras.length} 段</span>
+        <a class="pill" href="${yt(part.id, 0)}" target="_blank" rel="noopener">在 YouTube 打开 ↗</a>
+        <a class="pill" href="${DATA.source}" target="_blank" rel="noopener">课程播放列表 ↗</a>
+      </div>
+    </div>
+    <div class="pbar">
+      ${prev ? `<button class="tbtn" data-go="${prev.n}">← Part ${prev.n}</button>` : ''}
+      ${next ? `<button class="tbtn" data-go="${next.n}">Part ${next.n} →</button>` : ''}
+      <button class="tbtn" id="markUnread">标记未读</button>
+      <button class="tbtn" id="openNotes">本讲笔记</button>
+      <button class="tbtn" id="toTop">回到顶部</button>
+    </div>
+    ${part.outline.length ? `<div class="chips">${part.outline.map(o =>
+      `<button class="chip" data-t="${o.t}"><b>${fmt(o.t)}</b>${esc(o.label)}</button>`).join('')}</div>` : ''}
+    <div id="reader"></div>`;
+  $('#reader').innerHTML = part.paras.map((p, i) =>
+    `<p class="para" id="p-${part.n}-${i}" data-i="${i}" data-t="${p.t}">
+       <a class="ts" href="${yt(part.id, p.t)}" target="_blank" rel="noopener" title="在视频 ${fmt(p.t)} 处打开">${fmt(p.t)}</a><span class="txt">${esc(p.text)}</span>
+     </p>`).join('');
+  renderOutline(part);
+  $$('#main [data-go]').forEach(b => b.onclick = () => openPart(+b.dataset.go));
+  $$('#main .chip').forEach(b => b.onclick = () => gotoTime(+b.dataset.t));
+  $('#markUnread').onclick = () => { readSet.delete(n); S.ls.set('cs329a:read', [...readSet]); renderParts(); };
+  $('#openNotes').onclick = openNotes;
+  $('#toTop').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
+  document.body.classList.toggle('compact', S.compact);
+  document.body.classList.toggle('nots', !S.ts);
+  history.replaceState(null, '', `#p${n}`);
+  setupSpy();
+  if (opts.highlight != null) {
+    const el = $(`#p-${n}-${opts.highlight}`);
+    if (el) { el.scrollIntoView({ block: 'center' }); flash(el); }
+  } else if (opts.t) gotoTime(opts.t, true);
+  else scrollTo({ top: 0 });
+}
+
+function flash(el) { el.classList.add('hit', 'flash'); setTimeout(() => el.classList.remove('flash'), 1500); }
+function gotoTime(t, exact = false) {
+  const paras = S.part.paras; let best = 0;
+  for (let i = 0; i < paras.length; i++) if (paras[i].t <= t + (exact ? 0.5 : 0)) best = i;
+  const el = $(`#p-${S.part.n}-${best}`); if (!el) return;
+  el.scrollIntoView({ block: 'start' }); flash(el);
+}
+
+let spy;
+function setupSpy() {
+  if (spy) spy.disconnect();
+  const links = $$('#outlinelist .olink'); if (!links.length) return;
+  spy = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        const t = +en.target.dataset.t, cur = +$('.olink.active')?.dataset.t || -1;
+        let sel = links.filter(l => +l.dataset.t <= t); sel = sel[sel.length - 1];
+        if (sel && sel.dataset.t !== String(cur)) { links.forEach(l => l.classList.remove('active')); sel.classList.add('active'); }
+      }
+    });
+  }, { rootMargin: '-70px 0px -75% 0px' });
+  $$('#reader .para').forEach(p => spy.observe(p));
+}
+
+/* ---------- search ---------- */
+let lastQ = '';
+function doSearch(q) {
+  q = q.trim().toLowerCase(); lastQ = q;
+  if (!q) { $('#searchResults').innerHTML = '<div class="nores">输入关键词开始搜索。</div>'; $('#searchMeta').textContent = ''; return; }
+  const out = [];
+  for (const part of DATA.parts) {
+    part.paras.forEach((p, i) => {
+      if (p.text.toLowerCase().includes(q)) out.push({ part, i, p });
+    });
+  }
+  $('#searchMeta').textContent = `${out.length} 处匹配`;
+  if (!out.length) { $('#searchResults').innerHTML = '<div class="nores">没有找到匹配，试试更短的关键词。</div>'; return; }
+  $('#searchResults').innerHTML = out.slice(0, 500).map(r =>
+    `<button class="result" data-n="${r.part.n}" data-i="${r.i}">
+       <div class="rq">Part ${r.part.n} · <b>${fmt(r.p.t)}</b> · ${esc(r.part.title)}</div>
+       <div class="rt">${snippet(r.p.text, q)}</div>
+     </button>`).join('') + (out.length > 500 ? '<p class="nores">仅显示前 500 条。</p>' : '');
+  $$('#searchResults .result').forEach(b => b.onclick = () => {
+    closePanels(); openPart(+b.dataset.n, { highlight: +b.dataset.i });
+  });
+}
+
+/* ---------- glossary ---------- */
+function renderGlossary() {
+  const g = DATA.glossary;
+  const paint = (box, items) => {
+    box.innerHTML = items.map(x => `<button class="gtag" data-term="${esc(x.term)}">${esc(x.term)}<i>${x.count}</i></button>`).join('');
+  };
+  paint($('#gAcro'), g.acronyms); paint($('#gConc'), g.concepts);
+  $('#gstat').textContent = `${g.acronyms.length} 个缩写 · ${g.concepts.length} 个概念/短语（点击即搜索，数字为出现次数）`;
+  $$('.gtag').forEach(b => b.onclick = () => {
+    const term = b.dataset.term; closePanels(); $('#q').value = term; doSearch(term); openPanel('searchPanel');
+  });
+  $('#gfilter').oninput = e => {
+    const f = e.target.value.trim().toLowerCase();
+    paint($('#gAcro'), g.acronyms.filter(x => x.term.toLowerCase().includes(f)));
+    paint($('#gConc'), g.concepts.filter(x => x.term.toLowerCase().includes(f)));
+    $$('.gtag').forEach(b => b.onclick = () => { const t = b.dataset.term; closePanels(); $('#q').value = t; doSearch(t); openPanel('searchPanel'); });
+  };
+}
+
+/* ---------- notes ---------- */
+function openNotes() {
+  if (!S.part) return;
+  $('#notesTitle').textContent = `笔记 · Part ${S.part.n} · ${S.part.title}`;
+  $('#notesArea').value = S.ls.get(noteKey(S.part.n), '');
+  updateNotesStat();
+  openPanel('notesPanel');
+  setTimeout(() => $('#notesArea').focus(), 200);
+}
+function updateNotesStat() {
+  const v = $('#notesArea').value;
+  $('#notesStat').textContent = `${v.length} 字符 · 自动保存`;
+}
+let noteTimer;
+function onNotesInput() {
+  updateNotesStat();
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => {
+    S.ls.set(noteKey(S.part.n), $('#notesArea').value);
+    $('#notesStat').textContent = '已保存 ✓';
+    renderParts();
+  }, 400);
+}
+$('#notesArea').addEventListener('input', onNotesInput);
+$('#notesExport').onclick = () => {
+  let md = `# CS329A 笔记\n\n`;
+  for (const p of DATA.parts) {
+    const v = S.ls.get(noteKey(p.n), ''); if (!v) continue;
+    md += `## Part ${p.n} · ${p.title}\n\n${v}\n\n`;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([md], { type: 'text/markdown' }));
+  a.download = 'cs329a-notes.md'; a.click();
+};
+$('#notesClear').onclick = () => {
+  if (!S.part || !confirm('清空本讲笔记？')) return;
+  S.ls.set(noteKey(S.part.n), ''); $('#notesArea').value = ''; updateNotesStat(); renderParts();
+};
+
+/* ---------- panels / misc ---------- */
+function openPanel(id) { $('#overlay').classList.add('open'); $('#' + id).classList.add('open'); }
+function closePanels() { $('#overlay').classList.remove('open'); $$('.panel').forEach(p => p.classList.remove('open')); }
+$('#overlay').onclick = closePanels;
+$$('[data-close]').forEach(b => b.onclick = closePanels);
+$('#btnGlossary').onclick = () => openPanel('glossaryPanel');
+$('#btnNotes').onclick = openNotes;
+$('#btnTheme').onclick = () => {
+  const cur = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = cur; S.ls.set('cs329a:theme', cur);
+};
+
+let searchTimer;
+$('#q').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { doSearch(e.target.value); if (e.target.value.trim()) openPanel('searchPanel'); }, 160);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== $('#q') && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); $('#q').focus(); }
+  if (e.key === 'Escape') closePanels();
+  if (document.activeElement.tagName === 'TEXTAREA') return;
+  if (e.key === 'j' || e.key === 'k') {
+    const ps = $$('#reader .para'); if (!ps.length) return;
+    const top = scrollY + 90;
+    if (e.key === 'j') { const n = ps.find(p => p.offsetTop > top + 4); if (n) n.scrollIntoView({ block: 'start' }); }
+    else { const n = [...ps].reverse().find(p => p.offsetTop < top - 60); if (n) n.scrollIntoView({ block: 'start' }); }
+  }
+});
+addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - innerHeight;
+  $('#progress').style.width = (h > 0 ? scrollY / h * 100 : 0) + '%';
+});
+addEventListener('hashchange', () => { const m = location.hash.match(/^#p(\d+)/); if (m) openPart(+m[1]); });
+
+/* ---------- boot ---------- */
+function boot() {
+  document.documentElement.dataset.theme = S.ls.get('cs329a:theme', 'dark');
+  renderParts(); renderGlossary();
+  const m = location.hash.match(/^#p(\d+)/);
+  if (m) openPart(+m[1]);
+}
+boot();
+</script>
+</body>
+</html>

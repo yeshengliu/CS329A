@@ -1,0 +1,7543 @@
+1
+00:00:05,520 --> 00:00:11,599
+Welcome everyone to sixth lecture for
+
+2
+00:00:07,839 --> 00:00:14,080
+CS3 to9A. Uh we'll today cover train
+
+3
+00:00:11,599 --> 00:00:16,000
+time scaling or scaling RL. So far we
+
+4
+00:00:14,080 --> 00:00:20,640
+have gone through several topics related
+
+5
+00:00:16,000 --> 00:00:23,439
+to test time scaling u feedback using uh
+
+6
+00:00:20,640 --> 00:00:26,400
+tools and code and then also robust
+
+7
+00:00:23,439 --> 00:00:28,560
+verification. Today we will see how we
+
+8
+00:00:26,400 --> 00:00:30,160
+can close the loop to improve the models
+
+9
+00:00:28,560 --> 00:00:31,920
+even further.
+
+10
+00:00:30,160 --> 00:00:34,719
+Okay. So today's lecture we will
+
+11
+00:00:31,920 --> 00:00:37,600
+actually cover three papers. Uh the
+
+12
+00:00:34,719 --> 00:00:39,760
+first paper will cover how can you uh
+
+13
+00:00:37,600 --> 00:00:43,680
+boost the reasoning capabilities of the
+
+14
+00:00:39,760 --> 00:00:46,320
+models with um putting rationals in um
+
+15
+00:00:43,680 --> 00:00:48,640
+problems. Uh this paper was is called
+
+16
+00:00:46,320 --> 00:00:51,280
+star. It was actually done by an author
+
+17
+00:00:48,640 --> 00:00:53,520
+at uh Stanford. The second paper we will
+
+18
+00:00:51,280 --> 00:00:55,440
+cover is deepseek math which talks about
+
+19
+00:00:53,520 --> 00:00:58,879
+mathematical reasoning and how that can
+
+20
+00:00:55,440 --> 00:01:00,719
+be uh boosted in u language models. And
+
+21
+00:00:58,879 --> 00:01:02,960
+then the third paper is more focused on
+
+22
+00:01:00,719 --> 00:01:05,439
+reinforcement learning and how when you
+
+23
+00:01:02,960 --> 00:01:07,439
+have to do uh reasoning with longer
+
+24
+00:01:05,439 --> 00:01:09,040
+reasoning chains how can you stabilize
+
+25
+00:01:07,439 --> 00:01:11,280
+that kind of reinforcement learning
+
+26
+00:01:09,040 --> 00:01:13,119
+algorithms.
+
+27
+00:01:11,280 --> 00:01:15,360
+So to
+
+28
+00:01:13,119 --> 00:01:18,320
+ground a lot of the to motivate a lot of
+
+29
+00:01:15,360 --> 00:01:20,720
+the uh papers that we'll present today
+
+30
+00:01:18,320 --> 00:01:24,400
+if you look at a benchmark called Amy.
+
+31
+00:01:20,720 --> 00:01:27,119
+So AM is a benchmark which is uh on
+
+32
+00:01:24,400 --> 00:01:28,960
+mathematical problems which uh tests for
+
+33
+00:01:27,119 --> 00:01:32,320
+mathematical reasoning. It's very
+
+34
+00:01:28,960 --> 00:01:34,159
+similar to say um it's it's more uh
+
+35
+00:01:32,320 --> 00:01:36,320
+complex mathematical reasoning problems
+
+36
+00:01:34,159 --> 00:01:39,119
+than say what was in a math benchmarks.
+
+37
+00:01:36,320 --> 00:01:40,400
+Uh we used math benchmarks earlier this
+
+38
+00:01:39,119 --> 00:01:43,759
+year and then that one is already
+
+39
+00:01:40,400 --> 00:01:45,360
+saturated and and not and contaminated
+
+40
+00:01:43,759 --> 00:01:46,560
+in most of the models. Basically most of
+
+41
+00:01:45,360 --> 00:01:48,880
+the models have been trained on it. So
+
+42
+00:01:46,560 --> 00:01:51,759
+we had to change the benchmark. So this
+
+43
+00:01:48,880 --> 00:01:54,560
+is uh Amy 2024 and AME 2025. The
+
+44
+00:01:51,759 --> 00:01:56,880
+benchmark that you use in homework one
+
+45
+00:01:54,560 --> 00:01:58,960
+um is a recent a recent benchmark that
+
+46
+00:01:56,880 --> 00:02:01,360
+is uh has mathematical reasoning
+
+47
+00:01:58,960 --> 00:02:05,439
+problems. And if you were to evaluate
+
+48
+00:02:01,360 --> 00:02:07,600
+GPD 3.5 which is 175 billion parameter
+
+49
+00:02:05,439 --> 00:02:10,239
+model you would get or or that's what
+
+50
+00:02:07,600 --> 00:02:12,080
+it's believed to be you get almost 5%
+
+51
+00:02:10,239 --> 00:02:15,200
+accuracy. But if you were to take
+
+52
+00:02:12,080 --> 00:02:18,080
+deepsek math which was uh using train
+
+53
+00:02:15,200 --> 00:02:21,599
+time scaling with on a 7B model it gets
+
+54
+00:02:18,080 --> 00:02:23,440
+51.7% accuracy and
+
+55
+00:02:21,599 --> 00:02:27,680
+with additional tricks it's able to even
+
+56
+00:02:23,440 --> 00:02:29,840
+get 60% accuracy and if you apply uh the
+
+57
+00:02:27,680 --> 00:02:33,200
+third paper that I will talk about
+
+58
+00:02:29,840 --> 00:02:36,879
+called Dapo uh on the quen 32B model you
+
+59
+00:02:33,200 --> 00:02:39,760
+are able to get 50% accuracy. So in the
+
+60
+00:02:36,879 --> 00:02:43,680
+prior work or in the first lecture we
+
+61
+00:02:39,760 --> 00:02:45,840
+were saying that as we scale the number
+
+62
+00:02:43,680 --> 00:02:48,160
+of parameters in the model that's when
+
+63
+00:02:45,840 --> 00:02:51,200
+the model capabilities go up the model
+
+64
+00:02:48,160 --> 00:02:52,800
+accuracy on benchmarks go up. But what
+
+65
+00:02:51,200 --> 00:02:54,560
+we are seeing in this particular slide
+
+66
+00:02:52,800 --> 00:02:56,319
+is that you can achieve a pretty high
+
+67
+00:02:54,560 --> 00:02:58,400
+performance on reasoning benchmarks with
+
+68
+00:02:56,319 --> 00:03:00,879
+smaller models. So how did these smaller
+
+69
+00:02:58,400 --> 00:03:03,040
+models uh get really performant? How did
+
+70
+00:03:00,879 --> 00:03:04,959
+they get really high accuracy? So that's
+
+71
+00:03:03,040 --> 00:03:08,159
+something that we will kind of explore
+
+72
+00:03:04,959 --> 00:03:10,159
+in this particular lecture. And the some
+
+73
+00:03:08,159 --> 00:03:12,640
+of the tricks that are being used uh to
+
+74
+00:03:10,159 --> 00:03:15,840
+achieve uh this are called train time
+
+75
+00:03:12,640 --> 00:03:17,680
+scaling. Um so typically if you try to
+
+76
+00:03:15,840 --> 00:03:19,519
+do reinforcement learning on reasoning
+
+77
+00:03:17,680 --> 00:03:22,319
+it will not work well and a lot of the
+
+78
+00:03:19,519 --> 00:03:23,840
+times the reason it doesn't work well is
+
+79
+00:03:22,319 --> 00:03:26,879
+uh because the implementation details
+
+80
+00:03:23,840 --> 00:03:29,599
+are hard to get right. So the the key
+
+81
+00:03:26,879 --> 00:03:32,560
+insights that we uh that we will study
+
+82
+00:03:29,599 --> 00:03:34,080
+today are that if you have a model
+
+83
+00:03:32,560 --> 00:03:36,560
+earlier you were just training it on
+
+84
+00:03:34,080 --> 00:03:39,120
+internet. So pre-training the technique
+
+85
+00:03:36,560 --> 00:03:41,599
+of model training was training the model
+
+86
+00:03:39,120 --> 00:03:43,760
+on internet. If you allow the model to
+
+87
+00:03:41,599 --> 00:03:45,920
+learn from their own outputs uh by
+
+88
+00:03:43,760 --> 00:03:47,920
+filtering cleverly you can improve the
+
+89
+00:03:45,920 --> 00:03:50,159
+models even further. Hence the class is
+
+90
+00:03:47,920 --> 00:03:53,440
+called self-improving AI agents algorith
+
+91
+00:03:50,159 --> 00:03:55,599
+uh class. Um and then the the amount of
+
+92
+00:03:53,440 --> 00:03:57,680
+compute you invest in training the model
+
+93
+00:03:55,599 --> 00:03:59,680
+on its own outputs can substitute for
+
+94
+00:03:57,680 --> 00:04:01,439
+the model parameters. This also
+
+95
+00:03:59,680 --> 00:04:04,159
+parallels some of the earlier efforts
+
+96
+00:04:01,439 --> 00:04:06,879
+where the amount of compute uh used in
+
+97
+00:04:04,159 --> 00:04:08,480
+training smaller models u if you could
+
+98
+00:04:06,879 --> 00:04:10,720
+increase the amount of data has been
+
+99
+00:04:08,480 --> 00:04:12,640
+shown to like help improve certain
+
+100
+00:04:10,720 --> 00:04:14,480
+benchmarks. And then the third point is
+
+101
+00:04:12,640 --> 00:04:15,760
+that when you're doing reinforcement
+
+102
+00:04:14,480 --> 00:04:17,440
+learning as opposed to supervised
+
+103
+00:04:15,760 --> 00:04:20,079
+learning, you have to really be careful
+
+104
+00:04:17,440 --> 00:04:22,079
+about uh details of the implementation
+
+105
+00:04:20,079 --> 00:04:24,320
+because as you scale up those
+
+106
+00:04:22,079 --> 00:04:27,199
+algorithms, uh the small fixes can be
+
+107
+00:04:24,320 --> 00:04:28,720
+extremely important. So the three
+
+108
+00:04:27,199 --> 00:04:30,560
+paradigms that I'm talking about here
+
+109
+00:04:28,720 --> 00:04:33,600
+are pre-training which is basically
+
+110
+00:04:30,560 --> 00:04:35,280
+you're training the model on internet um
+
+111
+00:04:33,600 --> 00:04:37,199
+that we have talked about in the first
+
+112
+00:04:35,280 --> 00:04:39,840
+lecture and we're not covering that much
+
+113
+00:04:37,199 --> 00:04:41,680
+in detail. And then the next technique
+
+114
+00:04:39,840 --> 00:04:43,040
+would be that fine-tuning which is how
+
+115
+00:04:41,680 --> 00:04:45,040
+you get your chatbots where you're
+
+116
+00:04:43,040 --> 00:04:46,400
+basically perhaps fine-tuning or doing
+
+117
+00:04:45,040 --> 00:04:50,560
+reinforcement learning with human
+
+118
+00:04:46,400 --> 00:04:52,720
+feedback or RLif on uh preference data
+
+119
+00:04:50,560 --> 00:04:54,080
+uh from humans and then the test time
+
+120
+00:04:52,720 --> 00:04:56,240
+scaling which was some of the techniques
+
+121
+00:04:54,080 --> 00:04:57,840
+that were covered uh in previous
+
+122
+00:04:56,240 --> 00:04:59,360
+lectures. Those are more techniques
+
+123
+00:04:57,840 --> 00:05:02,560
+where you're basically doing some sort
+
+124
+00:04:59,360 --> 00:05:04,479
+of say majority voting or inference time
+
+125
+00:05:02,560 --> 00:05:06,639
+sampling and then combining the outputs
+
+126
+00:05:04,479 --> 00:05:09,600
+from the uh how you sample from the
+
+127
+00:05:06,639 --> 00:05:11,919
+model. Um for example in homework one uh
+
+128
+00:05:09,600 --> 00:05:14,160
+you are evaluating majority voting then
+
+129
+00:05:11,919 --> 00:05:17,680
+you are evaluating some other techniques
+
+130
+00:05:14,160 --> 00:05:19,440
+that u combine and evaluate the errors
+
+131
+00:05:17,680 --> 00:05:21,600
+in what the model is producing and then
+
+132
+00:05:19,440 --> 00:05:23,280
+using that to improve the model. So test
+
+133
+00:05:21,600 --> 00:05:25,440
+time scaling is mostly inferencebased
+
+134
+00:05:23,280 --> 00:05:29,039
+techniques. Now if you take what the
+
+135
+00:05:25,440 --> 00:05:30,720
+model output filter after applying this
+
+136
+00:05:29,039 --> 00:05:33,280
+test time scaling and then use that to
+
+137
+00:05:30,720 --> 00:05:34,720
+fine-tune further that that's roughly
+
+138
+00:05:33,280 --> 00:05:36,080
+what train time scaling is. So if you
+
+139
+00:05:34,720 --> 00:05:38,560
+take nothing away from this entire
+
+140
+00:05:36,080 --> 00:05:40,320
+lecture but you just remember this loop
+
+141
+00:05:38,560 --> 00:05:43,280
+then you kind of have learned the basics
+
+142
+00:05:40,320 --> 00:05:46,280
+of what train time scaling does.
+
+143
+00:05:43,280 --> 00:05:46,280
+Questions?
+
+144
+00:05:47,039 --> 00:05:51,120
+How do you um know like when what is
+
+145
+00:05:49,520 --> 00:05:53,120
+like the good balance to distribute your
+
+146
+00:05:51,120 --> 00:05:54,880
+compute into train time scaling versus
+
+147
+00:05:53,120 --> 00:05:58,320
+test time scaling like
+
+148
+00:05:54,880 --> 00:06:00,240
+>> is there like a flat flat like ROI curve
+
+149
+00:05:58,320 --> 00:06:02,400
+that you reach at certain point after
+
+150
+00:06:00,240 --> 00:06:05,440
+investing in train time I mean great
+
+151
+00:06:02,400 --> 00:06:08,400
+question um let's hold that question
+
+152
+00:06:05,440 --> 00:06:09,600
+until the third paper
+
+153
+00:06:08,400 --> 00:06:10,960
+>> cool [clears throat]
+
+154
+00:06:09,600 --> 00:06:13,120
+uh but definitely ask that question
+
+155
+00:06:10,960 --> 00:06:15,919
+again
+
+156
+00:06:13,120 --> 00:06:19,600
+um so roughly um what happened last year
+
+157
+00:06:15,919 --> 00:06:22,160
+was that um what uh the reasoning model
+
+158
+00:06:19,600 --> 00:06:24,880
+this is a graph on 01 and 01's accuracy
+
+159
+00:06:22,160 --> 00:06:27,520
+on Amy uh on the it's passet one
+
+160
+00:06:24,880 --> 00:06:29,520
+accuracy on the y-axis and then the
+
+161
+00:06:27,520 --> 00:06:32,639
+amount of compute on x-axis and train
+
+162
+00:06:29,520 --> 00:06:34,639
+time is shown on the x-axis on left
+
+163
+00:06:32,639 --> 00:06:38,160
+graph and test time compute is shown on
+
+164
+00:06:34,639 --> 00:06:40,000
+the x-axis on the right hand plot. So
+
+165
+00:06:38,160 --> 00:06:41,840
+what is happening here is that as we are
+
+166
+00:06:40,000 --> 00:06:43,520
+increasing the test time compute that we
+
+167
+00:06:41,840 --> 00:06:45,680
+have already seen the passet one
+
+168
+00:06:43,520 --> 00:06:48,319
+aggressive should go up. So we this is a
+
+169
+00:06:45,680 --> 00:06:51,039
+log linear plot and so more inference
+
+170
+00:06:48,319 --> 00:06:52,720
+time compute better passet one accuracy
+
+171
+00:06:51,039 --> 00:06:54,880
+but what they're also showing is that if
+
+172
+00:06:52,720 --> 00:06:56,560
+you can increase the train time compute
+
+173
+00:06:54,880 --> 00:06:59,520
+then you can also improve passet one
+
+174
+00:06:56,560 --> 00:07:02,319
+accuracy. So what Owen showed uh for Amy
+
+175
+00:06:59,520 --> 00:07:05,440
+benchmark was that by increasing both
+
+176
+00:07:02,319 --> 00:07:07,840
+the train time compute and the test time
+
+177
+00:07:05,440 --> 00:07:10,800
+compute you are able to in improve the
+
+178
+00:07:07,840 --> 00:07:13,440
+accuracy on the benchmark and um so it
+
+179
+00:07:10,800 --> 00:07:15,120
+allows you for basically a circular loop
+
+180
+00:07:13,440 --> 00:07:17,039
+where like you can generate model
+
+181
+00:07:15,120 --> 00:07:18,560
+outputs and then feed them back to
+
+182
+00:07:17,039 --> 00:07:20,800
+improve the model on this particular
+
+183
+00:07:18,560 --> 00:07:22,319
+benchmark. Now why does this work? So
+
+184
+00:07:20,800 --> 00:07:24,240
+math is a domain in which there is
+
+185
+00:07:22,319 --> 00:07:26,800
+verifiability. So we had an whole
+
+186
+00:07:24,240 --> 00:07:28,560
+lecture on robust verification. So you
+
+187
+00:07:26,800 --> 00:07:30,000
+have the ability to know which outputs
+
+188
+00:07:28,560 --> 00:07:31,520
+are correct and which ones are not
+
+189
+00:07:30,000 --> 00:07:33,599
+correct. So you have some ability to
+
+190
+00:07:31,520 --> 00:07:35,360
+actually choose the correct outputs that
+
+191
+00:07:33,599 --> 00:07:37,840
+that can then feed into train time
+
+192
+00:07:35,360 --> 00:07:40,319
+scaling. So this works better in domains
+
+193
+00:07:37,840 --> 00:07:44,160
+where there is verifiability.
+
+194
+00:07:40,319 --> 00:07:46,560
+So uh typically why doesing um start to
+
+195
+00:07:44,160 --> 00:07:47,919
+help? Uh so this is a repeat of some of
+
+196
+00:07:46,560 --> 00:07:50,960
+the slides but I think it's very
+
+197
+00:07:47,919 --> 00:07:53,520
+important to remind folks that all the
+
+198
+00:07:50,960 --> 00:07:55,759
+reasoning models in Osiris or or Gemini
+
+199
+00:07:53,520 --> 00:07:58,560
+Gemini flash thinking or like valance in
+
+200
+00:07:55,759 --> 00:08:00,240
+other uh frontier labs the basically
+
+201
+00:07:58,560 --> 00:08:01,840
+reasoning allows us to solve for
+
+202
+00:08:00,240 --> 00:08:03,440
+difficult problems because when you're
+
+203
+00:08:01,840 --> 00:08:05,440
+solving a difficult problem you will not
+
+204
+00:08:03,440 --> 00:08:07,280
+just spit out the output even in chain
+
+205
+00:08:05,440 --> 00:08:08,720
+of thought and math problems when you
+
+206
+00:08:07,280 --> 00:08:10,560
+were asking the model to think step by
+
+207
+00:08:08,720 --> 00:08:13,520
+step it allowed certain amount of tokens
+
+208
+00:08:10,560 --> 00:08:15,520
+to be dedicated to um uh spelling out
+
+209
+00:08:13,520 --> 00:08:17,120
+the reasoning and step-by-step process.
+
+210
+00:08:15,520 --> 00:08:19,039
+So, thinking models use a chain of
+
+211
+00:08:17,120 --> 00:08:21,039
+thought where when they're attempting to
+
+212
+00:08:19,039 --> 00:08:23,199
+solve the problem and what these tokens
+
+213
+00:08:21,039 --> 00:08:25,039
+might get dedicated to is you will see
+
+214
+00:08:23,199 --> 00:08:26,960
+patterns like problem analysis where
+
+215
+00:08:25,039 --> 00:08:29,280
+they might actually try to understand
+
+216
+00:08:26,960 --> 00:08:31,440
+what the problem is describing. Task
+
+217
+00:08:29,280 --> 00:08:33,360
+decomposition. I'll show you an example
+
+218
+00:08:31,440 --> 00:08:36,640
+of this but that will where they try to
+
+219
+00:08:33,360 --> 00:08:38,880
+decompose the task into subtasks. Um
+
+220
+00:08:36,640 --> 00:08:41,120
+self-evaluation they might actually try
+
+221
+00:08:38,880 --> 00:08:43,839
+to look at the answer and then be like
+
+222
+00:08:41,120 --> 00:08:46,320
+okay this is not looking correct. Uh so
+
+223
+00:08:43,839 --> 00:08:48,320
+they might actually choose to uh
+
+224
+00:08:46,320 --> 00:08:49,760
+backtrack and uh recognize their own
+
+225
+00:08:48,320 --> 00:08:51,680
+mistakes and then backtrack to a
+
+226
+00:08:49,760 --> 00:08:56,480
+previous step where they redo the
+
+227
+00:08:51,680 --> 00:08:57,920
+problem and um they might uh try some
+
+228
+00:08:56,480 --> 00:08:59,920
+kind of different approaches. So it's
+
+229
+00:08:57,920 --> 00:09:01,200
+like a somewhat parallel search where
+
+230
+00:08:59,920 --> 00:09:02,959
+they might actually try multiple
+
+231
+00:09:01,200 --> 00:09:05,120
+approaches at the same time instead of
+
+232
+00:09:02,959 --> 00:09:06,720
+if the current one is not leading to a
+
+233
+00:09:05,120 --> 00:09:08,240
+solution. So it needs to have some sense
+
+234
+00:09:06,720 --> 00:09:12,080
+of whether it's the correct solution or
+
+235
+00:09:08,240 --> 00:09:14,880
+not. So here are some examples from um
+
+236
+00:09:12,080 --> 00:09:17,839
+actually um earlier version of the model
+
+237
+00:09:14,880 --> 00:09:20,160
+uh in 01 series. Uh so here the user is
+
+238
+00:09:17,839 --> 00:09:22,320
+requesting a bash script uh where it
+
+239
+00:09:20,160 --> 00:09:23,760
+wants to understand uh so it's
+
+240
+00:09:22,320 --> 00:09:25,360
+requesting a bash script that will
+
+241
+00:09:23,760 --> 00:09:27,519
+represent a string with the for with
+
+242
+00:09:25,360 --> 00:09:29,120
+this format and print out the transpose
+
+243
+00:09:27,519 --> 00:09:33,360
+in the same format. So it's taking a
+
+244
+00:09:29,120 --> 00:09:36,720
+matrix and printing the transpose and uh
+
+245
+00:09:33,360 --> 00:09:38,560
+what you see in the output is that the
+
+246
+00:09:36,720 --> 00:09:41,200
+model first tries to understand what the
+
+247
+00:09:38,560 --> 00:09:43,200
+user uh is asking in terms of input and
+
+248
+00:09:41,200 --> 00:09:45,200
+output formats before it tries to solve
+
+249
+00:09:43,200 --> 00:09:48,160
+the problem. So that's more of a problem
+
+250
+00:09:45,200 --> 00:09:50,160
+analysis kind of pattern. Another
+
+251
+00:09:48,160 --> 00:09:52,399
+example for the same problem you see is
+
+252
+00:09:50,160 --> 00:09:54,240
+that it tries to decompose the problem.
+
+253
+00:09:52,399 --> 00:09:55,920
+So it will actually once it understood
+
+254
+00:09:54,240 --> 00:09:57,839
+the problem it's saying that the
+
+255
+00:09:55,920 --> 00:09:59,519
+approach should involve maybe I should
+
+256
+00:09:57,839 --> 00:10:01,279
+parse the input string then build the
+
+257
+00:09:59,519 --> 00:10:03,360
+matrix transpose the matrix and then
+
+258
+00:10:01,279 --> 00:10:05,760
+output the matrix in the same format. So
+
+259
+00:10:03,360 --> 00:10:07,360
+it's breaking it into multiple steps.
+
+260
+00:10:05,760 --> 00:10:09,760
+While for this particular problem this
+
+261
+00:10:07,360 --> 00:10:11,680
+might be an overkill but in more complex
+
+262
+00:10:09,760 --> 00:10:12,800
+problems this might be a better way to
+
+263
+00:10:11,680 --> 00:10:14,320
+solve the problem because you've
+
+264
+00:10:12,800 --> 00:10:18,079
+decomposed the problem into smaller
+
+265
+00:10:14,320 --> 00:10:19,519
+steps. And then selfcorrection. So this
+
+266
+00:10:18,079 --> 00:10:22,640
+is a different problem from chemistry
+
+267
+00:10:19,519 --> 00:10:26,880
+where it's asking pH of uh some solution
+
+268
+00:10:22,640 --> 00:10:30,320
+on a chemical and um the model starts to
+
+269
+00:10:26,880 --> 00:10:32,399
+compute uh the pH value but then it um
+
+270
+00:10:30,320 --> 00:10:34,079
+suddenly has this notion of weight the
+
+271
+00:10:32,399 --> 00:10:35,680
+correct formula is different. So it
+
+272
+00:10:34,079 --> 00:10:37,600
+basically goes and changes the formula
+
+273
+00:10:35,680 --> 00:10:39,920
+that it was going to use. So even though
+
+274
+00:10:37,600 --> 00:10:42,079
+it's pulling from the knowledge that the
+
+275
+00:10:39,920 --> 00:10:43,519
+model already has it's actually um
+
+276
+00:10:42,079 --> 00:10:46,160
+correcting itself. So it has the
+
+277
+00:10:43,519 --> 00:10:48,399
+capability of selfcorrection.
+
+278
+00:10:46,160 --> 00:10:50,320
+And how does this help the model? So as
+
+279
+00:10:48,399 --> 00:10:52,560
+I was trying to explain before in
+
+280
+00:10:50,320 --> 00:10:56,079
+domains where you have verification like
+
+281
+00:10:52,560 --> 00:10:58,480
+computer programming or um data analysis
+
+282
+00:10:56,079 --> 00:11:01,040
+or mathematical calculation the win rate
+
+283
+00:10:58,480 --> 00:11:02,640
+over GPD40 which which was not a
+
+284
+00:11:01,040 --> 00:11:05,680
+thinking model you'll see that it's
+
+285
+00:11:02,640 --> 00:11:08,480
+greater than 50%. So uh certain domains
+
+286
+00:11:05,680 --> 00:11:10,880
+benefit way more from uh the strain time
+
+287
+00:11:08,480 --> 00:11:12,320
+scaling kind of techniques as opposed to
+
+288
+00:11:10,880 --> 00:11:14,480
+if you look at personal writing or
+
+289
+00:11:12,320 --> 00:11:16,560
+editing editing text there's not as much
+
+290
+00:11:14,480 --> 00:11:17,920
+improvement in terms of win rate. Win
+
+291
+00:11:16,560 --> 00:11:20,480
+rate means like if you were to give
+
+292
+00:11:17,920 --> 00:11:22,640
+humans output from GPD40 versus thinking
+
+293
+00:11:20,480 --> 00:11:24,880
+models um personal writing and editing
+
+294
+00:11:22,640 --> 00:11:27,360
+text may not see as much gains but
+
+295
+00:11:24,880 --> 00:11:29,279
+domains which have the ability to uh
+
+296
+00:11:27,360 --> 00:11:30,800
+verify and close the loop see more
+
+297
+00:11:29,279 --> 00:11:34,040
+gains.
+
+298
+00:11:30,800 --> 00:11:34,040
+um questions.
+
+299
+00:11:40,000 --> 00:11:46,279
+>> Mhm.
+
+300
+00:11:41,519 --> 00:11:46,279
+So the train time
+
+301
+00:11:46,800 --> 00:11:54,240
+to zero times it seems like performance
+
+302
+00:11:51,600 --> 00:11:56,880
+is better than the train performance
+
+303
+00:11:54,240 --> 00:11:59,760
+like on the right
+
+304
+00:11:56,880 --> 00:12:02,720
+but on the left side that is low. So in
+
+305
+00:11:59,760 --> 00:12:04,720
+this case it has performance actually
+
+306
+00:12:02,720 --> 00:12:06,480
+better than performance.
+
+307
+00:12:04,720 --> 00:12:08,399
+>> So in this particular plot it does look
+
+308
+00:12:06,480 --> 00:12:10,160
+like that. Um
+
+309
+00:12:08,399 --> 00:12:11,920
+>> but
+
+310
+00:12:10,160 --> 00:12:13,440
+>> there is no intuition around these
+
+311
+00:12:11,920 --> 00:12:14,959
+things as to like one should be better
+
+312
+00:12:13,440 --> 00:12:17,839
+than the other. I think I mean you have
+
+313
+00:12:14,959 --> 00:12:19,519
+to it this is one instantiation of where
+
+314
+00:12:17,839 --> 00:12:22,720
+things were and I just wanted to show
+
+315
+00:12:19,519 --> 00:12:24,880
+you the curve.
+
+316
+00:12:22,720 --> 00:12:25,760
+>> Performance is better than performance.
+
+317
+00:12:24,880 --> 00:12:27,440
+>> Mhm.
+
+318
+00:12:25,760 --> 00:12:29,760
+>> Just mean some suspicious
+
+319
+00:12:27,440 --> 00:12:32,240
+>> something suspicious going on. Okay.
+
+320
+00:12:29,760 --> 00:12:33,760
+>> I I copy the plot so some their graphs
+
+321
+00:12:32,240 --> 00:12:35,760
+are not always right as you might know
+
+322
+00:12:33,760 --> 00:12:37,188
+from their latest release.
+
+323
+00:12:35,760 --> 00:12:39,120
+>> Okay.
+
+324
+00:12:37,188 --> 00:12:41,440
+>> [laughter]
+
+325
+00:12:39,120 --> 00:12:42,959
+>> U okay so let's go back to the
+
+326
+00:12:41,440 --> 00:12:44,320
+fundamentals right so what is it that
+
+327
+00:12:42,959 --> 00:12:45,519
+we're trying to answer I think the
+
+328
+00:12:44,320 --> 00:12:47,760
+fundamental question we're trying to
+
+329
+00:12:45,519 --> 00:12:49,600
+answer is that in test time compute you
+
+330
+00:12:47,760 --> 00:12:52,320
+can basically if you go back to this
+
+331
+00:12:49,600 --> 00:12:54,880
+plot test time compute is very cheap for
+
+332
+00:12:52,320 --> 00:12:56,639
+someone to put uh because you've trained
+
+333
+00:12:54,880 --> 00:12:58,399
+a model and then you can go and do
+
+334
+00:12:56,639 --> 00:12:59,920
+multiple inferences and if one of the
+
+335
+00:12:58,399 --> 00:13:02,320
+answers is correct and you have a good
+
+336
+00:12:59,920 --> 00:13:05,040
+verifier on your end then you can
+
+337
+00:13:02,320 --> 00:13:07,440
+basically scale compute infinitely in
+
+338
+00:13:05,040 --> 00:13:09,760
+fact I think next Friday uh I'll go
+
+339
+00:13:07,440 --> 00:13:11,680
+through some papers including alpha code
+
+340
+00:13:09,760 --> 00:13:14,720
+for example and what you'll find there
+
+341
+00:13:11,680 --> 00:13:16,720
+is that if you can basically make make
+
+342
+00:13:14,720 --> 00:13:18,560
+your search infinite in some ways then
+
+343
+00:13:16,720 --> 00:13:19,920
+in test time you basically have a
+
+344
+00:13:18,560 --> 00:13:22,399
+solution that will be correct because
+
+345
+00:13:19,920 --> 00:13:24,000
+from test time scaling we do know that
+
+346
+00:13:22,399 --> 00:13:27,440
+there is a correct solution if you
+
+347
+00:13:24,000 --> 00:13:28,959
+repeatedly sample right um pain time
+
+348
+00:13:27,440 --> 00:13:30,639
+scaling the challenge will be that you
+
+349
+00:13:28,959 --> 00:13:32,800
+have to scale it correctly which we'll
+
+350
+00:13:30,639 --> 00:13:34,480
+cover in this lecture and then the
+
+351
+00:13:32,800 --> 00:13:36,399
+second bit is that there's a certain
+
+352
+00:13:34,480 --> 00:13:38,399
+amount of this closed feed feedback loop
+
+353
+00:13:36,399 --> 00:13:41,200
+has to have enough successes for the
+
+354
+00:13:38,399 --> 00:13:43,360
+train time scaling to work well.
+
+355
+00:13:41,200 --> 00:13:46,399
+So you will see that in the papers that
+
+356
+00:13:43,360 --> 00:13:48,480
+I'll present now. So that plot is
+
+357
+00:13:46,399 --> 00:13:49,920
+actually different the traditional
+
+358
+00:13:48,480 --> 00:13:51,760
+machine learning will compare between
+
+359
+00:13:49,920 --> 00:13:53,760
+the performance and test performance
+
+360
+00:13:51,760 --> 00:13:55,839
+because that clause is showing it's
+
+361
+00:13:53,760 --> 00:13:58,480
+actually more efficient if you boost the
+
+362
+00:13:55,839 --> 00:14:02,160
+computer to the test because when
+
+363
+00:13:58,480 --> 00:14:05,040
+computer increases the accuracy faster
+
+364
+00:14:02,160 --> 00:14:07,279
+like given the same computer to test
+
+365
+00:14:05,040 --> 00:14:09,839
+essentially you have better
+
+366
+00:14:07,279 --> 00:14:13,360
+>> so uh so there is a caveat to what
+
+367
+00:14:09,839 --> 00:14:15,360
+you're saying uh test time compute works
+
+368
+00:14:13,360 --> 00:14:18,000
+well in benchmark marks where the
+
+369
+00:14:15,360 --> 00:14:18,639
+verifiability is robust.
+
+370
+00:14:18,000 --> 00:14:20,560
+Okay.
+
+371
+00:14:18,639 --> 00:14:22,240
+>> Um otherwise you do need to get the
+
+372
+00:14:20,560 --> 00:14:24,240
+model to start to reason better because
+
+373
+00:14:22,240 --> 00:14:27,920
+you and and you need some verification
+
+374
+00:14:24,240 --> 00:14:29,199
+loops. So both serve their uh I mean
+
+375
+00:14:27,920 --> 00:14:30,959
+this is something we'll discuss in the
+
+376
+00:14:29,199 --> 00:14:32,880
+lecture but both serve their goals. So
+
+377
+00:14:30,959 --> 00:14:35,519
+like if you prefetch what I'll present
+
+378
+00:14:32,880 --> 00:14:37,760
+by the end of the lecture. uh when you
+
+379
+00:14:35,519 --> 00:14:39,279
+look at a pre-trained model what it is
+
+380
+00:14:37,760 --> 00:14:41,760
+good at is it has certain level of
+
+381
+00:14:39,279 --> 00:14:43,519
+capability in say solving mathematical
+
+382
+00:14:41,760 --> 00:14:46,160
+problems and solving reasoning problems
+
+383
+00:14:43,519 --> 00:14:48,079
+and reasoning about um finance or legal
+
+384
+00:14:46,160 --> 00:14:52,240
+or whatever based on whatever domains it
+
+385
+00:14:48,079 --> 00:14:53,760
+has seen already data in but then uh in
+
+386
+00:14:52,240 --> 00:14:55,360
+inference time you're basically getting
+
+387
+00:14:53,760 --> 00:14:57,519
+it to reason over multiple of these
+
+388
+00:14:55,360 --> 00:14:59,199
+traces and then picking one if you know
+
+389
+00:14:57,519 --> 00:15:01,199
+and have a good way to verify the
+
+390
+00:14:59,199 --> 00:15:03,199
+solutions then you can like pick one of
+
+391
+00:15:01,199 --> 00:15:04,560
+the solutions that's like saying I'm
+
+392
+00:15:03,199 --> 00:15:07,760
+going to throw spaghetti at the wall and
+
+393
+00:15:04,560 --> 00:15:09,600
+I know which where it should land. Um
+
+394
+00:15:07,760 --> 00:15:11,199
+otherwise with train time scaling you
+
+395
+00:15:09,600 --> 00:15:13,920
+can teach the model and boost the pass
+
+396
+00:15:11,199 --> 00:15:15,760
+at one accuracy so that uh there's more
+
+397
+00:15:13,920 --> 00:15:18,160
+likelihood that will emit the correct
+
+398
+00:15:15,760 --> 00:15:20,720
+output but you still need verification
+
+399
+00:15:18,160 --> 00:15:24,040
+of the loop.
+
+400
+00:15:20,720 --> 00:15:24,040
+More questions?
+
+401
+00:15:24,399 --> 00:15:29,440
+>> Yes. So, so when you're um fine-tuning
+
+402
+00:15:27,040 --> 00:15:31,420
+the model to be able to solve difficult
+
+403
+00:15:29,440 --> 00:15:33,279
+problems better, um does it
+
+404
+00:15:31,420 --> 00:15:35,279
+[clears throat] have any regression on
+
+405
+00:15:33,279 --> 00:15:37,279
+solving simpler problems? And if so, how
+
+406
+00:15:35,279 --> 00:15:39,199
+do you get that?
+
+407
+00:15:37,279 --> 00:15:41,120
+>> That one also needs to be let's let's
+
+408
+00:15:39,199 --> 00:15:43,279
+keep those questions. I like all the
+
+409
+00:15:41,120 --> 00:15:45,519
+reason all the questions, but we need to
+
+410
+00:15:43,279 --> 00:15:48,880
+get to the first paper and then we can
+
+411
+00:15:45,519 --> 00:15:50,000
+ask that one.
+
+412
+00:15:48,880 --> 00:15:53,519
+Typically there shouldn't be a
+
+413
+00:15:50,000 --> 00:15:54,880
+regression on solving um uh difficult uh
+
+414
+00:15:53,519 --> 00:15:56,399
+easy problems if you're solving
+
+415
+00:15:54,880 --> 00:15:58,399
+difficult problems unless you basically
+
+416
+00:15:56,399 --> 00:16:01,360
+go into like reasoning chains that are
+
+417
+00:15:58,399 --> 00:16:03,839
+completely um broken in some ways. So
+
+418
+00:16:01,360 --> 00:16:07,800
+repetitive reasoning chains
+
+419
+00:16:03,839 --> 00:16:07,800
+that which is called as overthinking.
+
+420
+00:16:08,079 --> 00:16:12,560
+So uh so let's cover the first paper
+
+421
+00:16:10,800 --> 00:16:15,360
+first where we are basically teaching
+
+422
+00:16:12,560 --> 00:16:17,040
+the model how to reason. Um so we are
+
+423
+00:16:15,360 --> 00:16:20,399
+boosting the reasoning capability of the
+
+424
+00:16:17,040 --> 00:16:23,199
+model with reasoning chains.
+
+425
+00:16:20,399 --> 00:16:25,920
+So let's take a uh let's take a look at
+
+426
+00:16:23,199 --> 00:16:28,560
+um how we can do that. So we already
+
+427
+00:16:25,920 --> 00:16:30,720
+covered this earlier and uh we showed
+
+428
+00:16:28,560 --> 00:16:32,480
+this in the first lecture. So chain of
+
+429
+00:16:30,720 --> 00:16:34,399
+thought in uh large language models
+
+430
+00:16:32,480 --> 00:16:36,800
+provides both interpretability and if
+
+431
+00:16:34,399 --> 00:16:38,800
+you ask the model to show its uh work
+
+432
+00:16:36,800 --> 00:16:40,959
+step by step then provides boosts
+
+433
+00:16:38,800 --> 00:16:42,399
+mathematical reasoning and we saw
+
+434
+00:16:40,959 --> 00:16:44,720
+several benchmarks common sense
+
+435
+00:16:42,399 --> 00:16:46,800
+reasoning and so on. So we want to
+
+436
+00:16:44,720 --> 00:16:49,279
+basically get the model to have strong
+
+437
+00:16:46,800 --> 00:16:52,959
+step-by-step reasoning capabilities u
+
+438
+00:16:49,279 --> 00:16:54,480
+along solving any problem. Uh what is
+
+439
+00:16:52,959 --> 00:16:56,079
+what is challenging with existing
+
+440
+00:16:54,480 --> 00:16:57,759
+approaches if you were to like try to
+
+441
+00:16:56,079 --> 00:16:59,600
+get this in existing approaches. So no
+
+442
+00:16:57,759 --> 00:17:01,199
+internet scale data has really reasoning
+
+443
+00:16:59,600 --> 00:17:03,199
+steps. Most of the time there are very
+
+444
+00:17:01,199 --> 00:17:05,439
+few internet sources that have the large
+
+445
+00:17:03,199 --> 00:17:07,839
+scale reasoning steps. And then if you
+
+446
+00:17:05,439 --> 00:17:09,360
+try to manually annotate reasoning steps
+
+447
+00:17:07,839 --> 00:17:11,679
+that's very expensive because you
+
+448
+00:17:09,360 --> 00:17:13,919
+literally need humans to annotate those
+
+449
+00:17:11,679 --> 00:17:16,240
+reasoning steps. And if you try to
+
+450
+00:17:13,919 --> 00:17:18,319
+automate this process of like generating
+
+451
+00:17:16,240 --> 00:17:21,600
+reasoning on based on known solution
+
+452
+00:17:18,319 --> 00:17:24,160
+patterns then that also uh works only in
+
+453
+00:17:21,600 --> 00:17:26,240
+very very specific domains. Uh and then
+
+454
+00:17:24,160 --> 00:17:27,600
+if you try to few short prompt, few
+
+455
+00:17:26,240 --> 00:17:29,760
+short prompting means like if you give
+
+456
+00:17:27,600 --> 00:17:31,679
+it a few examples of like here's a
+
+457
+00:17:29,760 --> 00:17:33,520
+problem, here is a reasoning chain, here
+
+458
+00:17:31,679 --> 00:17:36,320
+is an answer, then that still
+
+459
+00:17:33,520 --> 00:17:38,400
+underperforms uh models that can be
+
+460
+00:17:36,320 --> 00:17:41,120
+fine-tuned on just larger data sets. So
+
+461
+00:17:38,400 --> 00:17:43,039
+basically um small amount of uh
+
+462
+00:17:41,120 --> 00:17:44,960
+reasoning examples don't quite cut it
+
+463
+00:17:43,039 --> 00:17:48,320
+and you can just have a larger data set
+
+464
+00:17:44,960 --> 00:17:51,600
+without reasoning chains. So the the key
+
+465
+00:17:48,320 --> 00:17:54,240
+insight that star has is a very is very
+
+466
+00:17:51,600 --> 00:17:56,000
+simple. first thing. So this is a very
+
+467
+00:17:54,240 --> 00:17:57,919
+simple example like it will start with a
+
+468
+00:17:56,000 --> 00:17:59,760
+small number of of examples that is
+
+469
+00:17:57,919 --> 00:18:02,720
+reasoning [snorts] steps. It will
+
+470
+00:17:59,760 --> 00:18:05,360
+generate solutions. So say 10k problems.
+
+471
+00:18:02,720 --> 00:18:06,880
+Uh 10k is a representative number and
+
+472
+00:18:05,360 --> 00:18:08,880
+then it will only keep the ones that
+
+473
+00:18:06,880 --> 00:18:11,280
+have correct answers. Uh but it will
+
+474
+00:18:08,880 --> 00:18:13,200
+generate these uh problems with rational
+
+475
+00:18:11,280 --> 00:18:14,960
+and it can fine-tune on those and it can
+
+476
+00:18:13,200 --> 00:18:17,280
+repeat. So it can repeat this loop. So
+
+477
+00:18:14,960 --> 00:18:18,960
+this what's new here compared to what we
+
+478
+00:18:17,280 --> 00:18:20,480
+were doing in test time scaling is it's
+
+479
+00:18:18,960 --> 00:18:23,039
+only keeping the ones that have correct
+
+480
+00:18:20,480 --> 00:18:24,640
+answers. Now why did it not produce
+
+481
+00:18:23,039 --> 00:18:26,480
+correct answers on the other ones and
+
+482
+00:18:24,640 --> 00:18:28,320
+what can we do with those particular set
+
+483
+00:18:26,480 --> 00:18:30,480
+of examples? So that's the other
+
+484
+00:18:28,320 --> 00:18:32,320
+interesting bit. So in certain problems
+
+485
+00:18:30,480 --> 00:18:34,000
+where it could not solve the problem the
+
+486
+00:18:32,320 --> 00:18:36,400
+model got stuck. So what we want to do
+
+487
+00:18:34,000 --> 00:18:38,080
+is we basically
+
+488
+00:18:36,400 --> 00:18:40,799
+if we just fine-tune on the correct
+
+489
+00:18:38,080 --> 00:18:43,200
+examples the model is not able to learn
+
+490
+00:18:40,799 --> 00:18:44,640
+new how to solve new problems. Let me
+
+491
+00:18:43,200 --> 00:18:46,880
+cover this slide and then we can come
+
+492
+00:18:44,640 --> 00:18:49,360
+back. U so there's basically no no
+
+493
+00:18:46,880 --> 00:18:51,360
+signal. So what we do is we give the
+
+494
+00:18:49,360 --> 00:18:53,360
+model the answer and ask it to explain
+
+495
+00:18:51,360 --> 00:18:55,360
+backwards. So it's almost like I have
+
+496
+00:18:53,360 --> 00:18:57,440
+this question. I asked the model to
+
+497
+00:18:55,360 --> 00:18:58,640
+produce the answer but now the model did
+
+498
+00:18:57,440 --> 00:19:00,080
+not produce the correct answer. So I
+
+499
+00:18:58,640 --> 00:19:01,679
+give the model the answer and then I ask
+
+500
+00:19:00,080 --> 00:19:04,400
+you to produce the rational. So for
+
+501
+00:19:01,679 --> 00:19:06,160
+example the answer is 42. The human says
+
+502
+00:19:04,400 --> 00:19:08,559
+and then the model generates the
+
+503
+00:19:06,160 --> 00:19:12,000
+reasoning and then you can fine-tune the
+
+504
+00:19:08,559 --> 00:19:14,720
+model on again the problem rational and
+
+505
+00:19:12,000 --> 00:19:16,799
+the answer but don't show it the hint um
+
+506
+00:19:14,720 --> 00:19:18,480
+as if it was solved directly. So this
+
+507
+00:19:16,799 --> 00:19:21,679
+helps you expand the training set to
+
+508
+00:19:18,480 --> 00:19:23,760
+include more difficult problems now. So
+
+509
+00:19:21,679 --> 00:19:26,400
+uh basically it allows you to bootstrap
+
+510
+00:19:23,760 --> 00:19:28,960
+the reasoning capabilities u and not
+
+511
+00:19:26,400 --> 00:19:30,559
+just say limit it to u easy problems
+
+512
+00:19:28,960 --> 00:19:32,799
+that the model could solve earlier but
+
+513
+00:19:30,559 --> 00:19:34,400
+like now you can bootstrap iteratively.
+
+514
+00:19:32,799 --> 00:19:36,080
+So you basically generate reasoning
+
+515
+00:19:34,400 --> 00:19:37,760
+attempts you learn from successful
+
+516
+00:19:36,080 --> 00:19:40,000
+reasoning paths where the quality of the
+
+517
+00:19:37,760 --> 00:19:42,799
+reasoning paths is entirely based on uh
+
+518
+00:19:40,000 --> 00:19:44,320
+things being correct. And for failed uh
+
+519
+00:19:42,799 --> 00:19:46,400
+attempts uh you're basically
+
+520
+00:19:44,320 --> 00:19:48,240
+rationalizing them by saying okay here
+
+521
+00:19:46,400 --> 00:19:50,240
+is a hint uh please generate the
+
+522
+00:19:48,240 --> 00:19:51,919
+rationale and then you're using these
+
+523
+00:19:50,240 --> 00:19:53,919
+generated rationals as the training
+
+524
+00:19:51,919 --> 00:19:56,240
+data. So that's basically the algorithm
+
+525
+00:19:53,919 --> 00:19:58,240
+that they use in star. It's a very bare
+
+526
+00:19:56,240 --> 00:20:00,480
+bones and like you you can almost call
+
+527
+00:19:58,240 --> 00:20:02,400
+it an off policy reinforcement learning
+
+528
+00:20:00,480 --> 00:20:05,679
+technique. It's a very bare bones way of
+
+529
+00:20:02,400 --> 00:20:07,280
+producing uh reasoning techniques in a
+
+530
+00:20:05,679 --> 00:20:09,919
+model.
+
+531
+00:20:07,280 --> 00:20:12,320
+And the assumption that is being made in
+
+532
+00:20:09,919 --> 00:20:13,919
+this particular case is that how do you
+
+533
+00:20:12,320 --> 00:20:15,600
+know something is a good rationale?
+
+534
+00:20:13,919 --> 00:20:17,919
+They're assuming that if the model
+
+535
+00:20:15,600 --> 00:20:19,760
+output is correct, which in math uh they
+
+536
+00:20:17,919 --> 00:20:21,760
+found that that was generally true, the
+
+537
+00:20:19,760 --> 00:20:23,760
+correctness of the final output is a
+
+538
+00:20:21,760 --> 00:20:25,280
+proxy for the reasoning quality. And so
+
+539
+00:20:23,760 --> 00:20:27,840
+they're filtering incorrect answers.
+
+540
+00:20:25,280 --> 00:20:29,919
+Basically, they're assuming that um that
+
+541
+00:20:27,840 --> 00:20:31,520
+will be filtering out lower quality
+
+542
+00:20:29,919 --> 00:20:34,000
+reasoning chains, but there might be
+
+543
+00:20:31,520 --> 00:20:35,600
+scenarios where they um they're not
+
+544
+00:20:34,000 --> 00:20:37,360
+learning from incorrect reasoning chains
+
+545
+00:20:35,600 --> 00:20:39,280
+as a result.
+
+546
+00:20:37,360 --> 00:20:41,360
+and but they get higher quality training
+
+547
+00:20:39,280 --> 00:20:43,919
+data. And then the second bit is that
+
+548
+00:20:41,360 --> 00:20:46,240
+they assume that the uh language model
+
+549
+00:20:43,919 --> 00:20:48,240
+can generate valid reasoning paths when
+
+550
+00:20:46,240 --> 00:20:50,000
+it's given the answer as a hint. So it
+
+551
+00:20:48,240 --> 00:20:51,600
+kind of assumes that if I show show the
+
+552
+00:20:50,000 --> 00:20:54,080
+model the answer and then ask it to show
+
+553
+00:20:51,600 --> 00:20:57,039
+its work, it will be able to do so. And
+
+554
+00:20:54,080 --> 00:20:58,559
+then finally um there's some amount of
+
+555
+00:20:57,039 --> 00:21:00,960
+assumption that the initial language
+
+556
+00:20:58,559 --> 00:21:03,120
+model is strong enough to uh bootstrap
+
+557
+00:21:00,960 --> 00:21:04,559
+from few short examples. So if the class
+
+558
+00:21:03,120 --> 00:21:06,960
+of problems is way outside the
+
+559
+00:21:04,559 --> 00:21:09,520
+capability of the initial language model
+
+560
+00:21:06,960 --> 00:21:11,120
+then it will not make much progress on
+
+561
+00:21:09,520 --> 00:21:13,760
+this and this is where the iterative
+
+562
+00:21:11,120 --> 00:21:15,600
+aspect starts to become important. I was
+
+563
+00:21:13,760 --> 00:21:16,799
+seeing a couple of hands. So let's take
+
+564
+00:21:15,600 --> 00:21:19,280
+them one by one.
+
+565
+00:21:16,799 --> 00:21:22,400
+>> Um yeah I was just wondering so do they
+
+566
+00:21:19,280 --> 00:21:24,799
+start with like a math data set that has
+
+567
+00:21:22,400 --> 00:21:26,240
+like the correct answer and just doesn't
+
+568
+00:21:24,799 --> 00:21:28,000
+have reasoning right like that's how
+
+569
+00:21:26,240 --> 00:21:28,480
+they know what the correct answer is.
+
+570
+00:21:28,000 --> 00:21:30,480
+>> Yes.
+
+571
+00:21:28,480 --> 00:21:32,480
+>> Okay. Cuz I was like how do they know
+
+572
+00:21:30,480 --> 00:21:34,080
+the correct answer? Yeah, everyone is
+
+573
+00:21:32,480 --> 00:21:35,600
+starting with a benchmark basically.
+
+574
+00:21:34,080 --> 00:21:37,840
+Yes.
+
+575
+00:21:35,600 --> 00:21:41,440
+>> Is there filtering that happens for step
+
+576
+00:21:37,840 --> 00:21:43,039
+three? Uh like are we worried that we
+
+577
+00:21:41,440 --> 00:21:44,880
+give like the correct solution and then
+
+578
+00:21:43,039 --> 00:21:46,159
+there's like issues in the reasoning
+
+579
+00:21:44,880 --> 00:21:47,919
+just to like get to the solution?
+
+580
+00:21:46,159 --> 00:21:49,760
+>> So they actually don't filter in step
+
+581
+00:21:47,919 --> 00:21:52,400
+three but there are follow on papers
+
+582
+00:21:49,760 --> 00:21:54,159
+that do filter in step three. Uh I mean
+
+583
+00:21:52,400 --> 00:21:55,919
+you can do some sort of process reward
+
+584
+00:21:54,159 --> 00:21:57,919
+model on top of the reasoning chains and
+
+585
+00:21:55,919 --> 00:21:59,679
+then say which of the steps make sense
+
+586
+00:21:57,919 --> 00:22:01,520
+or which of the steps don't make sense.
+
+587
+00:21:59,679 --> 00:22:03,679
+But this particular paper was one of the
+
+588
+00:22:01,520 --> 00:22:05,440
+first. I mean one of the attempts of
+
+589
+00:22:03,679 --> 00:22:08,400
+this class is to show you papers as they
+
+590
+00:22:05,440 --> 00:22:11,600
+evolved as opposed to like what's the
+
+591
+00:22:08,400 --> 00:22:14,000
+latest paper here. But yes, you can um
+
+592
+00:22:11,600 --> 00:22:15,760
+that might be another project idea of
+
+593
+00:22:14,000 --> 00:22:16,880
+like how do you evaluate the quality of
+
+594
+00:22:15,760 --> 00:22:18,720
+the reasoning chains if you don't want
+
+595
+00:22:16,880 --> 00:22:22,919
+to depend on just the final outcome as
+
+596
+00:22:18,720 --> 00:22:22,919
+the proxy [snorts] for correctness.
+
+597
+00:22:23,679 --> 00:22:30,480
+>> Yes. What if you problem
+
+598
+00:22:26,880 --> 00:22:34,480
+if you tell it fails as a parent even if
+
+599
+00:22:30,480 --> 00:22:39,280
+you tell the model the answer has been
+
+600
+00:22:34,480 --> 00:22:41,840
+not because it's just too complicated to
+
+601
+00:22:39,280 --> 00:22:44,400
+>> that's a great question. So uh
+
+602
+00:22:41,840 --> 00:22:46,559
+>> as as I told you in step four uh the
+
+603
+00:22:44,400 --> 00:22:50,640
+assumption is being made that the the
+
+604
+00:22:46,559 --> 00:22:53,360
+benchmark on which this is being done is
+
+605
+00:22:50,640 --> 00:22:55,280
+essentially uh where the problem is not
+
+606
+00:22:53,360 --> 00:22:57,360
+too difficult. It is within range or
+
+607
+00:22:55,280 --> 00:23:00,400
+some subset of the problems are within
+
+608
+00:22:57,360 --> 00:23:03,520
+range of the language model. Um and
+
+609
+00:23:00,400 --> 00:23:05,200
+typically you can uh
+
+610
+00:23:03,520 --> 00:23:07,039
+so so that that that is an assumption
+
+611
+00:23:05,200 --> 00:23:08,640
+that is made and then when you do
+
+612
+00:23:07,039 --> 00:23:10,559
+iteratively the model might get better
+
+613
+00:23:08,640 --> 00:23:14,360
+at certain point that it can start
+
+614
+00:23:10,559 --> 00:23:14,360
+handling these other problems.
+
+615
+00:23:16,000 --> 00:23:22,720
+So in the key like very should negative
+
+616
+00:23:19,919 --> 00:23:24,799
+sound this means that
+
+617
+00:23:22,720 --> 00:23:26,400
+you
+
+618
+00:23:24,799 --> 00:23:28,880
+so I'm just wondering is there
+
+619
+00:23:26,400 --> 00:23:31,200
+possibility that you you know from the
+
+620
+00:23:28,880 --> 00:23:33,760
+step two you know works well and if the
+
+621
+00:23:31,200 --> 00:23:38,880
+step three doesn't work and you just use
+
+622
+00:23:33,760 --> 00:23:42,400
+the step two positive step three
+
+623
+00:23:38,880 --> 00:23:44,080
+>> um so so
+
+624
+00:23:42,400 --> 00:23:46,080
+that's a great point let's come back to
+
+625
+00:23:44,080 --> 00:23:47,760
+that one so I think what I'll show you
+
+626
+00:23:46,080 --> 00:23:49,760
+by the end of the lecture is that
+
+627
+00:23:47,760 --> 00:23:51,600
+learning from negative examples has not
+
+628
+00:23:49,760 --> 00:23:53,840
+been nailed. Learning from positive
+
+629
+00:23:51,600 --> 00:23:55,840
+examples has been like if you have any
+
+630
+00:23:53,840 --> 00:23:57,760
+non-zero reward then you have an ability
+
+631
+00:23:55,840 --> 00:23:59,520
+to close the RL loop which is not happen
+
+632
+00:23:57,760 --> 00:24:01,280
+uh close the reinforcement learning loop
+
+633
+00:23:59,520 --> 00:24:03,840
+which is not happening yet in this
+
+634
+00:24:01,280 --> 00:24:06,000
+particular set of examples. So you do
+
+635
+00:24:03,840 --> 00:24:07,840
+need to be able to close the loop in
+
+636
+00:24:06,000 --> 00:24:10,799
+some way.
+
+637
+00:24:07,840 --> 00:24:12,080
+So if if you have negative examples
+
+638
+00:24:10,799 --> 00:24:13,520
+there are some papers that have tried to
+
+639
+00:24:12,080 --> 00:24:16,799
+learn from it but like that's not
+
+640
+00:24:13,520 --> 00:24:16,799
+something we'll cover today.
+
+641
+00:24:16,960 --> 00:24:20,080
+Yes,
+
+642
+00:24:17,440 --> 00:24:22,640
+>> I have a similar question like um how to
+
+643
+00:24:20,080 --> 00:24:25,360
+evaluate or verify quality of the
+
+644
+00:24:22,640 --> 00:24:29,520
+generated red nails on fail on this
+
+645
+00:24:25,360 --> 00:24:32,240
+fails after giving the hints like since
+
+646
+00:24:29,520 --> 00:24:35,360
+already know the answer but um it might
+
+647
+00:24:32,240 --> 00:24:38,080
+it might generate like a incorrect
+
+648
+00:24:35,360 --> 00:24:40,240
+reasoning that leads to
+
+649
+00:24:38,080 --> 00:24:42,640
+>> so that's a great problem to like uh so
+
+650
+00:24:40,240 --> 00:24:44,720
+you're saying that in step two it might
+
+651
+00:24:42,640 --> 00:24:47,600
+or in step three it might generate wrong
+
+652
+00:24:44,720 --> 00:24:50,080
+rationals is what you're saying then it
+
+653
+00:24:47,600 --> 00:24:52,159
+will learn wrong wrong wrong reasoning
+
+654
+00:24:50,080 --> 00:24:54,720
+from correct attempts yes that will be a
+
+655
+00:24:52,159 --> 00:24:57,360
+problem in this particular case they're
+
+656
+00:24:54,720 --> 00:25:01,039
+not they don't have any further uh
+
+657
+00:24:57,360 --> 00:25:02,880
+filtering on top of uh rationals
+
+658
+00:25:01,039 --> 00:25:04,559
+so there will be no way to hill climb in
+
+659
+00:25:02,880 --> 00:25:06,240
+that case
+
+660
+00:25:04,559 --> 00:25:08,159
+you can have humans look at the
+
+661
+00:25:06,240 --> 00:25:08,880
+reasoning chain
+
+662
+00:25:08,159 --> 00:25:12,840
+>> tedious
+
+663
+00:25:08,880 --> 00:25:12,840
+>> it could be tedious yes
+
+664
+00:25:13,200 --> 00:25:17,600
+okay So uh going through this in a
+
+665
+00:25:16,000 --> 00:25:19,440
+little bit more uh rigorous detail. So
+
+666
+00:25:17,600 --> 00:25:21,360
+you start with a prompt data set where
+
+667
+00:25:19,440 --> 00:25:23,520
+you have the questions the ration and
+
+668
+00:25:21,360 --> 00:25:27,360
+the answers. This uh prompt data set
+
+669
+00:25:23,520 --> 00:25:29,200
+will be small and uh compared to um the
+
+670
+00:25:27,360 --> 00:25:31,279
+amount of data that we want to train on.
+
+671
+00:25:29,200 --> 00:25:33,120
+For example, this is the multiple choice
+
+672
+00:25:31,279 --> 00:25:34,720
+questions um where do you put your
+
+673
+00:25:33,120 --> 00:25:36,480
+grapes just before checking out there's
+
+674
+00:25:34,720 --> 00:25:38,640
+a rationale and then the correct answer
+
+675
+00:25:36,480 --> 00:25:41,360
+is uh for example B which is grocery
+
+676
+00:25:38,640 --> 00:25:44,000
+cart. Now you have a training data set
+
+677
+00:25:41,360 --> 00:25:45,679
+which is quite large uh of examples that
+
+678
+00:25:44,000 --> 00:25:47,919
+have questions and answers. This would
+
+679
+00:25:45,679 --> 00:25:49,279
+be uh say if you have a benchmark you
+
+680
+00:25:47,919 --> 00:25:51,440
+might have a train subset of the
+
+681
+00:25:49,279 --> 00:25:54,240
+benchmark and test subset of the
+
+682
+00:25:51,440 --> 00:25:56,080
+benchmark and what vanilla star will do
+
+683
+00:25:54,240 --> 00:25:58,000
+is it will start with this rational data
+
+684
+00:25:56,080 --> 00:26:00,159
+set and training data set. So it will
+
+685
+00:25:58,000 --> 00:26:02,480
+first few short prompt the model with uh
+
+686
+00:26:00,159 --> 00:26:05,679
+the rationals in the rational data set
+
+687
+00:26:02,480 --> 00:26:07,600
+and then it will get the model to um
+
+688
+00:26:05,679 --> 00:26:10,000
+produce the rationals and the correct
+
+689
+00:26:07,600 --> 00:26:11,520
+output and then uh so this is on the
+
+690
+00:26:10,000 --> 00:26:14,559
+training data set. So now it's few short
+
+691
+00:26:11,520 --> 00:26:16,720
+prompting but it's supplying um pro
+
+692
+00:26:14,559 --> 00:26:18,159
+problems questions uh from the training
+
+693
+00:26:16,720 --> 00:26:19,679
+data set and it's checking if the
+
+694
+00:26:18,159 --> 00:26:22,240
+answers are correct by the language
+
+695
+00:26:19,679 --> 00:26:25,200
+model and it will collect these set of
+
+696
+00:26:22,240 --> 00:26:27,200
+uh rationals that it can use if they uh
+
+697
+00:26:25,200 --> 00:26:29,760
+and then it can fine-tune the language
+
+698
+00:26:27,200 --> 00:26:32,400
+model on these correct solutions. If you
+
+699
+00:26:29,760 --> 00:26:36,159
+have uh rationalization which is what
+
+700
+00:26:32,400 --> 00:26:37,919
+star uh does if the answer is incorrect
+
+701
+00:26:36,159 --> 00:26:39,600
+what you will do is you will add hint.
+
+702
+00:26:37,919 --> 00:26:42,320
+So you'll be saying okay here is the
+
+703
+00:26:39,600 --> 00:26:44,559
+correct answer and you will essentially
+
+704
+00:26:42,320 --> 00:26:46,400
+generate the rationale by looking at
+
+705
+00:26:44,559 --> 00:26:49,200
+this hint and then you you will use that
+
+706
+00:26:46,400 --> 00:26:50,960
+to to add to that data set of rationals
+
+707
+00:26:49,200 --> 00:26:52,400
+that led to the correct answer and then
+
+708
+00:26:50,960 --> 00:26:55,679
+you can fine-tune on top of that
+
+709
+00:26:52,400 --> 00:26:57,360
+language model and um so you basically
+
+710
+00:26:55,679 --> 00:26:59,360
+have these two sets of rationals that
+
+711
+00:26:57,360 --> 00:27:00,880
+then you can fine-tune on top of this
+
+712
+00:26:59,360 --> 00:27:02,880
+language model and you can do this
+
+713
+00:27:00,880 --> 00:27:05,120
+process iteratively. So you don't like
+
+714
+00:27:02,880 --> 00:27:06,799
+do it just once you fine-tune it. Now
+
+715
+00:27:05,120 --> 00:27:08,640
+the language model perhaps is able to
+
+716
+00:27:06,799 --> 00:27:10,159
+produce better reasoning chains. So now
+
+717
+00:27:08,640 --> 00:27:12,720
+you can again start with your training
+
+718
+00:27:10,159 --> 00:27:16,000
+data set and uh whatever was not correct
+
+719
+00:27:12,720 --> 00:27:17,919
+you can redo this process. So their
+
+720
+00:27:16,000 --> 00:27:20,240
+experiments were on a small model which
+
+721
+00:27:17,919 --> 00:27:22,720
+is an open- source uh of GPD3 a six
+
+722
+00:27:20,240 --> 00:27:24,880
+billion parameter model called GPDJ.
+
+723
+00:27:22,720 --> 00:27:26,559
+they had a pretty small warm-up uh and
+
+724
+00:27:24,880 --> 00:27:28,320
+then they kept a constant learning rate
+
+725
+00:27:26,559 --> 00:27:30,240
+and then they basically had certain
+
+726
+00:27:28,320 --> 00:27:32,559
+number of iterations of the outer loop
+
+727
+00:27:30,240 --> 00:27:34,320
+and then they increased uh the inner
+
+728
+00:27:32,559 --> 00:27:36,960
+loop the number of steps in the inner
+
+729
+00:27:34,320 --> 00:27:38,960
+loop on each step. So one of the
+
+730
+00:27:36,960 --> 00:27:41,440
+comments the paper makes is that they
+
+731
+00:27:38,960 --> 00:27:42,799
+want to start the they want to have a
+
+732
+00:27:41,440 --> 00:27:45,039
+slower start in the training time and
+
+733
+00:27:42,799 --> 00:27:47,039
+then they want to slowly increase uh the
+
+734
+00:27:45,039 --> 00:27:49,120
+number of u things that are happening in
+
+735
+00:27:47,039 --> 00:27:50,799
+the inner loop.
+
+736
+00:27:49,120 --> 00:27:55,440
+The data sets that they tried this on
+
+737
+00:27:50,799 --> 00:27:57,120
+was GSM 8K. U so GSM 8K is just uh math
+
+738
+00:27:55,440 --> 00:27:58,720
+problems that you have seen where you're
+
+739
+00:27:57,120 --> 00:28:00,240
+basically asking these are grade school
+
+740
+00:27:58,720 --> 00:28:02,559
+math problems. There are about 9K
+
+741
+00:28:00,240 --> 00:28:05,520
+samples. Then common sense QA. Common
+
+742
+00:28:02,559 --> 00:28:08,480
+sense QA is essentially uh problems that
+
+743
+00:28:05,520 --> 00:28:10,480
+would you would see on say related to
+
+744
+00:28:08,480 --> 00:28:12,000
+day-to-day stuff. So you will have these
+
+745
+00:28:10,480 --> 00:28:13,200
+multiple choice questions and then you
+
+746
+00:28:12,000 --> 00:28:15,039
+have these answers and there's
+
+747
+00:28:13,200 --> 00:28:17,039
+rationalization that looks like this.
+
+748
+00:28:15,039 --> 00:28:18,720
+and then arithmetic problems which
+
+749
+00:28:17,039 --> 00:28:22,000
+basically was some sort of an addition
+
+750
+00:28:18,720 --> 00:28:24,399
+problem on multi-digit addition.
+
+751
+00:28:22,000 --> 00:28:26,960
+So they generated the last one was uh
+
+752
+00:28:24,399 --> 00:28:28,720
+synthetic data where they randomly uh
+
+753
+00:28:26,960 --> 00:28:30,799
+like they generated some of these uh
+
+754
+00:28:28,720 --> 00:28:33,440
+things themselves.
+
+755
+00:28:30,799 --> 00:28:35,520
+So in terms of results uh some of the
+
+756
+00:28:33,440 --> 00:28:37,760
+results that stood out in this paper was
+
+757
+00:28:35,520 --> 00:28:39,919
+that just compared to say supervised
+
+758
+00:28:37,760 --> 00:28:42,320
+fine-tuning on say math benchmark they
+
+759
+00:28:39,919 --> 00:28:45,600
+could boost uh with this uh star
+
+760
+00:28:42,320 --> 00:28:48,640
+approach to 51.7 but they only used like
+
+761
+00:28:45,600 --> 00:28:49,919
+70 to 87% of the data in terms of like
+
+762
+00:28:48,640 --> 00:28:51,520
+uh so they had to throw out a whole
+
+763
+00:28:49,919 --> 00:28:55,120
+bunch of data that didn't did not have
+
+764
+00:28:51,520 --> 00:28:57,679
+correct solutions and um other challenge
+
+765
+00:28:55,120 --> 00:28:59,840
+is that it's not really true RL so if
+
+766
+00:28:57,679 --> 00:29:01,840
+you basically do multiple iterations of
+
+767
+00:28:59,840 --> 00:29:05,200
+this it starts to plateau after a while.
+
+768
+00:29:01,840 --> 00:29:07,360
+So uh I mean RL has its own set of
+
+769
+00:29:05,200 --> 00:29:09,440
+challenges but here it also starts to
+
+770
+00:29:07,360 --> 00:29:11,919
+plateau. So you have to really pay
+
+771
+00:29:09,440 --> 00:29:13,039
+attention to um how many iterations you
+
+772
+00:29:11,919 --> 00:29:16,080
+can do and there's some amount of
+
+773
+00:29:13,039 --> 00:29:17,679
+tweaking there that you have to do. Uh
+
+774
+00:29:16,080 --> 00:29:21,200
+the other interesting set of results
+
+775
+00:29:17,679 --> 00:29:22,960
+here were that um this was on common
+
+776
+00:29:21,200 --> 00:29:25,919
+sense reasoning. So so they actually
+
+777
+00:29:22,960 --> 00:29:27,919
+looked at um this was a question that
+
+778
+00:29:25,919 --> 00:29:29,840
+several folks asked here. They actually
+
+779
+00:29:27,919 --> 00:29:32,320
+tried to see the rationals for common
+
+780
+00:29:29,840 --> 00:29:34,320
+sense QA. They showed it to human
+
+781
+00:29:32,320 --> 00:29:38,480
+raiders and they asked human raiders to
+
+782
+00:29:34,320 --> 00:29:41,360
+say how likely they are to um prefer the
+
+783
+00:29:38,480 --> 00:29:44,000
+rationals from star versus like uh just
+
+784
+00:29:41,360 --> 00:29:46,399
+like uh otherwise. So star generated
+
+785
+00:29:44,000 --> 00:29:49,679
+rationals versus the few short rationals
+
+786
+00:29:46,399 --> 00:29:51,760
+in the the the rational data set. uh
+
+787
+00:29:49,679 --> 00:29:54,960
+they compared those and what they found
+
+788
+00:29:51,760 --> 00:29:57,200
+was that um generally the qualitative
+
+789
+00:29:54,960 --> 00:29:58,880
+analysis showed that their rationals
+
+790
+00:29:57,200 --> 00:30:01,360
+were pretty reasonable. Now common sense
+
+791
+00:29:58,880 --> 00:30:04,240
+QA as you remember is a natural language
+
+792
+00:30:01,360 --> 00:30:06,720
+um like it's tackling daily problems
+
+793
+00:30:04,240 --> 00:30:08,720
+here. So as a result of that um this
+
+794
+00:30:06,720 --> 00:30:11,200
+these seemed the rational seemed pretty
+
+795
+00:30:08,720 --> 00:30:13,919
+reasonable and then the other aspect
+
+796
+00:30:11,200 --> 00:30:16,399
+that they noticed was that uh star in
+
+797
+00:30:13,919 --> 00:30:18,480
+general requires like if you use direct
+
+798
+00:30:16,399 --> 00:30:20,080
+finetuning you you basically do get a
+
+799
+00:30:18,480 --> 00:30:22,320
+certain level of accuracy but star with
+
+800
+00:30:20,080 --> 00:30:25,120
+rationalization gets that accuracy but
+
+801
+00:30:22,320 --> 00:30:26,880
+it does not require that same like it
+
+802
+00:30:25,120 --> 00:30:28,799
+requires much less data compared to what
+
+803
+00:30:26,880 --> 00:30:31,120
+you would need for fine-tuning. So
+
+804
+00:30:28,799 --> 00:30:35,120
+rationalization helps you uh get to an
+
+805
+00:30:31,120 --> 00:30:37,039
+accuracy without um using like so 86% of
+
+806
+00:30:35,120 --> 00:30:40,720
+the data is used but you can basically
+
+807
+00:30:37,039 --> 00:30:42,960
+get to uh the deficit accuracy of 72.5%
+
+808
+00:30:40,720 --> 00:30:45,039
+compared to like using a lot of training
+
+809
+00:30:42,960 --> 00:30:46,799
+data. So this was a very small model. So
+
+810
+00:30:45,039 --> 00:30:49,360
+this was first science of life that was
+
+811
+00:30:46,799 --> 00:30:51,360
+shown for reasoning. U in terms of
+
+812
+00:30:49,360 --> 00:30:53,760
+mathematical reasoning this was an
+
+813
+00:30:51,360 --> 00:30:54,799
+interesting uh one on GSM8K. What they
+
+814
+00:30:53,760 --> 00:30:56,799
+found was that the use of
+
+815
+00:30:54,799 --> 00:30:58,880
+rationalization actually did not improve
+
+816
+00:30:56,799 --> 00:31:01,600
+performance. So like star by itself was
+
+817
+00:30:58,880 --> 00:31:05,039
+not helping in this particular case. Uh
+
+818
+00:31:01,600 --> 00:31:07,440
+so what you see is that you have uh GPDJ
+
+819
+00:31:05,039 --> 00:31:09,679
+like basically it improves of the
+
+820
+00:31:07,440 --> 00:31:12,960
+baselines but it's basically not helping
+
+821
+00:31:09,679 --> 00:31:15,360
+too much. Uh if you directly do
+
+822
+00:31:12,960 --> 00:31:17,600
+fine-tuning on good data then you can
+
+823
+00:31:15,360 --> 00:31:19,120
+actually improve it similarly. So one of
+
+824
+00:31:17,600 --> 00:31:20,880
+the reasons that is the case is the
+
+825
+00:31:19,120 --> 00:31:23,440
+number of calculation steps that were
+
+826
+00:31:20,880 --> 00:31:25,520
+used uh by the model themselves. if you
+
+827
+00:31:23,440 --> 00:31:27,360
+force the model to use chain of thought
+
+828
+00:31:25,520 --> 00:31:30,480
+versus you provide these rationalization
+
+829
+00:31:27,360 --> 00:31:32,799
+steps is actually pretty similar. So in
+
+830
+00:31:30,480 --> 00:31:35,600
+in some ways uh it was not helping if
+
+831
+00:31:32,799 --> 00:31:36,960
+the problem is too simple like the whole
+
+832
+00:31:35,600 --> 00:31:39,039
+notion of like getting the model to
+
+833
+00:31:36,960 --> 00:31:40,960
+reason if the model if the problem is
+
+834
+00:31:39,039 --> 00:31:43,760
+too simple was basically not helping. So
+
+835
+00:31:40,960 --> 00:31:47,440
+GSM8K for GPD40 was very much within
+
+836
+00:31:43,760 --> 00:31:49,440
+capability. So um similarly for GPDJ so
+
+837
+00:31:47,440 --> 00:31:51,360
+there was not much improvement here
+
+838
+00:31:49,440 --> 00:31:52,960
+relative to but it did show that direct
+
+839
+00:31:51,360 --> 00:31:54,559
+fine-tune versus star with
+
+840
+00:31:52,960 --> 00:31:56,720
+rationalization you still had some
+
+841
+00:31:54,559 --> 00:32:00,480
+gains.
+
+842
+00:31:56,720 --> 00:32:02,399
+Okay, so some takeaways here are that um
+
+843
+00:32:00,480 --> 00:32:04,000
+the whole notion of rationalization
+
+844
+00:32:02,399 --> 00:32:05,919
+conditions on the fact that you have an
+
+845
+00:32:04,000 --> 00:32:08,559
+answer and then you can essentially
+
+846
+00:32:05,919 --> 00:32:11,919
+figure out what rationals would would be
+
+847
+00:32:08,559 --> 00:32:13,919
+good and um the outputs without
+
+848
+00:32:11,919 --> 00:32:16,240
+rationalization are examples where the
+
+849
+00:32:13,919 --> 00:32:18,720
+model is already quite confident but
+
+850
+00:32:16,240 --> 00:32:20,960
+then uh the model is not yet but if you
+
+851
+00:32:18,720 --> 00:32:22,799
+can look at the answer then in certain
+
+852
+00:32:20,960 --> 00:32:25,279
+cases it might actually do a better job
+
+853
+00:32:22,799 --> 00:32:27,279
+producing the rationale and if you do
+
+854
+00:32:25,279 --> 00:32:30,640
+few short prompting you can basically
+
+855
+00:32:27,279 --> 00:32:34,320
+really help the model um in how it
+
+856
+00:32:30,640 --> 00:32:36,880
+should produce rational but um the style
+
+857
+00:32:34,320 --> 00:32:38,559
+of rational might actually influence the
+
+858
+00:32:36,880 --> 00:32:40,960
+model in certain ways. So you you do
+
+859
+00:32:38,559 --> 00:32:42,559
+have to like prompt engineering in this
+
+860
+00:32:40,960 --> 00:32:44,799
+particular case might might bias the
+
+861
+00:32:42,559 --> 00:32:46,559
+model in certain ways. So effectively
+
+862
+00:32:44,799 --> 00:32:49,519
+there are certain challenges. One
+
+863
+00:32:46,559 --> 00:32:51,519
+challenge is that um the rationalization
+
+864
+00:32:49,519 --> 00:32:53,039
+the quality has certain amount of
+
+865
+00:32:51,519 --> 00:32:54,559
+effects and the second bit is that if
+
+866
+00:32:53,039 --> 00:32:56,799
+you're few short prompting then you are
+
+867
+00:32:54,559 --> 00:32:59,360
+biased by how the rationals were
+
+868
+00:32:56,799 --> 00:33:01,679
+formatted in your uh few short prompts
+
+869
+00:32:59,360 --> 00:33:04,159
+and and that might affect what kind of
+
+870
+00:33:01,679 --> 00:33:07,120
+rationals the model will produce and
+
+871
+00:33:04,159 --> 00:33:09,279
+what you're training on. So overall I
+
+872
+00:33:07,120 --> 00:33:12,480
+think uh this kind of gives us a sense
+
+873
+00:33:09,279 --> 00:33:14,080
+of just that in the in the uh model
+
+874
+00:33:12,480 --> 00:33:16,240
+space if you basically bootstrap the
+
+875
+00:33:14,080 --> 00:33:18,480
+model to generate rationals you can get
+
+876
+00:33:16,240 --> 00:33:20,640
+high sample efficiency while not having
+
+877
+00:33:18,480 --> 00:33:22,880
+to get humans to generate these uh
+
+878
+00:33:20,640 --> 00:33:24,399
+reasoning chains and you can apply it to
+
+879
+00:33:22,880 --> 00:33:26,080
+many problems like you can apply it to
+
+880
+00:33:24,399 --> 00:33:28,720
+symbolic problems natural language
+
+881
+00:33:26,080 --> 00:33:30,320
+mathematical reasoning. The some of the
+
+882
+00:33:28,720 --> 00:33:32,559
+challenges that are there in this
+
+883
+00:33:30,320 --> 00:33:35,279
+overall techniques is that you don't
+
+884
+00:33:32,559 --> 00:33:37,919
+have a very good evaluation for ration
+
+885
+00:33:35,279 --> 00:33:39,840
+uh for most tasks because you basically
+
+886
+00:33:37,919 --> 00:33:41,279
+have to have a human evaluate them or
+
+887
+00:33:39,840 --> 00:33:43,519
+you need some sort of a process reward
+
+888
+00:33:41,279 --> 00:33:46,640
+model to evaluate them. Uh there might
+
+889
+00:33:43,519 --> 00:33:48,000
+be u true negatives and false positives.
+
+890
+00:33:46,640 --> 00:33:49,840
+So you are just filtering based on
+
+891
+00:33:48,000 --> 00:33:51,679
+correct answers. So you might have some
+
+892
+00:33:49,840 --> 00:33:56,080
+invalid steps in between which might
+
+893
+00:33:51,679 --> 00:34:00,159
+cause problems. Yes. So, so this
+
+894
+00:33:56,080 --> 00:34:03,600
+uh method is is useful for models,
+
+895
+00:34:00,159 --> 00:34:05,440
+right? Because if if you are if you are
+
+896
+00:34:03,600 --> 00:34:08,560
+if you want to fine a small language
+
+897
+00:34:05,440 --> 00:34:11,440
+model, you can just use a front model to
+
+898
+00:34:08,560 --> 00:34:13,040
+generate these training, right?
+
+899
+00:34:11,440 --> 00:34:14,159
+>> Oh, I don't know how to answer that
+
+900
+00:34:13,040 --> 00:34:17,520
+question.
+
+901
+00:34:14,159 --> 00:34:21,200
+>> So, so you don't have to rely on on on a
+
+902
+00:34:17,520 --> 00:34:23,520
+small model to generate you this uh new
+
+903
+00:34:21,200 --> 00:34:26,159
+additional data automatically. you can
+
+904
+00:34:23,520 --> 00:34:28,879
+just use a big model and it can train
+
+905
+00:34:26,159 --> 00:34:31,119
+stuff but I'm wondering that the the the
+
+906
+00:34:28,879 --> 00:34:32,079
+main benefit I mean you are actually
+
+907
+00:34:31,119 --> 00:34:34,960
+getting
+
+908
+00:34:32,079 --> 00:34:36,960
+>> getting training out from nothing
+
+909
+00:34:34,960 --> 00:34:38,720
+>> what is is is shows when you are
+
+910
+00:34:36,960 --> 00:34:40,480
+training something which is basically
+
+911
+00:34:38,720 --> 00:34:43,599
+the following
+
+912
+00:34:40,480 --> 00:34:45,359
+>> yes so the the goal for a lot of the
+
+913
+00:34:43,599 --> 00:34:49,200
+work that we're discussing is the
+
+914
+00:34:45,359 --> 00:34:51,280
+ability to I mean we're showing um the
+
+915
+00:34:49,200 --> 00:34:54,240
+solutions on small models but at the end
+
+916
+00:34:51,280 --> 00:34:56,000
+of the day what we wanted to want to be
+
+917
+00:34:54,240 --> 00:34:57,920
+able to do is take the model, take its
+
+918
+00:34:56,000 --> 00:35:00,240
+outputs and then use that to improve the
+
+919
+00:34:57,920 --> 00:35:01,760
+model. Um, you can always take a more
+
+920
+00:35:00,240 --> 00:35:05,359
+powerful model and use it outputs and
+
+921
+00:35:01,760 --> 00:35:07,119
+that's like distillation process. Um,
+
+922
+00:35:05,359 --> 00:35:09,280
+>> yeah, that's that's clear. I I mean the
+
+923
+00:35:07,119 --> 00:35:11,119
+the theory
+
+924
+00:35:09,280 --> 00:35:12,720
+attempt is clear but I mean when it
+
+925
+00:35:11,119 --> 00:35:13,359
+comes to practical application
+
+926
+00:35:12,720 --> 00:35:16,320
+>> yes
+
+927
+00:35:13,359 --> 00:35:19,520
+>> so so I will I will use this method when
+
+928
+00:35:16,320 --> 00:35:21,680
+I'm at opening I learn topic and I'm
+
+929
+00:35:19,520 --> 00:35:24,079
+training the next
+
+930
+00:35:21,680 --> 00:35:26,720
+one
+
+931
+00:35:24,079 --> 00:35:29,280
+parameter model and I need additional
+
+932
+00:35:26,720 --> 00:35:32,049
+data view what I have
+
+933
+00:35:29,280 --> 00:35:34,720
+>> that that's a fair point
+
+934
+00:35:32,049 --> 00:35:36,320
+[snorts] um or or you want to basically
+
+935
+00:35:34,720 --> 00:35:38,079
+uh improve the model on so instead
+
+936
+00:35:36,320 --> 00:35:39,920
+capabilities that they they actually
+
+937
+00:35:38,079 --> 00:35:42,000
+don't have they won't produce good model
+
+938
+00:35:39,920 --> 00:35:45,680
+outcomes on.
+
+939
+00:35:42,000 --> 00:35:47,920
+>> So so so what I mean is that so if if I
+
+940
+00:35:45,680 --> 00:35:50,720
+want to improve their performance over 7
+
+941
+00:35:47,920 --> 00:35:52,720
+billion
+
+942
+00:35:50,720 --> 00:35:56,480
+>> in practice then I I wouldn't use this
+
+943
+00:35:52,720 --> 00:35:57,040
+because I I get get high quality data
+
+944
+00:35:56,480 --> 00:35:59,280
+from
+
+945
+00:35:57,040 --> 00:36:00,320
+>> from this
+
+946
+00:35:59,280 --> 00:36:02,079
+is much easier.
+
+947
+00:36:00,320 --> 00:36:04,720
+>> We are not covering this relation but
+
+948
+00:36:02,079 --> 00:36:06,640
+that's fair point. Okay, thank you. Just
+
+949
+00:36:04,720 --> 00:36:08,640
+>> uh No, that's a fair point that you can
+
+950
+00:36:06,640 --> 00:36:11,119
+use one of the frontier models in distal
+
+951
+00:36:08,640 --> 00:36:13,200
+things, but this is more an attempt to
+
+952
+00:36:11,119 --> 00:36:15,119
+uh build it from scratch and for you
+
+953
+00:36:13,200 --> 00:36:16,960
+folks to understand what might that
+
+954
+00:36:15,119 --> 00:36:18,320
+take.
+
+955
+00:36:16,960 --> 00:36:21,440
+>> Yes,
+
+956
+00:36:18,320 --> 00:36:24,560
+>> question. I'm curious why this isn't
+
+957
+00:36:21,440 --> 00:36:26,560
+like full-fledged RL and also um whether
+
+958
+00:36:24,560 --> 00:36:29,839
+>> you're leading me to my next slide.
+
+959
+00:36:26,560 --> 00:36:32,960
+>> Okay, great. Oh, and also um I I'm also
+
+960
+00:36:29,839 --> 00:36:35,440
+curious uh so like when you would decide
+
+961
+00:36:32,960 --> 00:36:37,920
+to make the choice of to post train with
+
+962
+00:36:35,440 --> 00:36:39,599
+SFT versus RL and if there's any
+
+963
+00:36:37,920 --> 00:36:42,720
+different implications of how much data
+
+964
+00:36:39,599 --> 00:36:45,410
+or compute is needed.
+
+965
+00:36:42,720 --> 00:36:46,160
+>> Um hold that question until the end
+
+966
+00:36:45,410 --> 00:36:48,079
+[laughter]
+
+967
+00:36:46,160 --> 00:36:50,560
+but I'm covering that that's that's part
+
+968
+00:36:48,079 --> 00:36:54,480
+of the lecture.
+
+969
+00:36:50,560 --> 00:36:56,079
+Uh so just uh just to cover so in star
+
+970
+00:36:54,480 --> 00:36:58,720
+you basically were just using the
+
+971
+00:36:56,079 --> 00:37:00,880
+correct uh output which is like a proxy
+
+972
+00:36:58,720 --> 00:37:03,280
+for a verifier where like you already
+
+973
+00:37:00,880 --> 00:37:06,160
+know the answer. If you basically also
+
+974
+00:37:03,280 --> 00:37:07,839
+add a verifier in that whole loop then
+
+975
+00:37:06,160 --> 00:37:10,079
+that would be called var. So there was a
+
+976
+00:37:07,839 --> 00:37:12,320
+paper that basically had a generator and
+
+977
+00:37:10,079 --> 00:37:14,560
+a verifier training in a loop. And then
+
+978
+00:37:12,320 --> 00:37:16,320
+quietar was essentially adding an
+
+979
+00:37:14,560 --> 00:37:19,440
+internal thinking. So what it was doing
+
+980
+00:37:16,320 --> 00:37:21,440
+was essentially instead of having uh
+
+981
+00:37:19,440 --> 00:37:23,040
+reasoning steps be in the language
+
+982
+00:37:21,440 --> 00:37:24,960
+space, it was actually uh putting
+
+983
+00:37:23,040 --> 00:37:28,640
+reasoning steps in the latent space uh
+
+984
+00:37:24,960 --> 00:37:30,240
+with um MLPS. So why have them in
+
+985
+00:37:28,640 --> 00:37:33,800
+English when you can have them have the
+
+986
+00:37:30,240 --> 00:37:33,800
+model thinking internally?
+
+987
+00:37:34,800 --> 00:37:38,160
+So before I move further actually there
+
+988
+00:37:36,720 --> 00:37:41,680
+have been a lot of questions. I'll only
+
+989
+00:37:38,160 --> 00:37:44,880
+pick one of these questions but um
+
+990
+00:37:41,680 --> 00:37:46,960
+let's look at question two. What what is
+
+991
+00:37:44,880 --> 00:37:50,599
+uh what what bounds the performance of
+
+992
+00:37:46,960 --> 00:37:50,599
+star as an approach?
+
+993
+00:37:53,280 --> 00:38:00,760
+You can talk to someone for a minute and
+
+994
+00:37:55,680 --> 00:38:00,760
+then let's chat as a class.
+
+995
+00:38:02,079 --> 00:38:06,880
+>> Let's come on back as a class.
+
+996
+00:38:04,480 --> 00:38:10,079
+>> So what performance like what bounds the
+
+997
+00:38:06,880 --> 00:38:14,680
+performance of star as a technique that
+
+998
+00:38:10,079 --> 00:38:14,680
+multiplication of choice helps
+
+999
+00:38:18,960 --> 00:38:25,640
+I'm seeing no hands. You guys are
+
+1000
+00:38:20,400 --> 00:38:25,640
+talking. All answers are welcome.
+
+1001
+00:38:27,040 --> 00:38:29,119
+>> Yes.
+
+1002
+00:38:27,680 --> 00:38:30,560
+>> I think this is kind of like a silly
+
+1003
+00:38:29,119 --> 00:38:33,040
+like answer right here. We were thinking
+
+1004
+00:38:30,560 --> 00:38:35,040
+like um there are some logical steps
+
+1005
+00:38:33,040 --> 00:38:36,960
+that are kind of more complex than
+
+1006
+00:38:35,040 --> 00:38:38,800
+others and you wouldn't expect star to
+
+1007
+00:38:36,960 --> 00:38:41,440
+be able to make any logical leaps that
+
+1008
+00:38:38,800 --> 00:38:43,599
+are not in its training data set, right?
+
+1009
+00:38:41,440 --> 00:38:45,440
+like the rationalization
+
+1010
+00:38:43,599 --> 00:38:47,440
+should all kind of be of the same level
+
+1011
+00:38:45,440 --> 00:38:50,240
+as what it was dreamed of just this
+
+1012
+00:38:47,440 --> 00:38:52,560
+allows it to get like you know more
+
+1013
+00:38:50,240 --> 00:38:56,400
+rational rationalization data
+
+1014
+00:38:52,560 --> 00:38:58,240
+>> okay okay so it will not make I I mean
+
+1015
+00:38:56,400 --> 00:39:00,079
+it will basically not have a logical
+
+1016
+00:38:58,240 --> 00:39:01,440
+leap into say new domain that will have
+
+1017
+00:39:00,079 --> 00:39:04,240
+figured out new things is what you're
+
+1018
+00:39:01,440 --> 00:39:07,720
+saying okay
+
+1019
+00:39:04,240 --> 00:39:07,720
+any other takers
+
+1020
+00:39:10,079 --> 00:39:13,599
+>> um absolutely
+
+1021
+00:39:11,280 --> 00:39:17,680
+You care about new things. So you can't
+
+1022
+00:39:13,599 --> 00:39:20,160
+really model to to do likeation
+
+1023
+00:39:17,680 --> 00:39:22,960
+because like if the model is really bad
+
+1024
+00:39:20,160 --> 00:39:25,920
+at like creating new
+
+1025
+00:39:22,960 --> 00:39:30,599
+reasoning introduce wrong samples into
+
+1026
+00:39:25,920 --> 00:39:30,599
+the training and like
+
+1027
+00:39:30,880 --> 00:39:35,200
+>> say that loudly what you're saying.
+
+1028
+00:39:33,200 --> 00:39:39,359
+>> Yeah. So we testing like this
+
+1029
+00:39:35,200 --> 00:39:41,280
+performance is improved by the um by
+
+1030
+00:39:39,359 --> 00:39:41,760
+model's capability to do reasoning
+
+1031
+00:39:41,280 --> 00:39:42,240
+because
+
+1032
+00:39:41,760 --> 00:39:43,680
+>> I see
+
+1033
+00:39:42,240 --> 00:39:45,520
+>> yeah because
+
+1034
+00:39:43,680 --> 00:39:48,000
+>> if the model can't reason even given the
+
+1035
+00:39:45,520 --> 00:39:49,680
+hints that's also not going to work out
+
+1036
+00:39:48,000 --> 00:39:50,320
+because the rationalization won't show
+
+1037
+00:39:49,680 --> 00:39:54,320
+up at all. [snorts]
+
+1038
+00:39:50,320 --> 00:39:56,000
+>> Yeah wrong samples
+
+1039
+00:39:54,320 --> 00:39:59,119
+>> that that opens the question what leads
+
+1040
+00:39:56,000 --> 00:40:02,400
+to reasoning
+
+1041
+00:39:59,119 --> 00:40:04,800
+>> in the base model. I I think some some
+
+1042
+00:40:02,400 --> 00:40:06,800
+answers make it inherently easier to um
+
+1043
+00:40:04,800 --> 00:40:08,880
+rationalize than others. For example, if
+
+1044
+00:40:06,800 --> 00:40:10,320
+the final answer is like 225, you
+
+1045
+00:40:08,880 --> 00:40:11,839
+probably know that at some point.
+
+1046
+00:40:10,320 --> 00:40:13,680
+There's like the multiplication of 15
+
+1047
+00:40:11,839 --> 00:40:15,599
+and 15 or something similar to that. But
+
+1048
+00:40:13,680 --> 00:40:17,599
+maybe some other numbers are not as
+
+1049
+00:40:15,599 --> 00:40:20,400
+straightforward. And I also think that
+
+1050
+00:40:17,599 --> 00:40:21,760
+um if there's a lot of a lot of problems
+
+1051
+00:40:20,400 --> 00:40:23,440
+that you don't know the answer to and
+
+1052
+00:40:21,760 --> 00:40:25,359
+that forces you to rationalize, then it
+
+1053
+00:40:23,440 --> 00:40:26,960
+probably um you probably need more data
+
+1054
+00:40:25,359 --> 00:40:28,640
+so that you can form more generalized
+
+1055
+00:40:26,960 --> 00:40:30,000
+reasoning to backtrack.
+
+1056
+00:40:28,640 --> 00:40:32,079
+>> Okay.
+
+1057
+00:40:30,000 --> 00:40:35,079
+and that that is in the right direction.
+
+1058
+00:40:32,079 --> 00:40:35,079
+Yes.
+
+1059
+00:40:35,680 --> 00:40:39,599
+Okay. I think all of these answers are
+
+1060
+00:40:38,079 --> 00:40:41,280
+fairly valid, but I think this is worth
+
+1061
+00:40:39,599 --> 00:40:43,440
+keeping in the back of your mind as we
+
+1062
+00:40:41,280 --> 00:40:45,520
+move into RL because a lot of the magic
+
+1063
+00:40:43,440 --> 00:40:48,480
+in this particular domain is like what
+
+1064
+00:40:45,520 --> 00:40:50,960
+can the base model do as we're building
+
+1065
+00:40:48,480 --> 00:40:53,680
+on top of that.
+
+1066
+00:40:50,960 --> 00:40:55,359
+Um so we'll we'll come back to that.
+
+1067
+00:40:53,680 --> 00:40:57,920
+Okay. So the second paper that we'll
+
+1068
+00:40:55,359 --> 00:41:00,560
+cover is deepseek math uh that will
+
+1069
+00:40:57,920 --> 00:41:02,560
+focus on mathematical reasoning uh and
+
+1070
+00:41:00,560 --> 00:41:04,240
+it will actually use a form of RL that
+
+1071
+00:41:02,560 --> 00:41:06,480
+it proposed that has become quite
+
+1072
+00:41:04,240 --> 00:41:08,079
+popular. So we already looked at this
+
+1073
+00:41:06,480 --> 00:41:09,599
+graph earlier where we were basically
+
+1074
+00:41:08,079 --> 00:41:11,040
+showing that in math domain if you do
+
+1075
+00:41:09,599 --> 00:41:16,319
+train time scaling you can do much
+
+1076
+00:41:11,040 --> 00:41:18,640
+better and okay um so what this slide is
+
+1077
+00:41:16,319 --> 00:41:20,240
+showing is that if you look at the
+
+1078
+00:41:18,640 --> 00:41:21,760
+performance so this is a earlier
+
+1079
+00:41:20,240 --> 00:41:23,839
+benchmark than Amy it's actually a
+
+1080
+00:41:21,760 --> 00:41:25,760
+simpler benchmark than Amy it's called
+
+1081
+00:41:23,839 --> 00:41:28,560
+math uh benchmark and you're basically
+
+1082
+00:41:25,760 --> 00:41:30,000
+looking at top at one accuracy so if you
+
+1083
+00:41:28,560 --> 00:41:31,920
+look at the date of the benchmark you'll
+
+1084
+00:41:30,000 --> 00:41:34,319
+see that as the model sizes increased
+
+1085
+00:41:31,920 --> 00:41:35,920
+typically the accuracy on this benchmark
+
+1086
+00:41:34,319 --> 00:41:38,000
+has gone up. But then suddenly when
+
+1087
+00:41:35,920 --> 00:41:40,960
+Deepse seek math came out, a 7B model
+
+1088
+00:41:38,000 --> 00:41:42,640
+was doing really well. Um and the main
+
+1089
+00:41:40,960 --> 00:41:44,319
+leap that they made was that they were
+
+1090
+00:41:42,640 --> 00:41:46,560
+able to do the reinforcement learning
+
+1091
+00:41:44,319 --> 00:41:49,440
+part with this in the train time scaling
+
+1092
+00:41:46,560 --> 00:41:52,160
+loop correctly. So we will see what led
+
+1093
+00:41:49,440 --> 00:41:53,680
+to that uh innovation. So the first
+
+1094
+00:41:52,160 --> 00:41:56,160
+thing that they got right was that
+
+1095
+00:41:53,680 --> 00:41:57,599
+typically when you try to improve on
+
+1096
+00:41:56,160 --> 00:42:00,079
+math and this was something that was
+
+1097
+00:41:57,599 --> 00:42:02,560
+done on top of palm as a paper palm
+
+1098
+00:42:00,079 --> 00:42:05,040
+model. Uh there was this paper paper
+
+1099
+00:42:02,560 --> 00:42:07,280
+called minurva which improved palm model
+
+1100
+00:42:05,040 --> 00:42:08,800
+on stem and what what they did was they
+
+1101
+00:42:07,280 --> 00:42:11,599
+trained on a lot of science and math
+
+1102
+00:42:08,800 --> 00:42:13,599
+data typically like archive data. What
+
+1103
+00:42:11,599 --> 00:42:16,000
+deepseek did was it was like okay
+
+1104
+00:42:13,599 --> 00:42:18,079
+actually training on archive papers is
+
+1105
+00:42:16,000 --> 00:42:20,640
+not the trick. they actually trained on
+
+1106
+00:42:18,079 --> 00:42:22,400
+common crawl web pages but they started
+
+1107
+00:42:20,640 --> 00:42:24,480
+uh with a deep sea coder model. So they
+
+1108
+00:42:22,400 --> 00:42:27,599
+said that if you start with a model that
+
+1109
+00:42:24,480 --> 00:42:29,119
+has already been uh improved on code
+
+1110
+00:42:27,599 --> 00:42:30,960
+reasoning that it will actually do
+
+1111
+00:42:29,119 --> 00:42:32,960
+better and then they did a really good
+
+1112
+00:42:30,960 --> 00:42:35,599
+job at
+
+1113
+00:42:32,960 --> 00:42:38,480
+um curating from content from common
+
+1114
+00:42:35,599 --> 00:42:41,280
+crawl pages on math and they found that
+
+1115
+00:42:38,480 --> 00:42:43,839
+often archive papers in some ways don't
+
+1116
+00:42:41,280 --> 00:42:46,240
+have adequate amount of uh math content
+
+1117
+00:42:43,839 --> 00:42:48,960
+that would cover give us coverage. So,
+
+1118
+00:42:46,240 --> 00:42:50,960
+open web math uh by curating that and
+
+1119
+00:42:48,960 --> 00:42:53,200
+and mining it, they were able to
+
+1120
+00:42:50,960 --> 00:42:54,880
+actually and and getting better coverage
+
+1121
+00:42:53,200 --> 00:42:57,200
+across math domains, they were actually
+
+1122
+00:42:54,880 --> 00:43:00,400
+able to get much larger yield in number
+
+1123
+00:42:57,200 --> 00:43:03,280
+of tokens. And that was their first um
+
+1124
+00:43:00,400 --> 00:43:05,680
+first exercise in like priming the model
+
+1125
+00:43:03,280 --> 00:43:07,119
+before they take it to RL. So, this was
+
+1126
+00:43:05,680 --> 00:43:09,200
+related to one of the comments that were
+
+1127
+00:43:07,119 --> 00:43:11,040
+made that if the model is not strong in
+
+1128
+00:43:09,200 --> 00:43:12,640
+a certain domain, you do have to improve
+
+1129
+00:43:11,040 --> 00:43:15,680
+its capability in that domain. So, this
+
+1130
+00:43:12,640 --> 00:43:17,280
+is that step. Um so they basically got
+
+1131
+00:43:15,680 --> 00:43:18,880
+coverage across a lot of math domains
+
+1132
+00:43:17,280 --> 00:43:21,680
+showed it a lot of high quality data in
+
+1133
+00:43:18,880 --> 00:43:24,480
+math and they started from a code uh
+
+1134
+00:43:21,680 --> 00:43:26,480
+code pre-trained model and so they
+
+1135
+00:43:24,480 --> 00:43:28,640
+actually showed that archive training
+
+1136
+00:43:26,480 --> 00:43:31,599
+was actually not really helping but code
+
+1137
+00:43:28,640 --> 00:43:33,599
+to math significantly helped uh because
+
+1138
+00:43:31,599 --> 00:43:35,280
+it allowed the model to reason better do
+
+1139
+00:43:33,599 --> 00:43:37,760
+tool use better. This was actually the
+
+1140
+00:43:35,280 --> 00:43:39,760
+first time that um uh this was shown
+
+1141
+00:43:37,760 --> 00:43:41,599
+that like a model if you start from a
+
+1142
+00:43:39,760 --> 00:43:42,880
+coding based model you could do better.
+
+1143
+00:43:41,599 --> 00:43:45,680
+And then the other thing that they
+
+1144
+00:43:42,880 --> 00:43:48,880
+showed was that um the curation of data
+
+1145
+00:43:45,680 --> 00:43:50,640
+really helped in this particular case.
+
+1146
+00:43:48,880 --> 00:43:54,720
+Now the second step that they did was
+
+1147
+00:43:50,640 --> 00:43:56,960
+okay now that you have um this um like
+
+1148
+00:43:54,720 --> 00:43:58,480
+you've trained the model on math using
+
+1149
+00:43:56,960 --> 00:44:00,240
+supervised fine tuning what do you do
+
+1150
+00:43:58,480 --> 00:44:03,200
+next? So they actually scale up their
+
+1151
+00:44:00,240 --> 00:44:05,599
+RL. Now the typical RL algorithm that
+
+1152
+00:44:03,200 --> 00:44:08,640
+has been used in RL for human feedback
+
+1153
+00:44:05,599 --> 00:44:10,720
+even with verifiers is called PO. So you
+
+1154
+00:44:08,640 --> 00:44:12,400
+have to keep your policy and your new
+
+1155
+00:44:10,720 --> 00:44:14,800
+policy. So you basically this ends up
+
+1156
+00:44:12,400 --> 00:44:16,800
+being a memory problem if you try to do
+
+1157
+00:44:14,800 --> 00:44:19,280
+it on larger models. A 7B model is fine
+
+1158
+00:44:16,800 --> 00:44:21,280
+but if you try to scale up uh RL you
+
+1159
+00:44:19,280 --> 00:44:22,640
+have to keep multiple policy models and
+
+1160
+00:44:21,280 --> 00:44:25,040
+then you also have to learn a critic
+
+1161
+00:44:22,640 --> 00:44:27,680
+model and a reward model. So typically
+
+1162
+00:44:25,040 --> 00:44:30,079
+in the RL loop you have an old policy a
+
+1163
+00:44:27,680 --> 00:44:32,000
+new policy that you're learning. uh you
+
+1164
+00:44:30,079 --> 00:44:33,520
+have a critic that's basically giving
+
+1165
+00:44:32,000 --> 00:44:35,280
+feedback and then you have a reward
+
+1166
+00:44:33,520 --> 00:44:37,280
+model that's assigning the rewards. So
+
+1167
+00:44:35,280 --> 00:44:39,520
+keeping all four of the copies of models
+
+1168
+00:44:37,280 --> 00:44:40,880
+starts to become challenging. So what
+
+1169
+00:44:39,520 --> 00:44:43,599
+they did was they proposed a new
+
+1170
+00:44:40,880 --> 00:44:45,920
+technique called GRPO where instead of
+
+1171
+00:44:43,599 --> 00:44:49,359
+uh having a critic or a value function
+
+1172
+00:44:45,920 --> 00:44:51,599
+estimate uh things they basically used
+
+1173
+00:44:49,359 --> 00:44:52,880
+some sort of a generalized um advantage
+
+1174
+00:44:51,599 --> 00:44:55,040
+estimation that I'll show you in the
+
+1175
+00:44:52,880 --> 00:44:58,640
+next slide and then you only have three
+
+1176
+00:44:55,040 --> 00:45:00,960
+copies of the model. So now the PO which
+
+1177
+00:44:58,640 --> 00:45:02,880
+needed a lot more memory instead of that
+
+1178
+00:45:00,960 --> 00:45:05,280
+GRPO essentially could use just a group
+
+1179
+00:45:02,880 --> 00:45:07,920
+for the baseline and and the way that
+
+1180
+00:45:05,280 --> 00:45:11,040
+works is that for each question you
+
+1181
+00:45:07,920 --> 00:45:14,400
+sample a lot of the answers and then you
+
+1182
+00:45:11,040 --> 00:45:16,240
+score them and you normalize the reward
+
+1183
+00:45:14,400 --> 00:45:17,839
+of so this is the score that you gave
+
+1184
+00:45:16,240 --> 00:45:19,680
+for each of the answers using the reward
+
+1185
+00:45:17,839 --> 00:45:21,680
+model and then you normalize the reward
+
+1186
+00:45:19,680 --> 00:45:23,520
+as reward minus mean of rewards divided
+
+1187
+00:45:21,680 --> 00:45:25,520
+by standard deviation and then this
+
+1188
+00:45:23,520 --> 00:45:28,560
+becomes your advantage basically. So
+
+1189
+00:45:25,520 --> 00:45:30,240
+typically if you look at u the way DPO
+
+1190
+00:45:28,560 --> 00:45:32,640
+works or all of those techniques works
+
+1191
+00:45:30,240 --> 00:45:35,280
+you're basically going to compare the
+
+1192
+00:45:32,640 --> 00:45:37,040
+rewards. So by doing a reward minus mean
+
+1193
+00:45:35,280 --> 00:45:38,640
+of rewards divided by standard deviation
+
+1194
+00:45:37,040 --> 00:45:42,920
+you're effectively providing a
+
+1195
+00:45:38,640 --> 00:45:42,920
+comparative technique across rewards
+
+1196
+00:45:43,040 --> 00:45:48,400
+and uh the why so the reason this made
+
+1197
+00:45:46,640 --> 00:45:49,680
+sense was because reward models are
+
+1198
+00:45:48,400 --> 00:45:51,520
+going to essentially be trained on
+
+1199
+00:45:49,680 --> 00:45:53,440
+comparison anyway. So by providing the
+
+1200
+00:45:51,520 --> 00:45:55,839
+grip context you can save memory and now
+
+1201
+00:45:53,440 --> 00:45:57,359
+you can start scaling up RL and your
+
+1202
+00:45:55,839 --> 00:46:00,160
+advantage function in this particular
+
+1203
+00:45:57,359 --> 00:46:01,760
+case essentially. So I I didn't add the
+
+1204
+00:46:00,160 --> 00:46:03,359
+full formula because I just wanted you
+
+1205
+00:46:01,760 --> 00:46:05,280
+guys to have intuition. You could just
+
+1206
+00:46:03,359 --> 00:46:06,800
+like take the reward subtract the
+
+1207
+00:46:05,280 --> 00:46:08,640
+average reward and then divide that by
+
+1208
+00:46:06,800 --> 00:46:11,040
+the spread of rewards and you can get an
+
+1209
+00:46:08,640 --> 00:46:14,240
+estimate of the advantage. And on math
+
+1210
+00:46:11,040 --> 00:46:15,599
+they were able to go from 46.8 to 51.7.
+
+1211
+00:46:14,240 --> 00:46:17,599
+And this was actually the first open
+
+1212
+00:46:15,599 --> 00:46:20,560
+source model at 7B scale that crossed
+
+1213
+00:46:17,599 --> 00:46:22,240
+like 50% without having a critic. Um
+
+1214
+00:46:20,560 --> 00:46:24,240
+this is a much earlier paper but then
+
+1215
+00:46:22,240 --> 00:46:27,440
+this gives you a sense of the technique
+
+1216
+00:46:24,240 --> 00:46:28,880
+that they used and further what they
+
+1217
+00:46:27,440 --> 00:46:31,359
+showed was that if you look at different
+
+1218
+00:46:28,880 --> 00:46:33,599
+variants of RL effectively what you are
+
+1219
+00:46:31,359 --> 00:46:35,680
+changing is either the data source. So I
+
+1220
+00:46:33,599 --> 00:46:38,640
+showed you how they curated their data
+
+1221
+00:46:35,680 --> 00:46:40,400
+and then you're deciding how to compute
+
+1222
+00:46:38,640 --> 00:46:42,079
+the gradients. The gradient depends on
+
+1223
+00:46:40,400 --> 00:46:43,599
+gradient coefficient and uh the
+
+1224
+00:46:42,079 --> 00:46:45,680
+probability
+
+1225
+00:46:43,599 --> 00:46:47,440
+of the output given the question. So the
+
+1226
+00:46:45,680 --> 00:46:48,720
+gradient coefficient computation changes
+
+1227
+00:46:47,440 --> 00:46:51,200
+in different algorithms. So their
+
+1228
+00:46:48,720 --> 00:46:54,160
+estimate of gradient coefficient was
+
+1229
+00:46:51,200 --> 00:46:56,160
+coming from this um group estimator
+
+1230
+00:46:54,160 --> 00:46:58,400
+group baseline uh which worked well for
+
+1231
+00:46:56,160 --> 00:47:00,880
+a single singlestep problem where you're
+
+1232
+00:46:58,400 --> 00:47:03,760
+just trying to get the answer. So if you
+
+1233
+00:47:00,880 --> 00:47:06,160
+compare uh approaches like star where
+
+1234
+00:47:03,760 --> 00:47:08,640
+you basically are just generating uh
+
+1235
+00:47:06,160 --> 00:47:10,960
+things once and if you uh you get
+
+1236
+00:47:08,640 --> 00:47:12,800
+correct one you basically get a reward
+
+1237
+00:47:10,960 --> 00:47:15,599
+of one if it's correct and zero if it's
+
+1238
+00:47:12,800 --> 00:47:18,480
+wrong or if you do online rejection
+
+1239
+00:47:15,599 --> 00:47:20,160
+fine-tuning you are still uh generating
+
+1240
+00:47:18,480 --> 00:47:22,000
+things online but you only get a reward
+
+1241
+00:47:20,160 --> 00:47:23,760
+of one if it's correct and zero if it's
+
+1242
+00:47:22,000 --> 00:47:27,599
+wrong. So you basically reject anything
+
+1243
+00:47:23,760 --> 00:47:29,599
+that is incorrect. GRPO is generating uh
+
+1244
+00:47:27,599 --> 00:47:31,520
+rewards online with the reward model,
+
+1245
+00:47:29,599 --> 00:47:33,440
+but it's basically getting an advantage
+
+1246
+00:47:31,520 --> 00:47:35,119
+function because you're doing multiple
+
+1247
+00:47:33,440 --> 00:47:37,839
+samples and then you're giving them a
+
+1248
+00:47:35,119 --> 00:47:39,920
+score and then the the advantage for
+
+1249
+00:47:37,839 --> 00:47:42,079
+that score comes from this uh group
+
+1250
+00:47:39,920 --> 00:47:44,960
+baseline by computing the mean and then
+
+1251
+00:47:42,079 --> 00:47:46,880
+dividing it by the spread of rewards. So
+
+1252
+00:47:44,960 --> 00:47:48,240
+um now you can ask me the question that
+
+1253
+00:47:46,880 --> 00:47:50,720
+you were asking me earlier about the
+
+1254
+00:47:48,240 --> 00:47:54,400
+difficulty of the problems.
+
+1255
+00:47:50,720 --> 00:47:56,720
+>> Oh the difficulty of the problem that I
+
+1256
+00:47:54,400 --> 00:48:00,800
+make regression on sensor questions.
+
+1257
+00:47:56,720 --> 00:48:04,560
+>> Yes. Yes. So I'm curious um um if you
+
+1258
+00:48:00,800 --> 00:48:07,200
+are updating the updating the model with
+
+1259
+00:48:04,560 --> 00:48:09,200
+with fine tuning for difficult questions
+
+1260
+00:48:07,200 --> 00:48:10,960
+you are essentially um updating all the
+
+1261
+00:48:09,200 --> 00:48:13,280
+weights. So isn't that going to
+
+1262
+00:48:10,960 --> 00:48:14,800
+potentially theoretically have any um
+
+1263
+00:48:13,280 --> 00:48:16,079
+regression on similar questions or other
+
+1264
+00:48:14,800 --> 00:48:18,240
+metrics?
+
+1265
+00:48:16,079 --> 00:48:21,040
+>> So this is this is a table I wanted to
+
+1266
+00:48:18,240 --> 00:48:22,880
+show you. So effectively um if you're
+
+1267
+00:48:21,040 --> 00:48:24,240
+basically trying to close the loop, what
+
+1268
+00:48:22,880 --> 00:48:26,800
+you're trying to figure out is how much
+
+1269
+00:48:24,240 --> 00:48:29,280
+reward you're giving. So simple problems
+
+1270
+00:48:26,800 --> 00:48:30,960
+effectively might uh equate to you're
+
+1271
+00:48:29,280 --> 00:48:32,640
+going to get a reward of one anyways and
+
+1272
+00:48:30,960 --> 00:48:35,760
+you're like never getting a reward of
+
+1273
+00:48:32,640 --> 00:48:38,400
+zero. um and in with GRPO you're getting
+
+1274
+00:48:35,760 --> 00:48:40,400
+some form of a distribution of rewards
+
+1275
+00:48:38,400 --> 00:48:42,079
+um that I was showing here. So if you
+
+1276
+00:48:40,400 --> 00:48:45,040
+don't have any distribution in rewards
+
+1277
+00:48:42,079 --> 00:48:46,880
+then so effectively what you want is
+
+1278
+00:48:45,040 --> 00:48:48,559
+some form of a distribution of rewards
+
+1279
+00:48:46,880 --> 00:48:50,400
+across the set of problems you are
+
+1280
+00:48:48,559 --> 00:48:51,839
+showing. If there is not a distribution
+
+1281
+00:48:50,400 --> 00:48:53,680
+of rewards there's nothing for the model
+
+1282
+00:48:51,839 --> 00:48:56,000
+to learn like if all the rewards are
+
+1283
+00:48:53,680 --> 00:48:57,599
+zero or all the rewards are one then
+
+1284
+00:48:56,000 --> 00:49:01,200
+basically the normalization doesn't
+
+1285
+00:48:57,599 --> 00:49:01,920
+work. Does that make sense? Uh yeah yes
+
+1286
+00:49:01,200 --> 00:49:04,640
+yes but
+
+1287
+00:49:01,920 --> 00:49:07,280
+>> which we will solve in the next like the
+
+1288
+00:49:04,640 --> 00:49:08,880
+like the the shortcoming of this
+
+1289
+00:49:07,280 --> 00:49:09,680
+particular method we will solve in the
+
+1290
+00:49:08,880 --> 00:49:12,400
+next paper
+
+1291
+00:49:09,680 --> 00:49:15,359
+>> but but this reward is specific to um
+
+1292
+00:49:12,400 --> 00:49:17,040
+like this one particular
+
+1293
+00:49:15,359 --> 00:49:19,920
+feature that we're trying to train and
+
+1294
+00:49:17,040 --> 00:49:21,920
+not like the basic overall holistic
+
+1295
+00:49:19,920 --> 00:49:24,000
+benchmark that we trained for the
+
+1296
+00:49:21,920 --> 00:49:26,720
+previous model before.
+
+1297
+00:49:24,000 --> 00:49:28,559
+>> So I mean it is basically taking
+
+1298
+00:49:26,720 --> 00:49:31,680
+problems and then computing answers
+
+1299
+00:49:28,559 --> 00:49:33,359
+right. uh if across the model you
+
+1300
+00:49:31,680 --> 00:49:35,839
+basically are showing problems that are
+
+1301
+00:49:33,359 --> 00:49:37,200
+all very hard then the model has no
+
+1302
+00:49:35,839 --> 00:49:41,559
+capacity to learn because it will
+
+1303
+00:49:37,200 --> 00:49:41,559
+basically have no reward at any point
+
+1304
+00:49:42,240 --> 00:49:46,880
+>> it needs some hill climbing signal right
+
+1305
+00:49:45,359 --> 00:49:50,079
+>> like I'm not showing you a formula I'm
+
+1306
+00:49:46,880 --> 00:49:50,880
+intuitively explaining it to you
+
+1307
+00:49:50,079 --> 00:49:52,800
+>> yes
+
+1308
+00:49:50,880 --> 00:49:54,559
+>> um yeah actually I just want to comment
+
+1309
+00:49:52,800 --> 00:49:56,400
+on that piece quickly
+
+1310
+00:49:54,559 --> 00:49:58,800
+>> I think my interpretation of actually
+
+1311
+00:49:56,400 --> 00:50:01,680
+the solution to that is in the original
+
+1312
+00:49:58,800 --> 00:50:03,599
+papers like bo that's why there's a kale
+
+1313
+00:50:01,680 --> 00:50:05,119
+divergence term. So essentially it's
+
+1314
+00:50:03,599 --> 00:50:06,400
+like it is a valid concern I think
+
+1315
+00:50:05,119 --> 00:50:07,760
+because it's like if we're updating the
+
+1316
+00:50:06,400 --> 00:50:10,079
+weights we could probably train really
+
+1317
+00:50:07,760 --> 00:50:12,240
+far like model and maybe we can get
+
+1318
+00:50:10,079 --> 00:50:13,680
+really good answer these benchmarks but
+
+1319
+00:50:12,240 --> 00:50:14,960
+if we got the model to be really
+
+1320
+00:50:13,680 --> 00:50:17,440
+optimized on all these like simple
+
+1321
+00:50:14,960 --> 00:50:19,200
+benchmarks earlier straight away so I
+
+1322
+00:50:17,440 --> 00:50:21,280
+think in addition to the normalized
+
+1323
+00:50:19,200 --> 00:50:24,000
+rewards we also have some like
+
+1324
+00:50:21,280 --> 00:50:26,400
+divergence and all
+
+1325
+00:50:24,000 --> 00:50:28,240
+>> okay that's a fair interpretation uh
+
+1326
+00:50:26,400 --> 00:50:30,000
+that you add divergence and then you
+
+1327
+00:50:28,240 --> 00:50:32,800
+don't deviate from what it could already
+
+1328
+00:50:30,000 --> 00:50:34,319
+solve. Okay.
+
+1329
+00:50:32,800 --> 00:50:36,880
+>> Yeah, I was interpreting it more along
+
+1330
+00:50:34,319 --> 00:50:38,559
+the lines of like how do you have good
+
+1331
+00:50:36,880 --> 00:50:40,319
+distribution of problems so that the
+
+1332
+00:50:38,559 --> 00:50:41,680
+model has the right hill climbing signal
+
+1333
+00:50:40,319 --> 00:50:43,119
+but I think what you're saying is that
+
+1334
+00:50:41,680 --> 00:50:44,800
+if the model could already solve
+
+1335
+00:50:43,119 --> 00:50:46,400
+something then kill diversion solves
+
+1336
+00:50:44,800 --> 00:50:49,040
+that part of the problem.
+
+1337
+00:50:46,400 --> 00:50:50,880
+>> Okay. Thank you.
+
+1338
+00:50:49,040 --> 00:50:54,000
+>> Question is like so if you were trying
+
+1339
+00:50:50,880 --> 00:50:56,000
+to post post train so that it has like a
+
+1340
+00:50:54,000 --> 00:50:57,680
+new feature do you really have to update
+
+1341
+00:50:56,000 --> 00:50:59,200
+all the weights or
+
+1342
+00:50:57,680 --> 00:51:00,880
+>> No, I don't think so. Right. And there
+
+1343
+00:50:59,200 --> 00:51:02,880
+are some more recent works that have
+
+1344
+00:51:00,880 --> 00:51:05,040
+shown there are some blog posts that
+
+1345
+00:51:02,880 --> 00:51:07,680
+have been recently shown that um like
+
+1346
+00:51:05,040 --> 00:51:09,359
+you can do with like lower updates and
+
+1347
+00:51:07,680 --> 00:51:11,680
+so on.
+
+1348
+00:51:09,359 --> 00:51:13,359
+So I I do think that either kale
+
+1349
+00:51:11,680 --> 00:51:15,520
+divergence or some like subset of
+
+1350
+00:51:13,359 --> 00:51:17,359
+features could solve that problem. I
+
+1351
+00:51:15,520 --> 00:51:18,960
+think the
+
+1352
+00:51:17,359 --> 00:51:22,800
+uh the reason this is interesting is
+
+1353
+00:51:18,960 --> 00:51:24,400
+that you uh want um you want perhaps
+
+1354
+00:51:22,800 --> 00:51:27,359
+that these kind of techniques allow you
+
+1355
+00:51:24,400 --> 00:51:29,920
+to improve the model overall.
+
+1356
+00:51:27,359 --> 00:51:29,920
+>> Yeah.
+
+1357
+00:51:30,079 --> 00:51:33,280
+more questions.
+
+1358
+00:51:31,520 --> 00:51:36,640
+>> I hope
+
+1359
+00:51:33,280 --> 00:51:39,119
+you just have a
+
+1360
+00:51:36,640 --> 00:51:42,400
+zero but at this point you have a score.
+
+1361
+00:51:39,119 --> 00:51:45,599
+How do you come up with a score?
+
+1362
+00:51:42,400 --> 00:51:47,280
+>> How do you come up with a clean score?
+
+1363
+00:51:45,599 --> 00:51:49,200
+>> Oh, because you train a reward model,
+
+1364
+00:51:47,280 --> 00:51:50,960
+right?
+
+1365
+00:51:49,200 --> 00:51:52,400
+I mean, you can also have zeros and ones
+
+1366
+00:51:50,960 --> 00:51:53,119
+there and then you can average things.
+
+1367
+00:51:52,400 --> 00:51:59,040
+But uh
+
+1368
+00:51:53,119 --> 00:52:01,359
+>> so zero line that they have thresh
+
+1369
+00:51:59,040 --> 00:52:02,880
+>> no you so what I was showing you are
+
+1370
+00:52:01,359 --> 00:52:04,480
+training a reward model that is
+
+1371
+00:52:02,880 --> 00:52:06,480
+basically going to give you a score for
+
+1372
+00:52:04,480 --> 00:52:09,599
+that feedback.
+
+1373
+00:52:06,480 --> 00:52:12,559
+>> Yeah if you only use zero and one that
+
+1374
+00:52:09,599 --> 00:52:15,559
+can be a proxy but then you can do some
+
+1375
+00:52:12,559 --> 00:52:15,559
+averaging.
+
+1376
+00:52:17,440 --> 00:52:22,319
+Okay.
+
+1377
+00:52:19,359 --> 00:52:23,839
+So what this roughly tells you is that
+
+1378
+00:52:22,319 --> 00:52:25,520
+if you do basically the online
+
+1379
+00:52:23,839 --> 00:52:28,160
+reinforcement learning loop uh and your
+
+1380
+00:52:25,520 --> 00:52:29,680
+sample from the current model that beats
+
+1381
+00:52:28,160 --> 00:52:32,640
+um what we were doing earlier where
+
+1382
+00:52:29,680 --> 00:52:34,480
+we're in star approach. Uh so overall
+
+1383
+00:52:32,640 --> 00:52:36,720
+what they showed was that you can
+
+1384
+00:52:34,480 --> 00:52:38,800
+improve the majority of the like if if
+
+1385
+00:52:36,720 --> 00:52:41,359
+they had 32 tries it was improving the
+
+1386
+00:52:38,800 --> 00:52:43,839
+majority at K but it was actually not
+
+1387
+00:52:41,359 --> 00:52:47,040
+improving pass at K. So if if you were
+
+1388
+00:52:43,839 --> 00:52:49,839
+basically looking and plotting pass at K
+
+1389
+00:52:47,040 --> 00:52:51,280
+um say one is correct if you sample 32
+
+1390
+00:52:49,839 --> 00:52:52,960
+times then that was not what was
+
+1391
+00:52:51,280 --> 00:52:54,319
+improving in their paper. What was
+
+1392
+00:52:52,960 --> 00:52:56,640
+improving was that majority of the
+
+1393
+00:52:54,319 --> 00:52:58,160
+solutions become correct. Um that that's
+
+1394
+00:52:56,640 --> 00:53:01,599
+what was improving in this particular
+
+1395
+00:52:58,160 --> 00:53:03,760
+paper. So the model actually became more
+
+1396
+00:53:01,599 --> 00:53:06,880
+consistent not fundamentally smarter was
+
+1397
+00:53:03,760 --> 00:53:09,280
+what they showed.
+
+1398
+00:53:06,880 --> 00:53:12,240
+Now we'll cover the last paper uh called
+
+1399
+00:53:09,280 --> 00:53:14,319
+Dappo um which is basically going to fix
+
+1400
+00:53:12,240 --> 00:53:17,440
+some of the problems uh with respect to
+
+1401
+00:53:14,319 --> 00:53:21,119
+reasoning on harder problems. So if you
+
+1402
+00:53:17,440 --> 00:53:23,760
+naively scale up uh gRPO and want to do
+
+1403
+00:53:21,119 --> 00:53:26,000
+this on even a quen 32B model which is
+
+1404
+00:53:23,760 --> 00:53:28,960
+very easily accessible and you would get
+
+1405
+00:53:26,000 --> 00:53:31,040
+30% on amy benchmark and here I will
+
+1406
+00:53:28,960 --> 00:53:33,440
+show you a lot of technical terms uh but
+
+1407
+00:53:31,040 --> 00:53:35,359
+I will try to explain to you intuitively
+
+1408
+00:53:33,440 --> 00:53:37,280
+some of the challenges in just doing
+
+1409
+00:53:35,359 --> 00:53:39,520
+this on quen 32B ends up being like the
+
+1410
+00:53:37,280 --> 00:53:41,520
+entropy of the model collapses the model
+
+1411
+00:53:39,520 --> 00:53:43,839
+can become too confident the training
+
+1412
+00:53:41,520 --> 00:53:45,440
+can become unstable and the response
+
+1413
+00:53:43,839 --> 00:53:47,680
+length the model output length can
+
+1414
+00:53:45,440 --> 00:53:49,839
+become uncontrollable like it can
+
+1415
+00:53:47,680 --> 00:53:53,040
+explode uncontrollably but deepseek did
+
+1416
+00:53:49,839 --> 00:53:56,800
+get 47% on Amy like the deepseek urban
+
+1417
+00:53:53,040 --> 00:54:00,800
+paper did get 47% so DAPo as a published
+
+1418
+00:53:56,800 --> 00:54:02,960
+piece of work tries to um make explicit
+
+1419
+00:54:00,800 --> 00:54:06,079
+what what were the techniques in RL that
+
+1420
+00:54:02,960 --> 00:54:07,760
+were not covered in say GRPO so some of
+
+1421
+00:54:06,079 --> 00:54:10,800
+the techniques that uh they talk about
+
+1422
+00:54:07,760 --> 00:54:12,079
+is the that in PO you have to do um so
+
+1423
+00:54:10,800 --> 00:54:14,160
+you're basically trying to do some sort
+
+1424
+00:54:12,079 --> 00:54:18,480
+of exploration in your standard PO
+
+1425
+00:54:14,160 --> 00:54:20,559
+algorithm And um the standard PO
+
+1426
+00:54:18,480 --> 00:54:23,599
+clipping uh treats the increasing and
+
+1427
+00:54:20,559 --> 00:54:25,520
+the decreasing u on on on that very
+
+1428
+00:54:23,599 --> 00:54:28,640
+similar. So basically if you have a low
+
+1429
+00:54:25,520 --> 00:54:30,480
+probability token um it can only hill
+
+1430
+00:54:28,640 --> 00:54:32,480
+climb so much and then the high
+
+1431
+00:54:30,480 --> 00:54:34,079
+probability token has can also get
+
+1432
+00:54:32,480 --> 00:54:36,240
+clipped. So the exploration can
+
+1433
+00:54:34,079 --> 00:54:38,880
+collapse. Uh so basically the clipping
+
+1434
+00:54:36,240 --> 00:54:41,040
+function in the the PO algorithm needs
+
+1435
+00:54:38,880 --> 00:54:42,640
+to be asymmetric and that will allow
+
+1436
+00:54:41,040 --> 00:54:44,880
+bigger increases. So that was the first
+
+1437
+00:54:42,640 --> 00:54:47,280
+thing that Dappo found.
+
+1438
+00:54:44,880 --> 00:54:50,400
+U in terms of graphs what that roughly
+
+1439
+00:54:47,280 --> 00:54:53,119
+meant was that if you did clipping then
+
+1440
+00:54:50,400 --> 00:54:55,359
+your accuracy was much better and if you
+
+1441
+00:54:53,119 --> 00:54:56,880
+didn't uh do if you could allow clipping
+
+1442
+00:54:55,359 --> 00:54:58,800
+higher if you could allow asymmetric
+
+1443
+00:54:56,880 --> 00:55:00,559
+clipping the purple plot shows you that
+
+1444
+00:54:58,800 --> 00:55:02,960
+you could achieve much higher accuracy
+
+1445
+00:55:00,559 --> 00:55:04,960
+and your entropy on the right side
+
+1446
+00:55:02,960 --> 00:55:08,720
+stayed more stable and did not collapse
+
+1447
+00:55:04,960 --> 00:55:10,480
+while if you uh did have uh did I invert
+
+1448
+00:55:08,720 --> 00:55:12,079
+that? So, so this is higher accuracy and
+
+1449
+00:55:10,480 --> 00:55:14,559
+then the entropy is looking nicer and
+
+1450
+00:55:12,079 --> 00:55:15,839
+then if you did not do asymmetric
+
+1451
+00:55:14,559 --> 00:55:18,400
+clipping then your entropy has
+
+1452
+00:55:15,839 --> 00:55:20,240
+collapsed. So you entropy is a proxy for
+
+1453
+00:55:18,400 --> 00:55:21,760
+how much exploration is possible in the
+
+1454
+00:55:20,240 --> 00:55:24,000
+model.
+
+1455
+00:55:21,760 --> 00:55:26,160
+A second uh very interesting technique
+
+1456
+00:55:24,000 --> 00:55:28,319
+which actually relates to what we were
+
+1457
+00:55:26,160 --> 00:55:31,839
+talking about earlier was something
+
+1458
+00:55:28,319 --> 00:55:34,160
+called as dynamic sampling. So what I
+
+1459
+00:55:31,839 --> 00:55:36,880
+showed you for uh GRPO was that okay you
+
+1460
+00:55:34,160 --> 00:55:38,319
+go and sample 64 solutions and then you
+
+1461
+00:55:36,880 --> 00:55:40,079
+come up with a distribution on them and
+
+1462
+00:55:38,319 --> 00:55:43,520
+then then you take a group baseline.
+
+1463
+00:55:40,079 --> 00:55:45,760
+What uh Dapo said was okay well um how
+
+1464
+00:55:43,520 --> 00:55:47,680
+about we oversample how about we don't
+
+1465
+00:55:45,760 --> 00:55:49,920
+just use 64 samples how about we
+
+1466
+00:55:47,680 --> 00:55:51,359
+oversample and then what we want is that
+
+1467
+00:55:49,920 --> 00:55:53,920
+we will filter out things that have
+
+1468
+00:55:51,359 --> 00:55:56,079
+zeros and zero reward and one reward so
+
+1469
+00:55:53,920 --> 00:55:58,240
+that what we want is basically a nice
+
+1470
+00:55:56,079 --> 00:56:01,599
+distribution so that uh most of the
+
+1471
+00:55:58,240 --> 00:56:04,160
+solutions uh have some sort of a signal.
+
+1472
+00:56:01,599 --> 00:56:07,040
+So they filter out all correct and all
+
+1473
+00:56:04,160 --> 00:56:10,079
+wrong groups and they keep only some
+
+1474
+00:56:07,040 --> 00:56:12,000
+subset uh between 0 and 64. So they
+
+1475
+00:56:10,079 --> 00:56:13,520
+they're basically doing dynamic sampling
+
+1476
+00:56:12,000 --> 00:56:16,160
+because they don't want to waste their
+
+1477
+00:56:13,520 --> 00:56:18,160
+gradient. Your advantage should not be
+
+1478
+00:56:16,160 --> 00:56:20,079
+zero. Like if you're if you're basically
+
+1479
+00:56:18,160 --> 00:56:21,920
+your rewards are all correct or all
+
+1480
+00:56:20,079 --> 00:56:24,880
+wrong then those groups are filtered out
+
+1481
+00:56:21,920 --> 00:56:27,359
+and you essentially want to keep only
+
+1482
+00:56:24,880 --> 00:56:29,119
+those groups that have um some signal.
+
+1483
+00:56:27,359 --> 00:56:32,000
+So this maintains an effective batch
+
+1484
+00:56:29,119 --> 00:56:34,319
+size because in RL if you have effective
+
+1485
+00:56:32,000 --> 00:56:36,079
+batch size for propagating the gradients
+
+1486
+00:56:34,319 --> 00:56:38,960
+because you're not computing gradients
+
+1487
+00:56:36,079 --> 00:56:41,960
+from all correct and all wrong. Anyways
+
+1488
+00:56:38,960 --> 00:56:41,960
+questions
+
+1489
+00:56:44,000 --> 00:56:47,000
+>> group
+
+1490
+00:56:47,599 --> 00:56:52,799
+question. Yes. So you have a batch of uh
+
+1491
+00:56:50,799 --> 00:56:56,720
+questions when you are training and then
+
+1492
+00:56:52,799 --> 00:57:01,040
+you're uh filtering out questions.
+
+1493
+00:56:56,720 --> 00:57:02,960
+Yeah. Um, it seems 64 samples is quite
+
+1494
+00:57:01,040 --> 00:57:05,920
+small. I I'm wondering if it's because
+
+1495
+00:57:02,960 --> 00:57:08,319
+like there's very limited amount of Amy
+
+1496
+00:57:05,920 --> 00:57:10,160
+questions out there and like whether
+
+1497
+00:57:08,319 --> 00:57:12,880
+that was enough.
+
+1498
+00:57:10,160 --> 00:57:15,200
+>> So this was a this is more an exemplar
+
+1499
+00:57:12,880 --> 00:57:18,000
+here. You can choose how many samples
+
+1500
+00:57:15,200 --> 00:57:20,079
+you pick but at the end of the day uh
+
+1501
+00:57:18,000 --> 00:57:22,880
+this this is mostly to showcase what was
+
+1502
+00:57:20,079 --> 00:57:24,160
+possible from their paper. So Amy yeah
+
+1503
+00:57:22,880 --> 00:57:25,359
+yeah yeah this will be benchmark
+
+1504
+00:57:24,160 --> 00:57:27,680
+specific and the difficulty of the
+
+1505
+00:57:25,359 --> 00:57:31,079
+benchmark and the [snorts] capability of
+
+1506
+00:57:27,680 --> 00:57:31,079
+the base model
+
+1507
+00:57:32,240 --> 00:57:35,760
+and I think the the third bit that is
+
+1508
+00:57:34,079 --> 00:57:38,880
+worth noting is that the reasoning
+
+1509
+00:57:35,760 --> 00:57:41,920
+chains um have certain amount of um
+
+1510
+00:57:38,880 --> 00:57:44,400
+length that matters. So if you are
+
+1511
+00:57:41,920 --> 00:57:46,079
+basically doing a sample level loss uh
+
+1512
+00:57:44,400 --> 00:57:48,000
+sample level means that for each
+
+1513
+00:57:46,079 --> 00:57:50,319
+question answer pair that that sequence
+
+1514
+00:57:48,000 --> 00:57:54,000
+you're computing a loss then each answer
+
+1515
+00:57:50,319 --> 00:57:55,599
+is basically counted globally. So um in
+
+1516
+00:57:54,000 --> 00:57:57,599
+certain cases if you have a very long
+
+1517
+00:57:55,599 --> 00:57:59,599
+garbage answer in the model output then
+
+1518
+00:57:57,599 --> 00:58:02,400
+that basically gets same weight as a
+
+1519
+00:57:59,599 --> 00:58:03,920
+short good answer. So they effectively
+
+1520
+00:58:02,400 --> 00:58:06,640
+suggest that you should have some sort
+
+1521
+00:58:03,920 --> 00:58:09,520
+of a effectively length penalty but
+
+1522
+00:58:06,640 --> 00:58:11,520
+which should put uh better like they
+
+1523
+00:58:09,520 --> 00:58:13,920
+want a shape uh based on the length. So
+
+1524
+00:58:11,520 --> 00:58:15,680
+they put a token based low loss as
+
+1525
+00:58:13,920 --> 00:58:18,160
+opposed to putting a sample level loss
+
+1526
+00:58:15,680 --> 00:58:20,000
+and that they gave them some gain. And
+
+1527
+00:58:18,160 --> 00:58:22,160
+in particular what they were controlling
+
+1528
+00:58:20,000 --> 00:58:24,000
+for is both the entropy and the mean
+
+1529
+00:58:22,160 --> 00:58:25,520
+response length. So effectively if they
+
+1530
+00:58:24,000 --> 00:58:27,119
+didn't have a token level loss they were
+
+1531
+00:58:25,520 --> 00:58:29,839
+noticing that the entropy was growing
+
+1532
+00:58:27,119 --> 00:58:31,760
+and the response length was also uh not
+
+1533
+00:58:29,839 --> 00:58:33,359
+looking like it was control um it was
+
+1534
+00:58:31,760 --> 00:58:35,280
+growing uncontrollably. So they wanted
+
+1535
+00:58:33,359 --> 00:58:38,400
+to shape that better by putting some
+
+1536
+00:58:35,280 --> 00:58:40,799
+form of a penalty there.
+
+1537
+00:58:38,400 --> 00:58:44,240
+So they put um token level loss for
+
+1538
+00:58:40,799 --> 00:58:48,400
+that. And then finally um there are
+
+1539
+00:58:44,240 --> 00:58:50,400
+certain cases in which um the model
+
+1540
+00:58:48,400 --> 00:58:52,559
+encounters a hard problem. So it
+
+1541
+00:58:50,400 --> 00:58:56,160
+basically gets truncated at the end
+
+1542
+00:58:52,559 --> 00:58:57,680
+because um it was thinking it was
+
+1543
+00:58:56,160 --> 00:59:00,000
+basically producing model outputs and
+
+1544
+00:58:57,680 --> 00:59:02,640
+and these truncated uh reasoning chains
+
+1545
+00:59:00,000 --> 00:59:05,040
+can generate a lot of noise. So they
+
+1546
+00:59:02,640 --> 00:59:06,960
+basically put a gradual penalty in and
+
+1547
+00:59:05,040 --> 00:59:08,720
+in in the tokens to to deal with that
+
+1548
+00:59:06,960 --> 00:59:11,040
+and that allowed the training to become
+
+1549
+00:59:08,720 --> 00:59:13,839
+stable instead of adding noise. So
+
+1550
+00:59:11,040 --> 00:59:16,799
+effectively uh the generation entropy
+
+1551
+00:59:13,839 --> 00:59:18,799
+instead of uh becoming unstable uh once
+
+1552
+00:59:16,799 --> 00:59:21,280
+the model was learning to generate like
+
+1553
+00:59:18,799 --> 00:59:23,760
+really like the model as it progresses
+
+1554
+00:59:21,280 --> 00:59:26,240
+starts to um generate longer and longer
+
+1555
+00:59:23,760 --> 00:59:27,599
+reasoning chains and that can that can
+
+1556
+00:59:26,240 --> 00:59:28,880
+get truncated and that can cause
+
+1557
+00:59:27,599 --> 00:59:30,480
+problems. So there are a couple of
+
+1558
+00:59:28,880 --> 00:59:32,319
+different ways in which different papers
+
+1559
+00:59:30,480 --> 00:59:34,240
+have tried to tackle this. one is that
+
+1560
+00:59:32,319 --> 00:59:36,799
+either they increase the context length
+
+1561
+00:59:34,240 --> 00:59:38,000
+over RL loop um to handle that in this
+
+1562
+00:59:36,799 --> 00:59:40,240
+particular case they are basically
+
+1563
+00:59:38,000 --> 00:59:43,280
+putting this uh penalty function so that
+
+1564
+00:59:40,240 --> 00:59:45,599
+they can handle this this part.
+
+1565
+00:59:43,280 --> 00:59:48,720
+So overall what this showed was that
+
+1566
+00:59:45,599 --> 00:59:51,280
+when you started with GRPO on this AMA
+
+1567
+00:59:48,720 --> 00:59:54,079
+benchmark if you put overong filtering
+
+1568
+00:59:51,280 --> 00:59:57,040
+you went from 30 to 36 on the quen 32B
+
+1569
+00:59:54,079 --> 00:59:59,440
+model. If you did asymmetric clipping,
+
+1570
+00:59:57,040 --> 01:00:01,359
+you could go to 38. With soft overong
+
+1571
+00:59:59,440 --> 01:00:03,599
+punishment, you could go to 41. And then
+
+1572
+01:00:01,359 --> 01:00:05,760
+with token level loss, you go to 42. And
+
+1573
+01:00:03,599 --> 01:00:07,200
+then if you do dynamic sampling, where
+
+1574
+01:00:05,760 --> 01:00:10,079
+you're basically doing a better
+
+1575
+01:00:07,200 --> 01:00:11,920
+distribution of rewards um across the
+
+1576
+01:00:10,079 --> 01:00:13,920
+batch, you have a better signal
+
+1577
+01:00:11,920 --> 01:00:16,559
+propagation. You basically got to 50,
+
+1578
+01:00:13,920 --> 01:00:18,559
+which was even better than what DeepS R1
+
+1579
+01:00:16,559 --> 01:00:21,040
+uh distilled down to Quen 32B had done.
+
+1580
+01:00:18,559 --> 01:00:23,280
+So they could actually hill climb on the
+
+1581
+01:00:21,040 --> 01:00:25,920
+quen 32B themselves and and get to a
+
+1582
+01:00:23,280 --> 01:00:28,640
+pretty strong score here.
+
+1583
+01:00:25,920 --> 01:00:31,359
+So some of the learnings from this paper
+
+1584
+01:00:28,640 --> 01:00:32,880
+was that the loss function by itself was
+
+1585
+01:00:31,359 --> 01:00:34,400
+not a reasonable enough proxy when
+
+1586
+01:00:32,880 --> 01:00:35,839
+you're learning in RL. You have to look
+
+1587
+01:00:34,400 --> 01:00:38,240
+at the response length. You have to look
+
+1588
+01:00:35,839 --> 01:00:39,760
+at the entropy and keep it so that it's
+
+1589
+01:00:38,240 --> 01:00:42,240
+not too low but it's not too high
+
+1590
+01:00:39,760 --> 01:00:44,720
+either. And then uh the percentage of
+
+1591
+01:00:42,240 --> 01:00:46,559
+samples that have uh a full accuracy of
+
+1592
+01:00:44,720 --> 01:00:49,280
+one tells you how much you need to
+
+1593
+01:00:46,559 --> 01:00:51,760
+sample. So that's all of all three are
+
+1594
+01:00:49,280 --> 01:00:54,319
+important principles in uh learning in
+
+1595
+01:00:51,760 --> 01:00:56,079
+RL and some of the challenges that you
+
+1596
+01:00:54,319 --> 01:00:58,000
+might have to look out for is that if
+
+1597
+01:00:56,079 --> 01:01:00,400
+your response length in the model
+
+1598
+01:00:58,000 --> 01:01:01,920
+outputs is exploding then you have to
+
+1599
+01:01:00,400 --> 01:01:03,440
+control the loss there. You have to
+
+1600
+01:01:01,920 --> 01:01:06,480
+control the entropy and then if you're
+
+1601
+01:01:03,440 --> 01:01:08,559
+not seeing improvement after um certain
+
+1602
+01:01:06,480 --> 01:01:10,799
+number of steps then your reward model
+
+1603
+01:01:08,559 --> 01:01:13,040
+actually might be saturated.
+
+1604
+01:01:10,799 --> 01:01:15,119
+Uh so effectively what this is saying is
+
+1605
+01:01:13,040 --> 01:01:17,040
+that the
+
+1606
+01:01:15,119 --> 01:01:18,400
+the optimization in the RL loop is
+
+1607
+01:01:17,040 --> 01:01:19,760
+harder. So if I were to answer the
+
+1608
+01:01:18,400 --> 01:01:23,440
+question that was brought up earlier of
+
+1609
+01:01:19,760 --> 01:01:25,280
+like SFT versus RL, RL does provide you
+
+1610
+01:01:23,440 --> 01:01:27,119
+uh in the domains where there you do
+
+1611
+01:01:25,280 --> 01:01:28,559
+have a strong reward signal. It does
+
+1612
+01:01:27,119 --> 01:01:31,280
+provide you the ability to hill climb
+
+1613
+01:01:28,559 --> 01:01:33,119
+with fewer number of examples but it
+
+1614
+01:01:31,280 --> 01:01:34,640
+does take a lot of work to like get it
+
+1615
+01:01:33,119 --> 01:01:36,640
+right. Well, supervised fine-tuning
+
+1616
+01:01:34,640 --> 01:01:38,799
+oftentimes if you do have access to a
+
+1617
+01:01:36,640 --> 01:01:40,799
+lot of high quality data is faster way
+
+1618
+01:01:38,799 --> 01:01:42,480
+to just improve the model performance in
+
+1619
+01:01:40,799 --> 01:01:44,319
+certain cases, but it doesn't bring
+
+1620
+01:01:42,480 --> 01:01:48,960
+reasoning trace reasoning capabilities
+
+1621
+01:01:44,319 --> 01:01:51,280
+or boost them in in certain ways.
+
+1622
+01:01:48,960 --> 01:01:53,359
+So if you want to compare the the three
+
+1623
+01:01:51,280 --> 01:01:56,640
+different techniques uh that we uh
+
+1624
+01:01:53,359 --> 01:01:58,160
+talked about today. Um so if you
+
+1625
+01:01:56,640 --> 01:01:59,920
+basically only had a few different
+
+1626
+01:01:58,160 --> 01:02:02,480
+examples like 100 examples with
+
+1627
+01:01:59,920 --> 01:02:05,040
+reasoning and you are effectively just
+
+1628
+01:02:02,480 --> 01:02:07,119
+like playing around uh with a model star
+
+1629
+01:02:05,040 --> 01:02:08,640
+is a pretty good and you don't have RL
+
+1630
+01:02:07,119 --> 01:02:10,480
+infrastructure. Star is a pretty good
+
+1631
+01:02:08,640 --> 01:02:13,599
+way for you to like start getting the
+
+1632
+01:02:10,480 --> 01:02:16,480
+model to reason. um and and simple
+
+1633
+01:02:13,599 --> 01:02:18,240
+reasoning tasks like GSM8K actually will
+
+1634
+01:02:16,480 --> 01:02:19,920
+see reasonable amount of improvement
+
+1635
+01:02:18,240 --> 01:02:21,520
+there. Maybe not phenomenal, but like
+
+1636
+01:02:19,920 --> 01:02:23,520
+you're still staying within what the
+
+1637
+01:02:21,520 --> 01:02:26,640
+model was capable of. If you go to
+
+1638
+01:02:23,520 --> 01:02:28,799
+Deepseek Math um and you use GRPO, you
+
+1639
+01:02:26,640 --> 01:02:32,079
+do need a good enough base model plus
+
+1640
+01:02:28,799 --> 01:02:35,040
+like uh you do need to u prime the model
+
+1641
+01:02:32,079 --> 01:02:36,720
+with with good instruction data. But now
+
+1642
+01:02:35,040 --> 01:02:39,599
+um you have a reasonably strong
+
+1643
+01:02:36,720 --> 01:02:41,119
+algorithm that that can work even if you
+
+1644
+01:02:39,599 --> 01:02:42,640
+don't have enough memory. if you have a
+
+1645
+01:02:41,119 --> 01:02:44,880
+limited number of GPUs and then for
+
+1646
+01:02:42,640 --> 01:02:47,200
+standard math reasoning tasks this was
+
+1647
+01:02:44,880 --> 01:02:50,799
+well proven
+
+1648
+01:02:47,200 --> 01:02:52,400
+and then if you uh and you need do kind
+
+1649
+01:02:50,799 --> 01:02:53,839
+of uh techniques when your reasoning
+
+1650
+01:02:52,400 --> 01:02:55,359
+chains will end up being longer which
+
+1651
+01:02:53,839 --> 01:02:57,280
+typically correlates with harder
+
+1652
+01:02:55,359 --> 01:02:59,040
+problems so if your reasoning chains are
+
+1653
+01:02:57,280 --> 01:03:00,640
+going to be uh much longer you need
+
+1654
+01:02:59,040 --> 01:03:02,319
+state-of-the-art performance then you do
+
+1655
+01:03:00,640 --> 01:03:04,559
+need to control all of these variables
+
+1656
+01:03:02,319 --> 01:03:06,319
+in your RL algorithm and infrastructure
+
+1657
+01:03:04,559 --> 01:03:09,200
+but for compet competition level
+
+1658
+01:03:06,319 --> 01:03:11,440
+problems like Amy and IMO this is very
+
+1659
+01:03:09,200 --> 01:03:11,440
+useful
+
+1660
+01:03:12,640 --> 01:03:16,799
+So what is it that we expect to improve?
+
+1661
+01:03:15,119 --> 01:03:19,440
+All three techniques will improve in
+
+1662
+01:03:16,799 --> 01:03:22,799
+general the majority at K performance on
+
+1663
+01:03:19,440 --> 01:03:24,799
+the y-axis as you put more compute. Um
+
+1664
+01:03:22,799 --> 01:03:27,200
+the answer formatting and generally will
+
+1665
+01:03:24,799 --> 01:03:29,280
+improve as you apply these techniques
+
+1666
+01:03:27,200 --> 01:03:31,680
+and uh in general the model will be more
+
+1667
+01:03:29,280 --> 01:03:33,839
+coherent over multiple steps but none of
+
+1668
+01:03:31,680 --> 01:03:35,680
+these will yet improve the fundamental
+
+1669
+01:03:33,839 --> 01:03:38,400
+capability or just teach the model to
+
+1670
+01:03:35,680 --> 01:03:40,400
+solve no new problems or generalize a
+
+1671
+01:03:38,400 --> 01:03:42,000
+lot out of domain. So there is some set
+
+1672
+01:03:40,400 --> 01:03:44,079
+of questions that are being asked at
+
+1673
+01:03:42,000 --> 01:03:46,640
+this point in time. What would it take
+
+1674
+01:03:44,079 --> 01:03:48,640
+for the the last part to start
+
+1675
+01:03:46,640 --> 01:03:50,640
+improving?
+
+1676
+01:03:48,640 --> 01:03:54,640
+>> Yes.
+
+1677
+01:03:50,640 --> 01:03:58,720
+part is because I wonder whe
+
+1678
+01:03:54,640 --> 01:04:01,039
+the part like all brand or all because
+
+1679
+01:03:58,720 --> 01:04:06,799
+that's if you
+
+1680
+01:04:01,039 --> 01:04:12,839
+>> Mhm. That's like uh the only way you
+
+1681
+01:04:06,799 --> 01:04:12,839
+like on the page and you improve on so
+
+1682
+01:04:13,599 --> 01:04:17,760
+because we all
+
+1683
+01:04:16,799 --> 01:04:21,119
+>> I see
+
+1684
+01:04:17,760 --> 01:04:23,039
+>> I'm just a
+
+1685
+01:04:21,119 --> 01:04:24,880
+>> uh that's not the reason I think the
+
+1686
+01:04:23,039 --> 01:04:27,119
+more fundamental question is that to
+
+1687
+01:04:24,880 --> 01:04:28,799
+improve pass at K you're basically
+
+1688
+01:04:27,119 --> 01:04:31,599
+improving the fundamental capability of
+
+1689
+01:04:28,799 --> 01:04:34,160
+the model to solve new problems right So
+
+1690
+01:04:31,599 --> 01:04:36,480
+you want to see the model uh show
+
+1691
+01:04:34,160 --> 01:04:38,240
+capabilities in certain ways. So
+
+1692
+01:04:36,480 --> 01:04:40,799
+typically the fundamental capability
+
+1693
+01:04:38,240 --> 01:04:43,359
+scaling comes from uh the fundamental
+
+1694
+01:04:40,799 --> 01:04:45,440
+capability step jumps have typically
+
+1695
+01:04:43,359 --> 01:04:47,039
+been seen by either some sort of a
+
+1696
+01:04:45,440 --> 01:04:48,720
+breakthrough or by scaling in some
+
+1697
+01:04:47,039 --> 01:04:51,039
+dimension.
+
+1698
+01:04:48,720 --> 01:04:53,920
+>> Okay. So if you actually see that this
+
+1699
+01:04:51,039 --> 01:04:57,760
+thing for a set of the problems always
+
+1700
+01:04:53,920 --> 01:05:00,960
+give the answer then it's possible that
+
+1701
+01:04:57,760 --> 01:05:02,960
+I'm not sure whe is good to do so but
+
+1702
+01:05:00,960 --> 01:05:04,559
+you can answer the question to some
+
+1703
+01:05:02,960 --> 01:05:07,359
+other models you're going to get the
+
+1704
+01:05:04,559 --> 01:05:10,720
+answer and you can go back to
+
+1705
+01:05:07,359 --> 01:05:14,160
+>> let's take that one offline
+
+1706
+01:05:10,720 --> 01:05:17,039
+>> um okay so one of the thing that I keep
+
+1707
+01:05:14,160 --> 01:05:19,839
+highlighting um is something to keep in
+
+1708
+01:05:17,039 --> 01:05:21,839
+mind is that a lot the RL loop or even
+
+1709
+01:05:19,839 --> 01:05:23,920
+the star method like the quality of
+
+1710
+01:05:21,839 --> 01:05:26,160
+rational all of that depends on the
+
+1711
+01:05:23,920 --> 01:05:27,520
+ability of the model to reason or there
+
+1712
+01:05:26,160 --> 01:05:30,079
+there needing to be some sort of a
+
+1713
+01:05:27,520 --> 01:05:32,000
+verifier or a reward model and the
+
+1714
+01:05:30,079 --> 01:05:34,480
+reward models if the model is too
+
+1715
+01:05:32,000 --> 01:05:36,480
+capable then the reward rewards will get
+
+1716
+01:05:34,480 --> 01:05:37,839
+hacked or and if the reward model
+
+1717
+01:05:36,480 --> 01:05:39,520
+doesn't have enough signal then you're
+
+1718
+01:05:37,839 --> 01:05:42,960
+basically not able to hill climb the
+
+1719
+01:05:39,520 --> 01:05:46,000
+loop. So it is a harder optimization
+
+1720
+01:05:42,960 --> 01:05:50,799
+problem in that respective. Um we looked
+
+1721
+01:05:46,000 --> 01:05:52,559
+at last um last lecture uh or last
+
+1722
+01:05:50,799 --> 01:05:54,559
+Friday we looked at the autonomous
+
+1723
+01:05:52,559 --> 01:05:56,640
+coding applications where you do have
+
+1724
+01:05:54,559 --> 01:05:58,880
+access to verifiable rewards because you
+
+1725
+01:05:56,640 --> 01:06:00,559
+have like in math and code you have the
+
+1726
+01:05:58,880 --> 01:06:02,000
+final correct answer then you can also
+
+1727
+01:06:00,559 --> 01:06:04,000
+give execution feedback which was the
+
+1728
+01:06:02,000 --> 01:06:06,480
+RLEF paper we looked at and then you
+
+1729
+01:06:04,000 --> 01:06:08,400
+also have unit test execution. Um
+
+1730
+01:06:06,480 --> 01:06:10,240
+similarly in other there are some
+
+1731
+01:06:08,400 --> 01:06:12,160
+domains in which you have this kind of
+
+1732
+01:06:10,240 --> 01:06:14,640
+verification available. So it's easy for
+
+1733
+01:06:12,160 --> 01:06:16,640
+you to uh hill climb but then how many
+
+1734
+01:06:14,640 --> 01:06:18,400
+such places do you have this signal
+
+1735
+01:06:16,640 --> 01:06:20,880
+available? These questions will continue
+
+1736
+01:06:18,400 --> 01:06:23,200
+to come up. So um like what verification
+
+1737
+01:06:20,880 --> 01:06:25,599
+signals are good enough and then there's
+
+1738
+01:06:23,200 --> 01:06:28,160
+can you use a ensemble of verifiers
+
+1739
+01:06:25,599 --> 01:06:30,319
+instead of like one single verifier to
+
+1740
+01:06:28,160 --> 01:06:32,720
+make up for the gaps of what a single
+
+1741
+01:06:30,319 --> 01:06:34,079
+verifier will provide signal on. So all
+
+1742
+01:06:32,720 --> 01:06:36,000
+of these questions are extremely
+
+1743
+01:06:34,079 --> 01:06:37,680
+important.
+
+1744
+01:06:36,000 --> 01:06:40,079
+So in terms of if you were to look at
+
+1745
+01:06:37,680 --> 01:06:41,839
+open problems uh in this domain so I
+
+1746
+01:06:40,079 --> 01:06:45,359
+think this is still an active train time
+
+1747
+01:06:41,839 --> 01:06:47,440
+scaling is an active area of research uh
+
+1748
+01:06:45,359 --> 01:06:49,359
+I already highlighted this there's a
+
+1749
+01:06:47,440 --> 01:06:51,280
+fundamental question of like why only
+
+1750
+01:06:49,359 --> 01:06:53,839
+majority at K increases why why does
+
+1751
+01:06:51,280 --> 01:06:56,640
+pass at K doesn't increase a second
+
+1752
+01:06:53,839 --> 01:06:58,799
+question is that um we do see in the
+
+1753
+01:06:56,640 --> 01:07:00,799
+reasoning chains um things like
+
+1754
+01:06:58,799 --> 01:07:03,200
+backtracking or the model is able to
+
+1755
+01:07:00,799 --> 01:07:05,440
+like self-evaluate self-correct we did
+
+1756
+01:07:03,200 --> 01:07:07,039
+show those examples early on, but are
+
+1757
+01:07:05,440 --> 01:07:08,400
+those behaviors real? Like these
+
+1758
+01:07:07,039 --> 01:07:11,200
+reasoning behaviors, are they emerging
+
+1759
+01:07:08,400 --> 01:07:12,960
+or were they already like present and
+
+1760
+01:07:11,200 --> 01:07:15,520
+they're basically statistically becoming
+
+1761
+01:07:12,960 --> 01:07:17,119
+more prevalent? And then a third bit
+
+1762
+01:07:15,520 --> 01:07:18,480
+right now is that we don't really have
+
+1763
+01:07:17,119 --> 01:07:19,839
+very good techniques to learn from
+
+1764
+01:07:18,480 --> 01:07:21,599
+failures. There have been a few papers
+
+1765
+01:07:19,839 --> 01:07:23,760
+that have tried to uh learn from
+
+1766
+01:07:21,599 --> 01:07:25,200
+failures in useful ways, but currently a
+
+1767
+01:07:23,760 --> 01:07:28,079
+lot of the techniques just filter them
+
+1768
+01:07:25,200 --> 01:07:29,920
+out. Some uh some promising directions
+
+1769
+01:07:28,079 --> 01:07:32,319
+that people continue to explore in this
+
+1770
+01:07:29,920 --> 01:07:34,079
+is uh along the data dimension of like
+
+1771
+01:07:32,319 --> 01:07:36,559
+how do you generate better data to train
+
+1772
+01:07:34,079 --> 01:07:39,119
+the model along the algorithm dimensions
+
+1773
+01:07:36,559 --> 01:07:40,640
+of like how do you get the reinforcement
+
+1774
+01:07:39,119 --> 01:07:42,880
+learning to be robust to noise in the
+
+1775
+01:07:40,640 --> 01:07:45,119
+reward models what kind of rewards
+
+1776
+01:07:42,880 --> 01:07:46,720
+should we use and then can you combine
+
+1777
+01:07:45,119 --> 01:07:49,839
+some of the rationalization techniques
+
+1778
+01:07:46,720 --> 01:07:52,000
+that we did with um in star with say the
+
+1779
+01:07:49,839 --> 01:07:53,680
+techniques that we did in DAPo. So all
+
+1780
+01:07:52,000 --> 01:07:55,680
+of those are u very interesting
+
+1781
+01:07:53,680 --> 01:07:58,559
+directions that that you could look into
+
+1782
+01:07:55,680 --> 01:08:00,000
+for your projects.
+
+1783
+01:07:58,559 --> 01:08:03,760
+And with that we have a few minutes
+
+1784
+01:08:00,000 --> 01:08:07,839
+left. Um but let's have questions.
+
+1785
+01:08:03,760 --> 01:08:12,319
+>> Um for like the new like being like out
+
+1786
+01:08:07,839 --> 01:08:14,240
+of the box like models it
+
+1787
+01:08:12,319 --> 01:08:17,520
+are training. How much do you think
+
+1788
+01:08:14,240 --> 01:08:19,600
+they're still relying on just like just
+
+1789
+01:08:17,520 --> 01:08:21,679
+common call like next to prediction like
+
+1790
+01:08:19,600 --> 01:08:24,239
+just just like blank like like raw text
+
+1791
+01:08:21,679 --> 01:08:28,319
+data right like that they take from like
+
+1792
+01:08:24,239 --> 01:08:30,480
+the internet right or anywhere
+
+1793
+01:08:28,319 --> 01:08:32,400
+rather than like instruction tuning data
+
+1794
+01:08:30,480 --> 01:08:34,080
+that like they generate like using
+
+1795
+01:08:32,400 --> 01:08:36,480
+reasoning techniques and techniques that
+
+1796
+01:08:34,080 --> 01:08:37,839
+we learn today like what do you think is
+
+1797
+01:08:36,480 --> 01:08:40,400
+that fraction
+
+1798
+01:08:37,839 --> 01:08:41,920
+>> I think so I think the like I don't
+
+1799
+01:08:40,400 --> 01:08:44,159
+think that's published for entropic but
+
+1800
+01:08:41,920 --> 01:08:46,560
+I think rock was more public. So
+
+1801
+01:08:44,159 --> 01:08:48,960
+typically the percentage of um
+
+1802
+01:08:46,560 --> 01:08:51,440
+reinforcement learning uh versus uh
+
+1803
+01:08:48,960 --> 01:08:54,080
+pre-training has been closer to I think
+
+1804
+01:08:51,440 --> 01:08:56,719
+last year it was closer to say 99% 1%
+
+1805
+01:08:54,080 --> 01:08:58,880
+and then it's grown to perhaps like 5%
+
+1806
+01:08:56,719 --> 01:09:02,080
+or something like that but Grock claimed
+
+1807
+01:08:58,880 --> 01:09:04,960
+that Grock 4 claimed that it did 50% RL
+
+1808
+01:09:02,080 --> 01:09:08,080
+but it actually did not quite improve 50
+
+1809
+01:09:04,960 --> 01:09:09,359
+like 50% RL should give a big jump but
+
+1810
+01:09:08,080 --> 01:09:12,400
+you're [snorts] bottlenecked by a lot of
+
+1811
+01:09:09,359 --> 01:09:14,480
+the things that I'm showing you here of
+
+1812
+01:09:12,400 --> 01:09:16,080
+like your your rewards are not strong
+
+1813
+01:09:14,480 --> 01:09:17,040
+enough or there's noise in rewards. All
+
+1814
+01:09:16,080 --> 01:09:18,799
+of those things are going to be
+
+1815
+01:09:17,040 --> 01:09:23,040
+bottlenecks. So there's still a lot of
+
+1816
+01:09:18,799 --> 01:09:24,880
+open problems in this domain. Yeah.
+
+1817
+01:09:23,040 --> 01:09:27,199
+Uh let's see if there are more questions
+
+1818
+01:09:24,880 --> 01:09:31,319
+across the board or is this lecture too
+
+1819
+01:09:27,199 --> 01:09:31,319
+complex for people to ask questions
+
+1820
+01:09:31,359 --> 01:09:35,159
+too complex? Okay.
+
+1821
+01:09:35,679 --> 01:09:39,799
+Happy to answer questions after
+
+1822
+01:09:43,679 --> 01:09:51,319
+>> more questions across the class. No,
+
+1823
+01:09:46,799 --> 01:09:51,319
+>> I will like for example.
+
+1824
+01:09:58,719 --> 01:10:06,400
+>> Mhm. Is this something like if you
+
+1825
+01:10:03,520 --> 01:10:09,760
+if the model perform okay in this
+
+1826
+01:10:06,400 --> 01:10:12,640
+calculus and you help it to perform
+
+1827
+01:10:09,760 --> 01:10:16,400
+better by RL
+
+1828
+01:10:12,640 --> 01:10:21,520
+the model never see always fail in
+
+1829
+01:10:16,400 --> 01:10:24,960
+regardless how well they can never
+
+1830
+01:10:21,520 --> 01:10:27,840
+fundamental reason like K is like
+
+1831
+01:10:24,960 --> 01:10:31,360
+fundamentally you think you need
+
+1832
+01:10:27,840 --> 01:10:32,880
+>> Mhm. But like you better
+
+1833
+01:10:31,360 --> 01:10:34,080
+>> exactly.
+
+1834
+01:10:32,880 --> 01:10:36,640
+>> Yes.
+
+1835
+01:10:34,080 --> 01:10:39,679
+>> Okay. So
+
+1836
+01:10:36,640 --> 01:10:43,120
+maybe that's something like there's more
+
+1837
+01:10:39,679 --> 01:10:46,239
+to learn because [clears throat] it's
+
+1838
+01:10:43,120 --> 01:10:48,239
+getting better at something you already
+
+1839
+01:10:46,239 --> 01:10:49,840
+can do.
+
+1840
+01:10:48,239 --> 01:10:51,679
+>> Yeah. You mean it's basically able to
+
+1841
+01:10:49,840 --> 01:10:54,320
+explore better in the design space of
+
+1842
+01:10:51,679 --> 01:10:55,679
+what it knows and by exploration and
+
+1843
+01:10:54,320 --> 01:10:58,679
+search it's able to arrive at the
+
+1844
+01:10:55,679 --> 01:10:58,679
+solution.
+
+1845
+01:10:59,840 --> 01:11:02,400
+There was a question here which I didn't
+
+1846
+01:11:01,600 --> 01:11:05,520
+let you ask.
+
+1847
+01:11:02,400 --> 01:11:08,000
+>> All right. Yeah. I I was curious for um
+
+1848
+01:11:05,520 --> 01:11:11,600
+especially on the directions of data. Um
+
+1849
+01:11:08,000 --> 01:11:13,840
+so uh for very unique data set like Amy
+
+1850
+01:11:11,600 --> 01:11:17,199
+or USML where the number of data sets is
+
+1851
+01:11:13,840 --> 01:11:19,840
+very limited. Um how can we uh ensure
+
+1852
+01:11:17,199 --> 01:11:23,040
+that we have enough signals for
+
+1853
+01:11:19,840 --> 01:11:24,800
+verifiable rewards? Um I mean like
+
+1854
+01:11:23,040 --> 01:11:27,199
+there's not enough data but we need a
+
+1855
+01:11:24,800 --> 01:11:28,719
+lot of signals. So how can you kind of
+
+1856
+01:11:27,199 --> 01:11:30,480
+like make sure that you have enough
+
+1857
+01:11:28,719 --> 01:11:33,120
+training and verification without
+
+1858
+01:11:30,480 --> 01:11:36,320
+accidentally leaking data?
+
+1859
+01:11:33,120 --> 01:11:38,960
+>> So uh I mean RL is more data efficient.
+
+1860
+01:11:36,320 --> 01:11:40,480
+So you do not need that much data to
+
+1861
+01:11:38,960 --> 01:11:42,239
+begin with. So I mean like that's why I
+
+1862
+01:11:40,480 --> 01:11:45,760
+was presenting these papers you do see
+
+1863
+01:11:42,239 --> 01:11:47,760
+that u certain number of like enough
+
+1864
+01:11:45,760 --> 01:11:50,480
+examples is going to enough to help
+
+1865
+01:11:47,760 --> 01:11:52,239
+climb. Uh the verification signals are
+
+1866
+01:11:50,480 --> 01:11:54,880
+more a function of like having good set
+
+1867
+01:11:52,239 --> 01:11:56,640
+of verifiers. So I think I thought you
+
+1868
+01:11:54,880 --> 01:11:58,080
+already covered the ensemble verifier
+
+1869
+01:11:56,640 --> 01:11:59,440
+paper, right? Like we were you already
+
+1870
+01:11:58,080 --> 01:12:01,040
+covered that. So it's it's not just a
+
+1871
+01:11:59,440 --> 01:12:03,760
+matter of having a single verifier, you
+
+1872
+01:12:01,040 --> 01:12:05,760
+can have multiple verifiers.
+
+1873
+01:12:03,760 --> 01:12:08,000
+>> I see. So when there's not enough data,
+
+1874
+01:12:05,760 --> 01:12:10,560
+we can just make up for that with many
+
+1875
+01:12:08,000 --> 01:12:12,159
+more verifiers.
+
+1876
+01:12:10,560 --> 01:12:14,400
+>> So I think you solve the data problem
+
+1877
+01:12:12,159 --> 01:12:15,840
+separately, but like I don't think the
+
+1878
+01:12:14,400 --> 01:12:17,440
+not enough data is the right
+
+1879
+01:12:15,840 --> 01:12:20,159
+abstraction. I think it's do you have
+
+1880
+01:12:17,440 --> 01:12:22,719
+enough data to hill climb on is the
+
+1881
+01:12:20,159 --> 01:12:24,480
+right abstraction, right?
+
+1882
+01:12:22,719 --> 01:12:26,159
+like where you don't end up filtering
+
+1883
+01:12:24,480 --> 01:12:28,480
+out if you were doing dynamic sampling
+
+1884
+01:12:26,159 --> 01:12:30,239
+for example.
+
+1885
+01:12:28,480 --> 01:12:35,159
+>> Okay, with that we'll close the class
+
+1886
+01:12:30,239 --> 01:12:35,159
+and I'm still around. Thanks everyone.

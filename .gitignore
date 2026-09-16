@@ -1,0 +1,14 @@
+# downloaded / generated media (kept locally, not published)
+/media/
+
+# root build outputs — the published copies live in docs/
+/slides/
+/coursebook.html
+/coursebook.zh.html
+/coursebook.en.html
+/courseware.html
+
+/__pycache__/
+*.pyc
+.DS_Store
+node_modules/

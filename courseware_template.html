@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS329A · 课件（音频 + 幻灯片）</title>
+<style>
+:root{
+  --bg:#0e1016; --bg2:#151823; --bg3:#1c2030; --line:#272c3d;
+  --fg:#e6e9f2; --fg2:#a7aec4; --fg3:#6f7793;
+  --acc:#7aa2ff; --acc2:#5ee1c4; --warn:#ffb86b; --hit:#4a3f16; --hitfg:#ffe08a;
+  --radius:12px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+[data-theme="light"]{
+  --bg:#eef0f6; --bg2:#ffffff; --bg3:#e8ebf3; --line:#d8dce8;
+  --fg:#171b26; --fg2:#48506a; --fg3:#8b93a7;
+  --acc:#2f5fd0; --acc2:#0c7d67; --warn:#a85a00; --hit:#fff0b0; --hitfg:#6b4d00;
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;height:100%;overflow:hidden;display:flex;flex-direction:column}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit}
+
+header.top{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(--bg2);
+  border-bottom:1px solid var(--line);height:54px;flex:0 0 auto}
+.brand{font-weight:700;white-space:nowrap}
+.brand small{display:block;font-weight:400;font-size:11px;color:var(--fg3)}
+select#partsel{background:var(--bg3);color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:7px 10px;max-width:320px}
+.searchwrap{position:relative;flex:1;max-width:520px;margin-left:auto}
+.searchwrap input{width:100%;padding:8px 34px 8px 34px;border-radius:9px;border:1px solid var(--line);background:var(--bg3);color:var(--fg);outline:none}
+.searchwrap input:focus{border-color:var(--acc)}
+.searchwrap .ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--fg3)}
+.searchwrap kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font:11px var(--mono);color:var(--fg3);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.tbtn{padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg3);color:var(--fg2);font-size:13px}
+.tbtn:hover{color:var(--fg);border-color:var(--acc)}
+.tbtn.on{color:var(--acc);border-color:var(--acc)}
+
+.wrap{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr);flex:1;min-height:0;overflow:hidden}
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--line);background:var(--bg)}
+.slidebox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#000;position:relative;overflow:hidden;padding:10px}
+.slidebox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.slidebox .badge{position:absolute;top:14px;left:16px;background:rgba(0,0,0,.6);color:#fff;border-radius:999px;padding:4px 11px;font:12px var(--mono)}
+.slidebox .navbtn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;
+  width:42px;height:64px;border-radius:8px;font-size:22px;display:flex;align-items:center;justify-content:center;opacity:.5}
+.slidebox .navbtn:hover{opacity:1;background:rgba(0,0,0,.75)}
+.slidebox .navbtn.prev{left:10px}.slidebox .navbtn.next{right:10px}
+.slidebox .dl{position:absolute;top:14px;right:16px;background:rgba(0,0,0,.6);color:#fff;border-radius:8px;padding:5px 10px;font-size:12px}
+
+.controls{padding:10px 16px 4px;background:var(--bg2);border-top:1px solid var(--line);flex:0 0 auto}
+.row{display:flex;align-items:center;gap:12px}
+.play{width:42px;height:42px;border-radius:50%;background:var(--acc);color:#07101f;font-size:18px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.play:hover{filter:brightness(1.1)}
+#seek{flex:1;accent-color:var(--acc)}
+.time{font:12.5px var(--mono);color:var(--fg2);min-width:104px;text-align:right}
+.spd{background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--fg2);padding:5px 8px;font-size:12.5px}
+.meta{display:flex;gap:14px;align-items:center;padding:6px 2px 8px;color:var(--fg3);font-size:12.5px;flex-wrap:wrap}
+
+.filmstrip{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 14px;background:var(--bg2);border-top:1px solid var(--line);flex:0 0 auto;max-height:140px}
+.thumb{flex:0 0 auto;width:112px;border-radius:7px;overflow:hidden;border:2px solid transparent;opacity:.62;position:relative;background:#000}
+.thumb:hover{opacity:1}
+.thumb.active{border-color:var(--acc);opacity:1}
+.thumb img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover}
+.thumb span{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));color:#fff;font:10.5px var(--mono);padding:3px 5px;text-align:right}
+
+.notes{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg2)}
+.notes .tabs{display:flex;gap:2px;padding:8px 12px 0;border-bottom:1px solid var(--line);flex:0 0 auto}
+.tab{padding:8px 12px;border-radius:8px 8px 0 0;color:var(--fg3);font-size:13px}
+.tab.active{color:var(--fg);background:var(--bg3)}
+.notes .body{flex:1;min-height:0;overflow:auto;padding:14px 16px 80px}
+.para{padding:6px 9px;border-radius:8px;margin-bottom:6px;color:var(--fg2);color:var(--fg);cursor:pointer}
+.para .ts{font:11px var(--mono);color:var(--fg3);margin-right:8px}
+.para:hover{background:var(--bg3)}
+.para.active{background:color-mix(in srgb,var(--acc) 16%,transparent);outline:1px solid color-mix(in srgb,var(--acc) 40%,transparent)}
+.para.active .ts{color:var(--acc)}
+mark{background:var(--hit);color:var(--hitfg);border-radius:3px;padding:0 2px}
+.slidebody{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg3);margin-bottom:16px}
+.slidebody h4{margin:0 0 8px;font-size:13px;color:var(--fg3);font-weight:600}
+.slidebody p{margin:0 0 8px}
+.notearea{width:100%;min-height:160px;resize:vertical;background:var(--bg3);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px;line-height:1.6}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70;opacity:0;pointer-events:none;transition:.15s}
+.overlay.open{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;height:100%;width:min(680px,94vw);background:var(--bg2);border-left:1px solid var(--line);z-index:80;transform:translateX(102%);transition:.2s;display:flex;flex-direction:column}
+.panel.open{transform:none}
+.panel header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel header h3{margin:0;font-size:16px}
+.panel .body{overflow:auto;padding:14px 16px}
+.close{font-size:20px;color:var(--fg3);margin-left:auto}
+.result{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:9px;margin-bottom:6px}
+.result:hover{background:var(--bg3)}
+.result .rq{font:11.5px var(--mono);color:var(--fg3);margin-bottom:2px}
+.result .rt{color:var(--fg2)}
+.nores{color:var(--fg3);padding:16px 4px}
+.hint{color:var(--fg3);font-size:12.5px;margin:4px 0 0}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(0,1fr);height:auto}
+  body{overflow:auto;height:auto}.slidebox{height:52vw;max-height:60vh}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">CS329A · 课件<small id="subtitle">音频 + 幻灯片 + 字幕</small></div>
+  <select id="partsel"></select>
+  <div class="searchwrap">
+    <span class="ic">⌕</span>
+    <input id="q" type="search" placeholder="搜索字幕 / 幻灯片内容…" autocomplete="off"><kbd>/</kbd>
+  </div>
+  <button class="tbtn" id="btnTheme" title="主题">◐</button>
+</header>
+
+<div class="wrap">
+  <section class="stage">
+    <div class="slidebox" id="slidebox">
+      <span class="badge" id="sbadge">—</span>
+      <a class="dl" id="sdl" target="_blank" rel="noopener">原图 ↗</a>
+      <button class="navbtn prev" id="sPrev">‹</button>
+      <button class="navbtn next" id="sNext">›</button>
+      <img id="slideimg" alt="slide">
+    </div>
+    <div class="controls">
+      <div class="row">
+        <button class="play" id="play">▶</button>
+        <input type="range" id="seek" min="0" max="100" value="0" step="0.1">
+        <span class="time" id="time">0:00 / 0:00</span>
+        <select class="spd" id="spd">
+          <option value="0.75">0.75×</option><option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option>
+        </select>
+      </div>
+      <div class="meta">
+        <span id="mtitle"></span>
+        <span id="mslide"></span>
+        <span class="hint">空格 播放/暂停 · ← → 上一/下一张 · 点击字幕跳转</span>
+      </div>
+    </div>
+    <div class="filmstrip" id="filmstrip"></div>
+  </section>
+
+  <section class="notes">
+    <div class="tabs">
+      <button class="tab active" data-tab="transcript">字幕</button>
+      <button class="tab" data-tab="slidebody">本页讲解</button>
+      <button class="tab" data-tab="mynotes">我的笔记</button>
+    </div>
+    <div class="body" id="panelBody"></div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<section class="panel" id="searchPanel">
+  <header><h3>搜索</h3><span id="searchMeta" style="color:var(--fg3);font-size:12.5px"></span><button class="close" data-close>×</button></header>
+  <div class="body" id="searchResults"></div>
+</section>
+
+<audio id="audio" preload="metadata"></audio>
+
+<script>
+const COURSE = /*__DATA__*/null;
+const $ = (s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const fmt=s=>{s=Math.max(0,Math.round(s||0));const m=Math.floor(s/60),h=Math.floor(m/60);
+  return (h?h+':'+String(m%60).padStart(2,'0'):m)+':'+String(s%60).padStart(2,'0')};
+const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+
+let part=null, tab='transcript', html='', ci=-1;
+
+function slideAt(t){let idx=0;for(let i=0;i<part.slides.length;i++) if(part.slides[i].t<=t+0.4) idx=i; return idx;}
+
+function bootSelect(){
+  $('#partsel').innerHTML=COURSE.parts.map(p=>`<option value="${p.n}">Part ${p.n} · ${esc(p.title)}</option>`).join('');
+  $('#partsel').onchange=e=>loadPart(+e.target.value);
+  document.documentElement.dataset.theme=LS.get('cs329a:theme','dark');
+}
+function loadPart(n,startT=0){
+  part=COURSE.parts.find(p=>p.n===n); if(!part)return;
+  $('#audio').src=part.audio;
+  $('#audio').playbackRate=+$('#spd').value;
+  $('#mtitle').textContent=`Part ${part.n} · ${part.title}`;
+  $('#mslide').textContent=`${part.slides.length} 张幻灯片 · ${fmt(part.duration)}`;
+  $('#subtitle').textContent=`Part ${part.n} · ${part.title}`;
+  $('#partsel').value=n;
+  renderFilmstrip(); renderTab(); if(startT) seekTo(startT,true);
+  else { ci=-1; syncSlide(0); }
+  history.replaceState(null,'',`#p${n}`);
+}
+function renderFilmstrip(){
+  $('#filmstrip').innerHTML=part.slides.map((s,i)=>
+    `<button class="thumb" data-i="${i}" title="${fmt(s.t)}"><img loading="lazy" src="${s.file}"><span>${fmt(s.t)}</span></button>`).join('');
+  $$('#filmstrip .thumb').forEach(b=>b.onclick=()=>seekTo(part.slides[+b.dataset.i].t,true));
+}
+function setSlide(i,seekAudio){
+  const s=part.slides[i]; if(!s)return;
+  ci=i;
+  $('#slideimg').src=s.file; $('#slideimg').alt=`Part ${part.n} slide ${i+1}`;
+  $('#sbadge').textContent=`${i+1} / ${part.slides.length} · ${fmt(s.t)}`;
+  $('#sdl').href=s.file;
+  $$('#filmstrip .thumb').forEach((el,k)=>el.classList.toggle('active',k===i));
+  const act=$('#filmstrip .thumb.active'), fs=$('#filmstrip');
+  if(act){ const target=act.offsetLeft-fs.clientWidth/2+act.clientWidth/2; fs.scrollLeft=Math.max(0,target); }
+  if(seekAudio) $('#audio').currentTime=s.t;
+  if(tab==='slidebody') renderTab();
+}
+function syncSlide(t){const i=slideAt(t); if(i!==ci) setSlide(i,false);}
+
+/* tabs */
+function renderTab(){
+  const body=$('#panelBody');
+  if(tab==='transcript'){
+    body.innerHTML=part.paras.map((p,i)=>
+      `<div class="para" data-i="${i}" data-t="${p.t}"><span class="ts">${fmt(p.t)}</span>${esc(p.text)}</div>`).join('');
+    $$('#panelBody .para').forEach(el=>el.onclick=()=>seekTo(+el.dataset.t,true));
+    highlightPara();
+  } else if(tab==='slidebody'){
+    const nb=nextSlideT(), s=part.slides[ci]||part.slides[0];
+    const segs=part.paras.filter(p=>p.t>=s.t-0.5 && p.t<nb);
+    body.innerHTML=`<div class="slidebody"><h4>幻灯片 ${ci+1} · ${fmt(s.t)} – ${fmt(nb)} 的讲解</h4>`+
+      (segs.length?segs.map(p=>`<p><span class="ts" style="font:11px var(--mono);color:var(--fg3)">${fmt(p.t)}</span> ${esc(p.text)}</p>`).join(''):'<p class="nores">本页无对应字幕。</p>')+'</div>';
+  } else {
+    const key=`cs329a:note:${part.n}`;
+    body.innerHTML=`<textarea class="notearea" id="na" placeholder="这一讲的笔记…（自动保存）">${esc(LS.get(key,''))}</textarea><p class="hint" id="nstat"></p>`;
+    const ta=$('#na'); const stat=$('#nstat'); const upd=()=>stat.textContent=`${ta.value.length} 字符 · 自动保存`;
+    upd(); ta.oninput=()=>{upd(); clearTimeout(ta._t); ta._t=setTimeout(()=>{LS.set(key,ta.value); stat.textContent='已保存 ✓';},400)};
+  }
+}
+function nextSlideT(){return part.slides[ci+1]?part.slides[ci+1].t:part.duration+1;}
+function highlightPara(){
+  const t=$('#audio').currentTime;
+  let idx=-1; for(let i=0;i<part.paras.length;i++) if(part.paras[i].t<=t+0.3) idx=i;
+  const els=$$('#panelBody .para');
+  els.forEach((el,i)=>el.classList.toggle('active',i===idx));
+  const act=els[idx], body=$('#panelBody');
+  if(act) body.scrollTop=Math.max(0, act.offsetTop-body.clientHeight/2+act.clientHeight/2);
+}
+function seekTo(t,play){$('#audio').currentTime=t; if(play)$('#audio').play();}
+
+/* audio events */
+const audio=$('#audio');
+audio.onloadedmetadata=()=>{$('#seek').max=audio.duration||part.duration;$('#time').textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration)}`};
+audio.ontimeupdate=()=>{ const t=audio.currentTime; $('#seek').value=t;
+  $('#time').textContent=`${fmt(t)} / ${fmt(audio.duration||part.duration)}`;
+  syncSlide(t); if(tab==='transcript') highlightPara(); };
+audio.onplay=()=>$('#play').textContent='⏸';
+audio.onpause=()=>$('#play').textContent='▶';
+$('#play').onclick=()=>audio.paused?audio.play():audio.pause();
+$('#seek').oninput=e=>{audio.currentTime=+e.target.value;};
+$('#spd').onchange=e=>audio.playbackRate=+e.target.value;
+$('#sPrev').onclick=()=>setSlide(Math.max(0,ci-1),true);
+$('#sNext').onclick=()=>setSlide(Math.min(part.slides.length-1,ci+1),true);
+
+/* tabs */
+$$('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;$$('.tab').forEach(x=>x.classList.toggle('active',x===b));renderTab();});
+
+/* search */
+let st;
+$('#q').oninput=e=>{clearTimeout(st);st=setTimeout(()=>doSearch(e.target.value),150);};
+function doSearch(q){q=q.trim().toLowerCase(); if(!q){$('#searchResults').innerHTML='<div class="nores">输入关键词。</div>';$('#searchMeta').textContent='';return;}
+  const out=[]; for(const p of COURSE.parts) p.paras.forEach((x,i)=>{if(x.text.toLowerCase().includes(q))out.push({p,x,i})});
+  $('#searchMeta').textContent=`${out.length} 处（全 9 讲）`;
+  if(!out.length){$('#searchResults').innerHTML='<div class="nores">无匹配。</div>';return;}
+  $('#searchResults').innerHTML=out.slice(0,500).map(r=>{const t=r.x.text,idx=t.toLowerCase().indexOf(q);
+    const a=Math.max(0,idx-60),b=Math.min(t.length,idx+q.length+180);
+    const sn=esc((a>0?'…':'')+t.slice(a,b)+(b<t.length?'…':''));
+    const marked=sn.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),m=>`<mark>${m}</mark>`);
+    return `<button class="result" data-n="${r.p.n}" data-t="${r.x.t}"><div class="rq">Part ${r.p.n} · ${fmt(r.x.t)} · ${esc(r.p.title)}</div><div class="rt">${marked}</div></button>`;}).join('');
+  $$('#searchResults .result').forEach(b=>b.onclick=()=>{closePanel(); const n=+b.dataset.n; if(n!==part.n)loadPart(n); setTimeout(()=>seekTo(+b.dataset.t,true),150);});
+}
+function openPanel(){$('#overlay').classList.add('open');$('#searchPanel').classList.add('open');$('#q').focus();}
+function closePanel(){$('#overlay').classList.remove('open');$('#searchPanel').classList.remove('open');}
+$('#overlay').onclick=closePanel; $$('[data-close]').forEach(b=>b.onclick=closePanel);
+$('#btnTheme').onclick=()=>{const c=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=c;LS.set('cs329a:theme',c);};
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT') { if(e.key==='Escape')e.target.blur(); return; }
+  if(e.key==='/'){e.preventDefault();openPanel();}
+  if(e.key==='Escape')closePanel();
+  if(e.key===' '){e.preventDefault();$('#play').click();}
+  if(e.key==='ArrowRight'){e.preventDefault();setSlide(Math.min(part.slides.length-1,ci+1),true);}
+  if(e.key==='ArrowLeft'){e.preventDefault();setSlide(Math.max(0,ci-1),true);}
+});
+addEventListener('hashchange',()=>{const m=location.hash.match(/^#p(\d+)/);if(m)loadPart(+m[1]);});
+function boot(){bootSelect();const m=location.hash.match(/^#p(\d+)/);loadPart(m?+m[1]:COURSE.parts[0].n);}
+boot();
+</script>
+</body>
+</html>

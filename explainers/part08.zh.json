@@ -1,0 +1,259 @@
+{
+  "n": 8,
+  "title": "Agentic Evaluations 与长周期任务",
+  "summary": "经典的 chatbot/QA/单次（single-shot）benchmark 已趋于饱和，无法跟踪 agentic 能力的进展，因此本讲构建了一个沿三条轴评估长周期自主性的框架：任务时长、真实世界经济价值，以及研究综述质量。课程依次讲解 METR 的以人类为基准的时间跨度（SWAA/EdgeCast/RE-Bench，约 170 个任务，时长从 1 秒到 8 小时，在 50% 成功率下约每 7 个月翻倍，在 80% 成功率下则短得多）、OpenAI 的 GDPval（在占 GDP 前 5% 的任务上与拥有十年经验的专业人士进行成对胜率比较，大致线性上升到约 48%），以及 Stanford 的 DeepScholarBench（实时的、抗 contamination 的 related-work 综述，无任何系统超过 19%）。反复出现的短板在于可靠性、context/reference-data grounding、错误恢复，以及忠实的指令遵循，而非原始任务长度。",
+  "sections": [
+    {
+      "t": 5,
+      "title": "界定：什么才算 Agentic Evaluation",
+      "problem": "大多数从业者不进行任何正式评估，而进行正式评估的人又往往选用短小、单一用途的任务，这些任务几乎无法反映长周期自主性。",
+      "why": "该领域缺乏对 agentic eval 的共同定义；临时选定的任务在任务跨度、工具使用和 grounding 上差异极大，因此无法跟踪进展。",
+      "how": "讲师在课堂上进行投票，收集具体的评估示例，然后引出本讲的三个锚点论文：METR、GDPval 和 DeepScholarBench。",
+      "detail": "<p>讲师首先投票询问谁做过评估、用了什么任务。答案集中在 <b>multihop QA</b>（HotpotQA 风格）、<b>SweBench</b>，以及一个先将<b>私有 wiki</b> 提炼为笔记、再喂给编码 agent 的 agent。</p><ul><li>核心界定问题是：相较于以往的评估范式，究竟是什么让 <b>agentic evaluations 变得困难</b>。</li><li>三篇锚点论文构成了本讲的骨架：<b>METR</b>（可完成任务的时间跨度）、<b>GDPval</b>（真实世界具有经济价值的任务，OpenAI），以及 <b>DeepScholarBench</b>（实时生成式研究综述，Stanford）。</li><li>这些评估在<b>任务时长</b>、<b>经济价值</b>和<b>对参考数据的 grounding</b> 上各不相同；每一个都是独立的测量轴。</li><li>与 chat/QA 套件相比，它们也更昂贵、方差更高，因为它们需要 tool loop 和人工评分。</li><li>讲师提醒：任何 benchmark 都只是我们认为可测量之物的表征，而非 ground truth。</li></ul>",
+      "terms": ["agentic evaluation", "multihop QA", "SweBench", "private-wiki QA", "METR", "GDPval", "DeepScholarBench"]
+    },
+    {
+      "t": 164,
+      "title": "为何要测量：饱和、能力与经济价值",
+      "problem": "传统的 chatbot、question-answering 和单次（single-shot）benchmark——其答案已在上下文之中——正在迅速饱和。",
+      "why": "我们必须预测能力以及经济/安全影响，而浅层的 in-context recall 分数已无法区分前沿 agent。",
+      "how": "跟踪两个互补的指标——METR 的以人类为基准的时间跨度（能力）和 GDPval 相对专家的胜率（经济价值）——再为研究综述加入第三个指标。",
+      "detail": "<p>讲师界定了核心挑战：要评估 AI 进展，就必须测量<b>真正重要之物</b>，而如今重要之物同时涵盖<b>能力</b>与<b>经济/安全影响</b>。</p><ul><li>四五年前，仅仅生成流畅的解释就是一个里程碑；今天我们则要问模型是否影响经济或安全。</li><li><b>传统 benchmark</b>——chatbot、question answering，以及答案已存在于上下文中的单次任务——正在<b>迅速饱和</b>。</li><li>引入两个互补的指标：<b>METR</b> 测量任务的<b>时间跨度</b>（模型能完成的任务有多长或多复杂），由人类专业人士校准；<b>GDPval</b> 测量模型在真实工作中相对专家的<b>胜率</b>。</li><li>两者同样有效，并给出相似的定性洞见，但它们<b>所测量的趋势不同</b>——指数式与大致线性。</li><li>通过 DeepScholarBench 加入第三个指标：研究综述质量。</li></ul>",
+      "terms": ["benchmark saturation", "single-shot", "time horizon", "win rate", "economic impact", "capability"]
+    },
+    {
+      "t": 272,
+      "title": "时间跨度：时长加可靠性",
+      "problem": "单纯问“模型能否完成这个”过于粗糙；缺少衡量模型能持续工作多久、或成功率有多高的单位。",
+      "why": "chatbot 在几轮对话后就会丢失上下文，因此持续的多轮工作本身即是新事物；而脱离可靠性的时长对部署毫无意义。",
+      "how": "METR 测量任务时长，并为其关联一个可靠性水平（例如 50% 或 80% 成功率），以人类专业人士所需的时间作为锚点。",
+      "detail": "<p>时间跨度的框架始于一个具体观察：三到五年前，chatbot 在几轮对话后就会失去脉络，而如今对话在长时间的多轮交流中仍能保持连贯。这种上下文持久性正是长周期工作的原始基础。</p><ul><li>因此 <b>METR</b> 测量两件事：模型能完成任务的<b>时长</b>，以及它完成时的<b>可靠性</b>。</li><li>可靠性以成功阈值报告——例如<b>50% 成功率</b>与 <b>80% 成功率</b>下的完成情况。</li><li>衡量难度的通用锚点是<b>人类专业人士</b>完成同一任务所需的时间，从而使跨领域的时长具有可比性。</li><li>跨度并非单一数字：50% 可靠性与 80% 可靠性下的跨度可能相差一个数量级。</li></ul>",
+      "terms": ["time horizon", "reliability", "success rate", "duration", "human professional"]
+    },
+    {
+      "t": 342,
+      "title": "METR 的三套任务，从秒到八小时",
+      "problem": "没有单一任务集能覆盖从原子级软件操作到多小时的 ML 研究的完整范围。",
+      "why": "要拟合出一条跨度曲线，就需要人类完成时间跨越数个数量级的任务。",
+      "how": "METR 组合三套任务——SWAA（1-30 秒的原子操作）、EdgeCast（1 分钟-30 小时多样化的 SWE/研究任务）、RE-Bench（最长 8 小时的 ML 研究）——总计约 170 个任务。",
+      "detail": "<p>METR 汇集三套任务以覆盖时长范围：</p><ul><li><b>SWAA 风格的小型套件：</b><b>1-30 秒</b>，纯<b>原子软件操作</b>（例如打开一个文件）——约 <b>66 个任务</b>。</li><li><b>EdgeCast：</b><b>1 分钟到约 30 小时</b>的多样化软件与研究工程任务——约 <b>97 个任务</b>。</li><li><b>RE-Bench：</b>完整的 <b>ML 研究</b>任务，最长约 <b>8 小时</b>（AI-scientist 风格）——仅约 <b>7 个任务</b>。</li><li>总计约 <b>170 个任务</b>，从一秒到八小时，映射到单一的时间轴。</li><li>示例任务涵盖从查找一个 shell 脚本（约 3 秒），到检测并修复仿真输入文件中的 bug（约 10 分钟），再到为实现性能目标而编写自定义 <b>CUDA kernel</b>（数十小时，上限接近 8 小时）。</li><li>这种跨度使得成功率能够平滑地对人类时间作图。</li></ul>",
+      "terms": ["SWAA", "EdgeCast", "RE-Bench", "task suite", "CUDA kernel", "AI scientist"]
+    },
+    {
+      "t": 410,
+      "title": "从人类完成时间构建曲线",
+      "problem": "要将原始任务结果转化为单一的跨度数字，需要一条有原则的聚合流程。",
+      "why": "在同一人类时间区间内，模型可能通过某些任务而失败于另一些任务，因此必须将逐任务结果汇总为一条曲线。",
+      "how": "收集并审核任务，记录人类和 agent 的时间估计，然后将成功率对人类时间拟合，并在选定可靠性下读出跨度。",
+      "detail": "<p>跨度数字由一条流程产生，而非单一分数：</p><ul><li>为每套任务<b>收集并审核</b>任务，使该套件具有代表性。</li><li>对每个任务，<b>人类运行</b>用于估计完成时间和难度；<b>agent 运行</b>用于测量任务是否被可靠完成。</li><li>在拥有足够数据点后，METR <b>拟合出一条成功率对人类时间估计的曲线</b>，并在选定可靠性下读出跨度。</li><li>随后将各跨度对<b>模型发布时间</b>作图，得到本讲接下来考察的趋势。</li><li>这一设计使单一的时间跨度数字具有意义，但该数字也继承了人类估计与拟合中的所有偏差。</li></ul>",
+      "terms": ["task vetting", "success-rate curve", "time estimate", "release date", "horizon fit"]
+    },
+    {
+      "t": 474,
+      "title": "课堂校准：哪些任务耗时几分钟、哪些耗时几小时",
+      "problem": "学生必须校准一个现实任务实际落在哪个时长区间。",
+      "why": "套件归属取决于人类完成时间，而学生系统性地低估真实任务所需的时间。",
+      "how": "讲师征集学生愿意委派的分钟级和小时级任务，然后将每个映射到 SWAA、EdgeCast 或 RE-Bench。",
+      "detail": "<p>为建立直觉，讲师请学生给出一个耗时几分钟、以及一个耗时几小时且他们愿意委派的任务。</p><ul><li>耗时数小时的任务落入 <b>EdgeCast 或 RE-Bench</b> 的范畴。</li><li>通过查询正确的网站来复核一条参考文献条目，映射到 <b>EdgeCast</b> 风格的多样化任务区间。</li><li><b>代码重构</b>可小可大：在保持逻辑不变的前提下移动代码可能需要几小时到数天，并且必须有人验证正确性——这将其推向 RE-Bench。</li><li>该练习表明套件归属取决于<b>人类完成时间</b>，而非任务的“感觉”。</li><li>它还揭示了一个反复出现的主题：<b>验证成本</b>往往是任务真实时长中隐藏的部分。</li></ul>",
+      "terms": ["task calibration", "refactoring", "bibliography verification", "EdgeCast", "RE-Bench", "verification cost"]
+    },
+    {
+      "t": 596,
+      "title": "人类基线：专家、一致性、成本与偏差",
+      "problem": "人类完成时间是通用锚点，但它在不同人之间差异很大，且大规模收集成本高昂。",
+      "why": "每个任务配备多位专家代价高昂，该估计是一个分布而非点值，并且专家的自我评估存在系统性偏差。",
+      "how": "使用少数熟练专业人士（约 5 年经验），记录成功尝试的时间，取几何平均作为难度，检查人类间一致性，仅在估计出现分歧时收集更多数据点。",
+      "detail": "<p>人类完成时间是锚点，但它是一个分布，且收集成本高昂。</p><ul><li>METR 通常并非使用多位专家，而是让<b>少数熟练专业人士</b>（约 <b>5 年</b>经验）求解每个任务，记录<b>成功尝试</b>的时间，并取<b>几何平均</b>作为难度评级。</li><li>会检查<b>人类间一致性</b>；仅在估计出现分歧时才收集更多数据点。更多专家能得到更好的分布，但成本高得多。</li><li><b>示例阶梯：</b>查找一个 shell 脚本（约 3 秒）；Wikipedia 研究；检测/修复仿真输入文件中的 bug（约 10 分钟）；在格式之间转换 JSON；为实现目标编写自定义 CUDA kernel（最长约 8 小时）。</li><li><b>专家偏差：</b>经验丰富的标注者习惯于知道“成功”意味着什么，常常<b>低估难度</b>，这可能与模型感知任务的方式不符。</li></ul>",
+      "terms": ["geometric mean", "inter-rater agreement", "expert bias", "annotation cost", "human baseline", "CUDA kernel"]
+    },
+    {
+      "t": 757,
+      "title": "跨度图与七个月翻倍",
+      "problem": "尚不清楚模型是真的完成了越来越长的任务，还是所报告的增长只是简单任务带来的假象。",
+      "why": "需要跨套件和发布日期的成功率对时长曲线，才能看出趋势并解释是哪些能力推动了它。",
+      "how": "将成功率对人类时间作图，在 50% 成功率处读出跨度，比较发布日期，并将增长归因于推理、代码、工具、可靠性、错误恢复和 context engineering。",
+      "detail": "<p>在跨度图上，x 轴是人类的完成时间，y 轴是模型成功率。</p><ul><li><b>SWAA（小型）任务</b>总体位于高位；<b>EdgeCast</b> 任务从约 <b>0.8 散布到 0</b>；<b>RE-Bench</b> 任务位于低位——<b>任务越长，越难保持正轨</b>。</li><li>按发布日在 <b>50% 成功率</b>处读取跨度：<b>GPT-2</b>（2019）约 <b>2 秒</b>；<b>GPT-4</b>（2023）约 <b>8 分钟</b>；<b>Claude 3.7 Sonnet</b>（2025）最长约 <b>59 分钟</b>——呈现出<b>大约每 7 个月翻倍</b>。</li><li>需要注意的是：50% 成功率意味着模型有一半时间会失败——就像一个只是偶尔才返回答案的实习生，因此不确定性始终存在。</li><li><b>驱动因素</b>包括更好的逻辑推理、代码生成、工具使用（ReAct）、非重复性可靠性、<b>错误恢复</b>、目标意识/对进展的记忆，以及 context engineering。</li></ul>",
+      "terms": ["doubling time", "GPT-2", "GPT-4", "Claude 3.7 Sonnet", "error recovery", "context engineering"]
+    },
+    {
+      "t": 895,
+      "title": "什么推动进展：推理、代码、工具、恢复",
+      "problem": "跨度趋势需要机制来解释；哪些能力能产生更长的自主运行尚不明显。",
+      "why": "更长的任务会累积错误，因此进展需要的不仅仅是更好的 next-token 质量。",
+      "how": "将增长归因于改进的逻辑推理、代码生成、工具使用（ReAct）、非重复性可靠性、错误恢复、目标/状态意识，以及上下文管理。",
+      "detail": "<p>为什么跨度持续增长？讲师将这一改进归因于若干具体能力，而非仅仅是规模。</p><ul><li><b>逻辑推理：</b>模型学会了以往课程所涵盖的推理方式，这有助于分解并执行多步任务。</li><li><b>代码生成：</b>更强的编码能力推动了 SWE 和 ML 研究套件上的增长。</li><li><b>工具使用：</b>ReAct 风格的工具选择与调用如今更加可靠。</li><li><b>可靠性：</b>模型更少重复行为，并避免陷入卡顿。</li><li><b>错误恢复：</b>一个 8 小时的任务必然包含错误步骤，因此模型必须检测并从中恢复。</li><li><b>目标意识与记忆：</b>模型必须跟踪最终目标以及自己已推进到何处。</li><li><b>Context engineering：</b>跨许多步骤管理上下文（compaction、planning、replanning）本身就是一个主要驱动因素。</li></ul>",
+      "terms": ["logical reasoning", "code generation", "ReAct", "error recovery", "goal awareness", "context engineering"]
+    },
+    {
+      "t": 992,
+      "title": "课堂讨论：Context Engineering、Compaction、Replanning",
+      "problem": "为什么 Claude Code 等编码 agent 会逐年提升？",
+      "why": "决定长周期成功的是 agent loop 内部的机制，而不仅仅是基础模型。",
+      "how": "收集学生的解释：context engineering、compaction、planning/replanning、用户反馈循环、从日志中进行 online RL，以及对环境的记忆。",
+      "detail": "<p>讲师提问：为什么 Claude Code 及类似的编码 agent 比一年前更好？并收集了若干机制。</p><ul><li><b>Context engineering：</b>跨许多步骤更好地组织上下文是一门新学科，它改进了工具链。</li><li><b>Compaction：</b>当上下文窗口填满时，agent 会总结并压缩历史记录，然后继续。</li><li><b>Planning 与 replanning：</b>面对复杂问题时，agent 会先将任务分解为步骤，当执行揭示新数据时，它可能生成<b>一组新的步骤</b>。</li><li><b>用户反馈：</b>当用户指出输出有误时，agent 会重做工作——就像一份被退回的作业。</li><li><b>从用户日志中进行 online RL：</b>学生推测 Cursor 等产品会从真实使用日志中学习。</li><li><b>对环境的记忆：</b>一旦 agent 曾经在该代码库中操作过，理解该代码库就会有所帮助。</li></ul>",
+      "terms": ["context engineering", "compaction", "replanning", "user feedback", "online RL", "memory"]
+    },
+    {
+      "t": 1219,
+      "title": "可靠性轴：50% 与 80% 跨度之间的差距",
+      "problem": "59 分钟的跨度听起来可部署，直到你要求置信度：在 80% 成功率下，同一模型能维持的时长远短于此。",
+      "why": "能力与可靠性是两条独立的轴；当一次失败运行具有真实成本时，50% 成功率是不可接受的。",
+      "how": "报告多条可靠性曲线（灰色 = 50%，蓝色 = 80%）并比较各自的跨度；这一差距量化了构建于模型之上的系统的发挥空间。",
+      "detail": "<p>可靠性视角以更高的门槛重新绘制了同一组跨度数据。</p><ul><li><b>灰线</b>是 50% 可靠性；<b>蓝线</b>是 <b>80% 成功率</b>。x 轴是发布日期，y 轴是模型的完成时间。</li><li>对 <b>Claude 3.7 Sonnet</b>，50% 跨度为 <b>59 分钟</b>，但 <b>80% 跨度大约只有 15 分钟</b>（有一张图显示为 8-10 分钟）——差距很大。</li><li>两条曲线上的翻倍时间（约 7 个月）相似，但 80% 下的绝对可部署时长要低得多。</li><li>含义：在真实任务上部署模型时，<b>即使对中等复杂度的任务也会遇到可靠性挑战</b>，从而为<b>构建于其上的系统</b>（验证、重试、工具）留出了发挥空间。</li><li>这同时也是一个成本/方差问题：失败的尝试会消耗 token 和 wall-clock 时间，而低成功率会使其倍增。</li></ul>",
+      "terms": ["reliability", "80% success", "50% success", "deployment gap", "headroom", "variance"]
+    },
+    {
+      "t": 1355,
+      "title": "长周期 Agent 的失败模式",
+      "problem": "长任务会累积错误，但尚不清楚哪类失败占主导，以及推理模型是否能修复它们。",
+      "why": "要在许多步骤中达成目标，需要正确的分解、工具选择以及全局状态意识。",
+      "how": "METR 对非推理模型（GPT-4o）与推理模型（o1）的失败进行了分类：规划不当、工具选择不当、推理错误、过早放弃，以及重复循环。",
+      "detail": "<p>METR 的失败分析比较了一个非推理模型（<b>GPT-4o</b>）与一个推理模型（<b>o1</b>）；这些类别正是学习信号。</p><ul><li><b>规划不当：</b>模型未能将给定任务分解为步骤。</li><li><b>工具选择不当：</b>它选择了不合适的工具，或发出了格式错误的调用。</li><li><b>心算/推理错误：</b>它尝试推理但搞错了。</li><li><b>过早放弃：</b>它陷入重复行为，无法判断成功的含义。</li><li><b>重复循环：</b>某个动作失败后仍保持最高概率，于是模型重复它；这在 GPT-4o 上很高，而在 <b>o1 上更低</b>。</li><li>失败模式分析是困难 benchmark 上的标准做法，也恰好是 self-refinement 作业任务：找出 agent 循环在何处崩溃。</li><li>这些模式（规划、工具选择、目标检测、循环）直接对应到更长跨度所需的能力。</li></ul>",
+      "terms": ["failure modes", "poor planning", "tool selection", "premature abandonment", "repetitive loop", "o1"]
+    },
+    {
+      "t": 1521,
+      "title": "METR 的局限：杂乱性、Contamination、外包人员",
+      "problem": "跨度分数是乐观的代理指标，会受到分布不匹配和训练数据 contamination 的扭曲。",
+      "why": "这些套件奖励干净、可验证的结果；模型见过公开仓库；标注者低估时长；而模型缺乏专家积累的上下文。",
+      "how": "将这些数字视为有界的：预期在杂乱任务上表现更低，对易受 contamination 影响的套件打折扣，并将模型行为与低上下文的人类（外包人员）比较。",
+      "detail": "<p>讲师强调没有 benchmark 是完美的；METR 是测量时间跨度的首次尝试，存在三个具体局限。</p><ul><li><b>杂乱性（Messiness）：</b>在没有唯一正确答案或额外复杂度的任务上表现更低，尽管各类别中会出现相似的曲线形状。</li><li><b>Contamination：</b>在 <b>SWE-bench</b> 上，模型见过大多数公开 GitHub 仓库，且标注者低估时长，因此估计值<b>会比在未见过的仓库上更短</b>。</li><li><b>上下文差距：</b>对于内部 pull request，<b>外包人员</b>（无代码库上下文）比 <b>maintainer</b> <b>慢 5-18 倍</b>，而模型的表现更接近<b>外包人员的时间</b>。</li><li>含义：模型作为<b>低上下文工作者</b>运作，有价值但并非领域专家；当积累的上下文很重要时，模型处于劣势。</li></ul>",
+      "terms": ["data contamination", "SWE-bench", "contractor vs maintainer", "messiness", "context gap", "low-context worker"]
+    },
+    {
+      "t": 1672,
+      "title": "GDPval：以真实工作对标专家评分",
+      "problem": "跨度指标对经济有用性只字未提，也没有定量方法来衡量模型能完成哪些专业任务。",
+      "why": "真实工作具有主观性、多模态且高度依赖上下文，因此无法被化简为 pass/fail 的单元测试。",
+      "how": "GDPval 从拥有 10 年以上经验的专业人士处获取真实交付物，并通过与这些专家进行成对胜率比较来为模型评分。",
+      "detail": "<p><b>GDPval</b>（OpenAI）翻转了问题：如果一个任务被交给模型而非专业人士，其输出是否<b>足够好</b>？</p><ul><li>任务是从拥有 <b>10 年以上</b>经验、横跨广泛行业的专业人士处获取的真实交付物。</li><li>评分方式是对这些专家的<b>成对胜率</b>，以 <b>wins+ties</b> 和 <b>wins-only</b> 偏好报告。</li><li>由于模型是多模态的，该套件包含视频、CAD、音频、电子表格和演示文稿，而不仅是文本。</li><li>该设计刻意接受主观性：真实工作相对于人类专家来评估，而非相对于单一 ground-truth 答案，从而捕捉输出是否有用，而非是否完全正确。</li></ul>",
+      "terms": ["GDPval", "win rate", "pairwise preference", "expert", "multimodal deliverable"]
+    },
+    {
+      "t": 1746,
+      "title": "GDPval 跨职业的示例任务",
+      "problem": "需要具体示例来判断哪些真实交付物是可处理的。",
+      "why": "任务的真实性（realism）与主观性决定了胜率是否有意义。",
+      "how": "逐一走查该套件：制造、金融、护理、视频剪辑、客服、礼宾、审计、房地产和康乐任务，全部来自专业人士。",
+      "detail": "<p>具体任务使抽象变得可感知；它们全部来自各领域的专业人士。</p><ul><li><b>制造工程师：</b>为装配线设计一个电缆卷盘支架的 3D 模型。</li><li><b>金融/投资分析师：</b>创建竞争格局（研究密集型）。</li><li><b>注册护士：</b>评估某问题的图像并生成一份咨询报告。</li><li><b>电影/视频剪辑师：</b>根据脚本制作一段片头短片。</li><li><b>客户服务：</b>为一位不满的客户起草一封电子邮件回复。</li><li><b>礼宾：</b>为一个四口之家制定行程。</li><li><b>审计员：</b>找出采购订单中的定价不一致之处。</li><li><b>房地产经纪人：</b>为一处新房产设计销售宣传册。</li><li><b>康乐工作人员：</b>优化一个摊位集市的布局。</li></ul><p>这些任务从客观（审计）到主观（宣传册）不等，这正是采用胜率指标以及后续讨论上下文的动因。</p>",
+      "terms": ["manufacturing engineer", "competitive landscape", "consultation report", "vendor fair", "sales brochure", "audit"]
+    },
+    {
+      "t": 1822,
+      "title": "主观性、胜率与专家上下文",
+      "problem": "许多真实任务具有主观性，因此不存在唯一正确答案，且模型选定的风格可能并非在所有情况下都成立。",
+      "why": "真实工作既需要上下文也需要主观判断；能力与恰当性是彼此独立的问题。",
+      "how": "使用与专家的成对偏好；将“模型能否做到”与“我们是否应部署它”区分开；优先选择具有相当清晰可用/不可用信号的交付物。",
+      "detail": "<p>学生指出许多任务是<b>主观的</b>——可能没有唯一正确答案，且模型选定的风格可能并非在所有情况下都成立。讲师表示同意，并对关注点加以区分。</p><ul><li>主观性正是 GDPval 采用<b>胜率</b>而非 pass/fail 的原因，也是真实工作需要<b>上下文</b>与主观判断的原因。</li><li>讲师将“模型是否擅长某任务”与“我们是否愿意将其用于<b>伦理/合规</b>”区分开——例如法律任务可能模型有能力做，但委派它并不恰当。</li><li>医疗健康领域的示例偏向<b>注册护士/执业护士</b>而非医生；音乐创作可能日后出现，但目前尚不在该 benchmark 中，因为<b>验证很困难</b>。</li><li>讨论倾向于选择具有<b>相当清晰的可用/不可用信号</b>的交付物，这使评分变得可处理。</li></ul>",
+      "terms": ["subjectivity", "win rate", "pairwise preference", "compliance", "verification", "multimodal"]
+    },
+    {
+      "t": 2020,
+      "title": "GDPval 数据集剖析：GDP 前 5%、220 个任务",
+      "problem": "该套件必须代表具有经济价值的工作，并且规格明确，否则胜率将反映的是 prompt 造成的假象。",
+      "why": "覆盖范围和规格说明决定了结果能否泛化到该 benchmark 声称要衡量的职业。",
+      "how": "自顶向下构建，横跨 9 个部门，瞄准 GDP 前 5%，包含 44 种职业和约 220 个黄金任务，配有多模态产物并经过专家审核。",
+      "detail": "<p>该套件自顶向下构建，以具有经济代表性：</p><ul><li>选择 <b>9 个部门</b>以瞄准 <b>GDP 前 5%</b>——最具经济价值的任务。</li><li>开放 <b>gold set</b> 中包含 <b>44 种职业</b>和约 <b>220 个任务</b>，其中纳入了约 <b>60%</b> 基于计算机的 <b>O*NET</b> 任务。</li><li>任务特征：平均完成时间最长约 <b>7 小时</b>，部分跨越<b>数周</b>；文本加<b>多模态</b>产物（CAD、视频、音频、电子表格、演示文稿）；平均任务价值约为 <b>400 美元</b>。</li><li>约 <b>70%</b> 的任务需要<b>与参考文件交互</b>才能得到最终输出。</li><li>约 <b>89%</b> 的任务被<b>专家审核</b>为规格良好——并非规格不清、会让模型因错误原因而失败的陷阱。</li></ul>",
+      "terms": ["O*NET", "gold set", "top 5% of GDP", "reference files", "multimodal deliverable", "task value"]
+    },
+    {
+      "t": 2139,
+      "title": "GDPval 趋势：线性胜率增长",
+      "problem": "经济胜率的提升远慢于 METR 指数式跨度叙事所暗示的速度。",
+      "why": "真实工作既需要隐性知识，也需要忠实地使用参考数据，因此模型无法用流畅的生成来替代 grounding。",
+      "how": "将胜率对模型代际作图，报告 wins+ties 与 wins-only，在 Q&A 中与 METR 比较，并按职业细分结果。",
+      "detail": "<p>胜率对模型代际所讲述的故事与 METR 不同。</p><ul><li>x 轴：从 <b>GPT-4o</b> 到 <b>GPT-5-high</b> 再到 <b>Claude Opus 4.1</b> 的模型；y 轴：相对行业专业人士的胜率。浅蓝色为 <b>wins+ties</b>；深蓝色为 <b>wins only</b>。</li><li><b>GPT-4o</b>（2024）平均约 <b>12.4%</b>；到 2025 年模型达到 20-30 多；<b>Claude Opus 4.1</b> 达到约 <b>47.6%</b>。</li><li>这是一个<b>大致线性</b>的趋势，而非 METR 那种约 7 个月的指数式翻倍。</li><li>在 Q&A 中讲师表示二者不能直接比较——指标不同——但 GDPval 表明，在多小时到多周、针对具体职业的真实工作上，模型<b>只有这样的可靠性</b>。</li><li>将表现<b>按职业</b>细分，相比单一的基于小时的数字，能使评估更贴近现实。</li></ul>",
+      "terms": ["win rate", "GPT-4o", "Claude Opus 4.1", "linear trend", "tacit knowledge", "reference data"]
+    },
+    {
+      "t": 2330,
+      "title": "模型优势、指令遵循失败、输出质量",
+      "problem": "主要失败在于指令遵循和 grounding，而非原始推理，且有用性受限于模型所缺乏的上下文。",
+      "why": "真实任务规格良好，但需要隐性知识以及对所提供的参考数据的忠实使用。",
+      "how": "按类型和部门分解失败，对输出质量评分，并比较模型在美学、格式、计算和文本方面的表现。",
+      "detail": "<p>本段由两类分析主导：哪些模型在何处强，以及实际失败的是什么。</p><ul><li><b>优势：</b>某些模型在<b>美学、文档格式、PDF、电子表格和演示文稿</b>上获胜；GPT-5 倾向于在<b>指令遵循、正确计算和文本任务</b>上获胜。</li><li><b>失败模式</b>以<b>指令遵循</b>为主：模型<b>承诺查阅参考数据却并未查阅</b>，用过 hallucinate 的内容覆盖它，并出现格式错误。GPT-5 表现出更少的参考数据指令遵循失败。</li><li><b>有用性分布：</b>约<b>一半</b>任务若被委派则<b>可接受但欠佳</b>；约 <b>20%</b> 的任务模型<b>确实会做得更好</b>；约 <b>29%</b> 的任务<b>糟糕或灾难性</b>。</li><li>人类评分者之间存在可测量的<b>分歧</b>，这为这些数字增添了噪声。</li></ul>",
+      "terms": ["instruction following", "hallucination", "document formatting", "output quality", "grader disagreement", "aesthetics"]
+    },
+    {
+      "t": 2434,
+      "title": "Self-Refinement：n 次尝试、1.6 倍成本、1.4 倍速度",
+      "problem": "单次（one-shot）胜率低估了迭代式自我纠正所能带来的增益。",
+      "why": "带有自我纠正的并行与顺序采样可以恢复质量，这与自我改进 agent 的课程直接相关。",
+      "how": "将单次试验与 n 次尝试（每次迭代在上一轮基础上改进）进行比较；测量相对于无辅助专家的成本与速度，以及与薪资的对比。",
+      "detail": "<p>由于本课程关注自我改进 agent，讲师测试了迭代式自我纠正。</p><ul><li>协议：朴素的<b>单次试验</b>与 <b>n 次尝试</b>对比，在顺序情形中每一轮都被要求在前一轮基础上改进（并行或顺序采样）。</li><li><b>GPT-5</b> 报告的增益：相对于无辅助专家，约 <b>1.6 倍成本改进</b>和约 <b>1.4 倍速度改进</b>。</li><li>即便成功，该运行的成本仍<b>低于人类专家薪资的 10%</b>——因此一部分职业已得到强有力的服务。</li><li>需要注意的是，这些增益仅适用于<b>模型成功的场合</b>；它们并未消除底层的可靠性差距，且重复尝试会成倍增加评估成本。</li><li>这将评估与自我改进主题联系起来：采样加自我纠正是一个一阶的调控旋钮。</li></ul>",
+      "terms": ["parallel sampling", "sequential sampling", "self-refinement", "cost improvement", "expert salary", "reliability"]
+    },
+    {
+      "t": 2514,
+      "title": "部门差异与模型达到平价的领域",
+      "problem": "总体胜率掩盖了各职业间的巨大差异。",
+      "why": "某些任务类别契合模型优势（数字化、文本、研究），而另一些则需要模型所缺乏的专业知识。",
+      "how": "将各职业胜率与红色的人类专家线比较，并识别模型达到或超过平价的领域。",
+      "detail": "<p>总体胜率掩盖了巨大差异，因此本讲深入到职业层面（红线 = 人类专家；每种颜色 = 一个模型）。</p><ul><li><b>接近或达到平价：</b>柜台/租赁文员、房地产经纪人、收发货与库存文员、采购员与采购代理、计算机/IT 系统经理，以及软件开发人员。</li><li><b>表现极佳：</b>政府行政服务经理、合规官、医疗与健康服务经理、个人理财顾问、客户服务代表，以及销售、编辑、调查/侦探和新闻分析师任务。</li><li>关于软件的<b>注意：</b>人类基线可能是仓库 <b>maintainer</b>，而非拥有完整十年经验者；在工业/机械工程等领域，十年的专业经验更为重要。</li><li>这些图充当了模型今日在何处有用的<b>分类体系</b>，也是研究失败之处的起点。</li></ul>",
+      "terms": ["occupation parity", "real-estate brokers", "software developers", "compliance officers", "taxonomy", "maintainer"]
+    },
+    {
+      "t": 2740,
+      "title": "规格不足与上下文差距",
+      "problem": "当 prompt 规格不足或需要收集上下文时，模型无法弄清该做什么。",
+      "why": "真实工作高度依赖上下文；人类在头脑中保有上下文并架构问题，而模型尚无法自主获取它。",
+      "how": "测试规格不足的 prompt，比较外包人员与 maintainer，将近期的价值界定为在人工监督下的 AI 辅助，并优先考虑任务类别而非美元价值。",
+      "detail": "<p>GDPval 的最后一个主题是模型在没有帮助时无法做到的事。</p><ul><li><b>规格不足（Underspecification）：</b>从 prompt 中移除上下文只会使胜率下降几个点，但模型的<b>输出质量退化更多</b>，因为它无法弄清<b>该做什么</b>。</li><li><b>上下文差距：</b>仓库 <b>maintainer</b> 远比外部 <b>外包人员</b>快；模型的行为就像低上下文的外包人员，且无法自行收集那些上下文。</li><li>因此在真实工作中，<b>人类架构问题集合</b>并提供上下文；模型随后执行。近期来看，AI 辅助<b>在与人工监督相结合时具有成本效益</b>，且不同模型适合不同任务类型。</li><li>关于美元价值：金额本身不如<b>任务类别</b>（深度研究、代码生成、综合多样化来源）重要；该 benchmark 是一份可量化的有价值类别<b>分类体系</b>。</li></ul>",
+      "terms": ["underspecification", "context gap", "contractor vs maintainer", "human oversight", "task taxonomy", "delegation"]
+    },
+    {
+      "t": 3094,
+      "title": "DeepScholarBench：实时的 Related-Work 综述",
+      "problem": "真实工作还需要 grounding 于知识库，而不仅仅是长时长或经济价值。",
+      "why": "模型冻结于某个知识截止点，可能遗漏基础性论文，而连贯的写作并不等同于覆盖度或可验证性。",
+      "how": "DeepScholarBench（Stanford）从 22 个领域的近期 PhD 级论文生成 related-work 章节，每月重跑，且限定为训练后发表的论文；三条经人类验证的轴。",
+      "detail": "<p><b>DeepScholarBench</b>（Stanford）针对论文的 related-work 章节——这是同学曾请求的任务，也是从业者经常需要的任务。</p><ul><li><b>实时且抗 contamination：</b>由 <b>22 个领域</b>、PhD 级难度的<b>近期 arXiv 论文</b>构建，随新论文<b>每月重跑</b>，并限定为在<b>某主要模型训练截止点之后</b>发表的论文。</li><li>任务：检索相关参考文献，将发现综合为连贯的论断，并以<b>可验证的引用</b>予以支撑。</li><li>先前工作包括 OpenAI Deep Research、Gemini Deep Research、Perplexity、Stanford 的 <b>STORM</b>，以及 <b>OpenScholar</b>。</li><li>三条经人类验证的轴：<b>knowledge synthesis</b>（连贯、捕捉关键事实）、<b>retrieval quality</b>（相关性、引用次数、基础性论文覆盖度），以及 <b>verifiability</b>（引用是否真正支撑论断）。</li><li>这些指标与人类判断的吻合度约为 <b>70-80%</b>。</li></ul>",
+      "terms": ["DeepScholarBench", "live benchmark", "data contamination", "knowledge synthesis", "retrieval quality", "verifiability"]
+    },
+    {
+      "t": 3318,
+      "title": "DeepScholarBench 结果：无系统超过 19%",
+      "problem": "尽管有工业界的深度研究原型，质量与可验证性仍远低于专家水平。",
+      "why": "成功需要找到全面的基础性来源、呈现关键事实，并保持引用的忠实性——这些都是当前系统所缺乏的能力。",
+      "how": "报告各轴分数与失败模式；分别探究检索与综合；变化是否提供完美来源以隔离瓶颈。",
+      "detail": "<p>与大多数 benchmark 不同，这个 benchmark 有巨大的提升空间：<b>无任何现有系统超过 19%</b>。</p><ul><li><b>Knowledge synthesis：</b>OpenAI Deep Research 写得很好，但<b>几乎所有模型都持续遗漏关键事实</b>——连贯的英文却缺乏完整覆盖。</li><li><b>Retrieval quality：</b>总体仅<b>马马虎虎</b>；所有系统都难以找到全面且重要的来源；<b>文档重要性低于 12.5%</b>。</li><li><b>Verifiability：</b>DeepScholarBench 最高可达约 <b>90% 精确率</b>，但 Open Deep Research 尽管文笔流畅，可验证性却更低。</li><li><b>失败模式：</b>找不到<b>基础性论文</b>；对文档重要性的评估很差；即便提供了<b>完美的来源</b>，关键事实覆盖度也只有约 <b>50%</b>。</li><li><b>权衡：</b>没有任何系统能同时在综合质量与可验证性上表现出色——而这恰恰是一个职业所需的精确率/召回率平衡。</li></ul>",
+      "terms": ["19% ceiling", "foundational papers", "key-fact coverage", "document importance", "precision/recall", "verifiability"]
+    },
+    {
+      "t": 3513,
+      "title": "DeepScholarBench 的 Q&A 与跨度视角下的综合",
+      "problem": "为什么要单独挑出这个狭窄任务，它又与跨度和经济有何关联？",
+      "why": "真实世界任务需要知识库 grounding，而 related work 是一个有代表性、具有经济价值的研究综合任务。",
+      "how": "Q&A 澄清了论断/引用的覆盖，随后讲师将综合置于跨度轴上，并将差距归因于多步推理、信息收集、可验证性和 context engineering。",
+      "detail": "<p>Q&A 澄清了该 benchmark，随后讲师将其放到跨度轴上。</p><ul><li>专家提供一份<b>基础性论文清单</b>，但该 benchmark 还会检查所写的<b>论断</b>是否被支撑、以及哪些论文支撑了它们——而不仅仅是检索到的数量。</li><li>在 METR 时长轴上，研究综合任务的估计时长约为 <b>30 分钟到 8 小时</b>，而当前能力位于约 <b>50 分钟</b>，且成功率往往只有 <b>约 50%</b>。</li><li>一个任务在图上看起来像是长跨度，却可能产出低质量、低可验证性的输出——时长与质量是不同的轴。</li><li>差距来自<b>多步推理</b>、全面的信息收集，以及在<b>综合的同时保持可验证性</b>。</li><li>这与 homework 3 相呼应：组合多个 agent 调用需要在分布式来源和重复工具调用之间进行 <b>context engineering</b>，同时保留来源出处（provenance）。</li></ul>",
+      "terms": ["related-work synthesis", "claims and citations", "multi-step reasoning", "context engineering", "distributed sources", "verifiability"]
+    },
+    {
+      "t": 3773,
+      "title": "Benchmark 比较与已知及低置信度的差距",
+      "problem": "每个 benchmark 只测量一条轴，因此没有任何单一数字能告诉你 agent 在真实工作上是否可部署。",
+      "why": "三者都是带有已知局限的代理指标，且置信度因任务类型而差异极大。",
+      "how": "在评分方式、多 agent 结构、资源约束和主观性上比较三者，然后列出哪些已被充分确立、哪些仍属低置信度。",
+      "detail": "<p>讲师比较了这三个 benchmark，并将有把握的论断与不确定的论断区分开。</p><ul><li><b>METR：</b>自动评分，无多 agent 交互，无资源约束，且<b>不惩罚错误</b>——它针对单 agent、可清晰验证的任务。</li><li><b>GDPval：</b>任务<b>规格极其明确</b>（人类的隐含上下文被写入 prompt），且为<b>单次（one-shot）</b>，没有迭代纠正；它要求模型中已具备<b>隐性知识</b>。</li><li><b>DeepScholarBench：</b>填补了参考数据的缺口，暴露出检索、基础性论文和可验证性方面的失败。</li><li><b>已充分确立：</b>模型在孤立、规格良好的任务上有提升；SWE 和 ML 研究显示出最大进展；更强的模型即便部分内容有误也能产出组织良好的输出。</li><li><b>低置信度：</b>高度依赖上下文的任务、模糊的 prompt、对抗性环境、<b>95% 可靠性</b>、超出软件/知识工作的泛化，以及在知识库中查找/验证来源。</li></ul>",
+      "terms": ["benchmark limitations", "one-shot", "resource constraints", "adversarial environments", "95% reliability", "generalization"]
+    },
+    {
+      "t": 3994,
+      "title": "最终综合：预测、可靠性、指标",
+      "problem": "必须将指数式跨度叙事与线性经济价值叙事相协调，且尚不清楚该测量什么。",
+      "why": "不同的指标捕捉不同的进展；可靠性与错误恢复在改进，而表现仍取决于任务。",
+      "how": "总结 METR 的 7 个月翻倍以及 2028-2031 年完成一个月长任务的预测，对比 GDPval 线性的 48% 胜率，并提出基于时长、经济和综合质量的指标，且都需经人类验证。",
+      "detail": "<p>收尾的综合将各项指标串联起来。</p><ul><li><b>METR：</b>在 <b>50% 可靠性</b>下跨度<b>每 7 个月翻倍</b>，并预测到 <b>2028-2031</b> 年模型将几乎能完成<b>为期一个月</b>的任务。</li><li><b>GDPval：</b>两年多以来改善要<b>线性</b>得多，在某些任务上达到约 <b>48% 胜率</b>，而许多类别仍然很低——用真实经济工作为指数式叙事降温。</li><li><b>Context/参考数据</b>是反复出现的差距：许多 GDPval 任务需要上下文或参考文件，而 DeepScholarBench 显示质量与可验证性落后于人类。</li><li><b>预测：</b>可靠性与错误恢复应持续改善，但表现仍将<b>取决于任务</b>；解决更长跨度的任务并不能保证可靠或高质量的输出。</li><li><b>指标建议：</b>我们需要<b>基于时长</b>、<b>基于经济价值</b>和<b>基于综合质量</b>的指标，每一条都要针对真正能解决该任务的人类进行验证。</li></ul>",
+      "terms": ["seven-month doubling", "forecast", "win rate", "synthesis quality", "human validation", "task-dependent"]
+    },
+    {
+      "t": 4107,
+      "title": "开放式 Q&A：可部署性、长尾、AI Co-Scientist",
+      "problem": "从业者询问当前的可靠性是否使 agent 可部署，以及究竟是什么从根本上阻碍了长尾。",
+      "why": "最后的 20%——可靠性与困难领域——远比前 80% 更难，且数据与模型能力都很重要。",
+      "how": "讲师就长尾作答，澄清 METR 的 50% 是各任务在各次尝试中成功率的平均，并将当今系统界定为 AI co-scientists 而非自主 AI scientists。",
+      "detail": "<p>最后的 Q&A 涵盖从可部署性到职业建议等话题。</p><ul><li><b>长尾：</b>前 80% 容易，而<b>最后的 20% 要花十年</b>；诸如<b>分布式系统</b>这样的困难领域依然艰难。SWE 和可验证的编码持续进步，但许多非 PR 任务仍然困难。</li><li>关于 METR 的 50% 数字：它是各任务在各次尝试中<b>成功率的平均值</b>（例如跨 97 个任务），因此一个 50% 的任务意味着答案大约有一半时间是好的。</li><li><b>走向：</b>时间线变化很快且难以预测；当今系统是 <b>AI co-scientists</b>——知识广博、善于头脑风暴——尚不是能构建下一代模型的自主 <b>AI scientists</b>。</li><li><b>什么阻碍了长尾：</b>既有<b>数据</b>，也有<b>基础模型能力</b>；例如机器人初创公司押注于数据收集来弥合差距。</li><li><b>结课建议：</b>CS 基础知识仍有价值，而持久的能力是<b>为模型提供它所需的上下文</b>。</li></ul>",
+      "terms": ["long tail", "distributed systems", "AI co-scientist", "AI scientist", "reliability", "data collection"]
+    }
+  ]
+}

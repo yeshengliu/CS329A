@@ -1,0 +1,259 @@
+{
+  "n": 1,
+  "title": "Course Overview",
+  "summary": "CS329A frames self-improving AI agents as the successor to static LLM pipelines. The lecture traces scaling laws (compute/data/parameters) into emergent chain-of-thought, then walks the post-training stack (SFT, instruction tuning, RLHF/RLAIF) that produced ChatGPT. It then shows inference/test-time scaling (repeated sampling + verifiers, o1-style reasoning) being folded back into training to create a self-improvement loop, surveys agentic workflows and application areas, and closes with course logistics.",
+  "sections": [
+    {
+      "t": 5,
+      "title": "Welcome and course framing",
+      "problem": "The course must orient a mixed audience to CS329A, define its theme (self-improving AI agents), and establish the instructors' credibility.",
+      "why": "The instructors come from frontier LLM work, so the material is anchored in current practice rather than textbook abstractions.",
+      "how": "Self-introductions, an audience poll, and a statement that the second offering has updated lectures and course mechanics, with the website as the hub.",
+      "detail": "<p>CS329A is framed as a course on <b>self-improving AI agents</b>. Instructor <b>Akanksha</b> is an adjunct professor who works on large language models and does research at the startup <b>Reflection AI</b>; <b>Azalia Mirhoseini</b> is an assistant professor in the CS department. They met at <b>Google Brain / Google DeepMind</b>, and Azalia has also worked on Codex, Anthropic, and Gemini. This is the <b>second</b> time they teach the course, with updates to lectures and logistics.</p><ul><li>Audience poll: mostly <b>masters students</b>, with fewer PhD and undergrad students—what they call a \"really good balance.\"</li><li>The instructors were struck by the level of interest in the course.</li><li>Course website <code>cs329a.stanford.edu</code> holds lecture materials, the reading list, homework schedule, and project proposal structure.</li><li>Today's agenda: an LLM/scaling overview first, then course logistics, which directly influence grades.</li></ul>",
+      "terms": ["CS329A", "self-improving agents", "Reflection AI", "Google Brain"]
+    },
+    {
+      "t": 143,
+      "title": "Scaling laws and model-size growth",
+      "problem": "Early BERT/T5-class models were decent but limited; it was not obvious how far raw scale could push capability.",
+      "why": "Empirically, test loss falls smoothly as compute, dataset size, and parameter count increase—a predictable power-law (scaling) relationship—so more scale meant strictly better base models.",
+      "how": "Scale all three axes: more compute, more data, and more transformer layers/parameters to drive test loss down and improve the pretrained base model.",
+      "detail": "<p>The lecture's first trend is <b>scaling laws</b>: with compute on the x-axis, loss on the y-axis falls; more data lowers test loss further; and more parameters (deeper transformers) lowers loss again. These three axes became the foundation for GPT-3 and successors.</p><ul><li>Model sizes grew roughly exponentially <b>2018–2024</b>: BERT <b>340M</b>, GPT-2 <b>1.5B</b>, GPT-3 <b>175B</b>, PaLM <b>540B</b>, and GPT-4 estimated in the <b>trillions</b> of parameters.</li><li>\"Large\" in LLM literally refers to this growth in size.</li><li>According to the lecture, the trend began to hit a <b>saturation point</b> around last year, motivating the rest of the course.</li><li>This scaling produced GPT-3, ChatGPT, PaLM, and Gemini.</li></ul>",
+      "terms": ["scaling laws", "test loss", "parameters", "GPT-3", "PaLM"]
+    },
+    {
+      "t": 293,
+      "title": "Why scaling matters: benchmarks and few-shot learning",
+      "problem": "Raw loss numbers are abstract; the practical question is what capability scaling actually buys.",
+      "why": "Bigger models improve continuously on natural-language and reasoning benchmarks and acquire in-context learning: they follow a task template from a few examples instead of needing task-specific fine-tuning.",
+      "how": "Use prompting—describe the task (zero-shot) or provide a handful of demonstrations (few-shot)—so a fixed model generalizes to new tasks without retraining.",
+      "detail": "<p>Three payoffs of scale are highlighted:</p><ul><li><b>Benchmark gains</b> on natural-language, reasoning, and other tasks.</li><li><b>Few-shot / zero-shot learning.</b> Zero-shot = give a task (e.g. \"translate English to French\") with no examples; few-shot = include a few English→French pairs, then ask for \"cheese\". Earlier you had to fine-tune per domain; now a few examples let the model follow the template, making prototyping easy.</li><li><b>Emergent behavior:</b> capabilities such as reasoning appear only in larger models, not predictably at smaller sizes.</li></ul><p>These in-context abilities, demonstrated by GPT-3 and PaLM across many tasks, made prompting—rather than fine-tuning—the default interface and seeded later work on reasoning.</p>",
+      "terms": ["few-shot learning", "zero-shot", "in-context learning", "emergent behavior"]
+    },
+    {
+      "t": 399,
+      "title": "Emergent behavior and chain of thought",
+      "problem": "Scaling laws describe average loss but do not predict qualitatively new behaviors, and some behaviors only help above a size threshold.",
+      "why": "Chain of thought (CoT) is an emergent capability: at small scale (LLaMA ~8B, GPT ~7B, PaLM 8B) supplying reasoning steps does nothing, while larger models use the demonstrated process to solve new problems.",
+      "how": "Instead of a bare one-shot answer, include the worked reasoning in the prompt (CoT prompting), so the model learns the procedure and transfers it.",
+      "detail": "<p>Azalia frames emergence as behaviors \"we never could predict until we had these bigger models.\" The canonical example is <b>chain of thought</b>.</p><ul><li>Usual one-shot math prompting gives a problem plus an answer; the model may or may not generalize.</li><li>CoT prompting additionally shows the reasoning: \"Roger started with 5 balls. Two cans of 3 is 6. 5+6=11.\" The model then follows the process on new problems.</li><li>The toy example is trivial for a 1B model today, but the property \"holds to this day\" and underpins thinking/reasoning models.</li><li>Empirically, small models (8B LLaMA, ~7B GPT) gain nothing from CoT; larger LLaMA/PaLM can leverage the traces to solve problems better.</li></ul>",
+      "terms": ["chain of thought", "emergent behavior", "LLaMA", "PaLM"]
+    },
+    {
+      "t": 603,
+      "title": "More emergent abilities and continued scaling momentum",
+      "problem": "CoT is not the only capability that appears abruptly, and labs need to know whether further scaling still pays off.",
+      "why": "Certain skills—modular arithmetic, word unscrambling—switch on suddenly at a particular model size, so smaller models cannot get them regardless of prompting.",
+      "how": "Frontier labs keep pushing the scaling laws on the assumption that more emergent behaviors will surface at larger scale.",
+      "detail": "<p>Beyond CoT, larger models suddenly gain abilities like <b>modular arithmetic</b> and <b>word unscramble</b> problems—\"all of a sudden it appears at a certain size.\" These are step functions, not smooth improvements, and they cannot be coaxed out of a smaller model by prompting alone.</p><ul><li>Because of these surprises, frontier companies and labs stay motivated to keep pushing the scaling laws rather than only optimizing known objectives.</li><li>Azalia's point is that we cannot predict these transitions ahead of time: they were only observed once bigger models existed, and she expects <b>more emergent behaviors</b> to surface and matter for downstream agent capability.</li><li>This sets up the lecture's pivot: once pre-training/fine-tuning started to stall, <b>inference-time computation</b> became a new frontier for making models more capable.</li><li>It also motivates the whole course: if capability appears unpredictably with scale and test-time compute, agents built on top must be measured empirically, not assumed.</li></ul>",
+      "terms": ["emergent abilities", "modular arithmetic", "word unscramble", "frontier labs"]
+    },
+    {
+      "t": 649,
+      "title": "ChatGPT and the post-training recipe",
+      "problem": "Scaling alone produced GPT-3 but not a usable assistant; GPT-3-era models did not reliably follow instructions.",
+      "why": "ChatGPT introduced two post-training innovations—instruction tuning and RLHF—that aligned a base model with human instructions and preferences, driving breakout adoption.",
+      "how": "Combine instruction tuning (supervised instruction/answer pairs) with reinforcement learning from human feedback to steer generations toward human-preferred answers.",
+      "detail": "<p>ChatGPT launched in <b>November 2022</b> and reached <b>1 million users in 5 days</b>—faster than the other famous software and services shown on the slide. Azalia stresses it was not just scale: pieces of innovation on top of parameter scaling made the leapfrog over GPT-3.</p><ul><li>The two key innovations: <b>instruction tuning</b> and <b>reinforcement learning from human feedback (RLHF)</b>.</li><li>These are previewed here and studied in depth throughout the course.</li><li>The pipeline the course builds toward: <b>pre-training → fine-tuning on high-quality data → instruction tuning → RLHF/RLAIF</b>.</li><li>This history frames the rest of the lecture: first the pre-training/alignment pipeline in detail, then the newer inference-scaling and agentic directions.</li><li>It also previews the recurring theme—capability leaps come from combining scale with a training/feedback objective, not from scale alone.</li></ul>",
+      "terms": ["ChatGPT", "instruction tuning", "RLHF", "post-training"]
+    },
+    {
+      "t": 720,
+      "title": "Pretraining and alignment: process overview",
+      "problem": "A pretrained model has absorbed all internet text but has no notion of right vs. wrong and does not know how to follow instructions.",
+      "why": "Pre-training only optimizes next-token prediction over raw web/books data, so it captures statistical structure but not human values or task-following behavior.",
+      "how": "Add an alignment/fine-tuning stage that steers the model toward human goals, preferences, and values—shown concretely by fine-tuning a base model for properties like sensibleness and safety with curated data.",
+      "detail": "<p>The <b>pre-training</b> step is the easiest: train on lots of text/data to predict the next token; it is the beginning of any language model. But the resulting base model \"statistically knows about the state of the world\" without knowing what is right, and it does not follow instructions.</p><ul><li>Alignment—steering models to human goals/preferences/values—is described as \"still a big problem… we haven't mastered it yet.\"</li><li>The class shows graphs of fine-tuning a base model for <b>sensibleness</b> and <b>safety</b> using curated, high-quality data that demonstrates what is safe/unsafe and sensible/nonsensical.</li><li>Fine-tuning was the \"key differentiating factor\" for ChatGPT relative to GPT-3 and prior models.</li><li>Although models are getting more powerful, the instructors emphasize that alignment is not solved—it remains an active problem the course returns to.</li></ul>",
+      "terms": ["pre-training", "alignment", "base model", "sensibleness", "safety"]
+    },
+    {
+      "t": 861,
+      "title": "Supervised fine-tuning on curated data",
+      "problem": "A pretrained model needs behavior that raw web text does not reliably teach.",
+      "why": "Fine-tuning repeats next-token prediction but on a much higher-quality, curated corpus, shifting the model's outputs toward the distribution you actually want.",
+      "how": "Fine-tune on expensive, curated data—books, creative essays, and similar high-quality text—rather than scraped web data.",
+      "detail": "<p>Supervised fine-tuning (SFT) \"follows the same process as pre-training\" (next-token prediction) but on <b>much higher-quality data</b>, so the model stays the same architecture while its output distribution shifts.</p><ul><li>Examples of the curated corpus: <b>books, creative essays</b>, and licensed text that companies pay millions—potentially hundreds of millions—of dollars to acquire.</li><li>\"The model becomes much better as a result of that.\"</li><li>The lecture emphasizes this is the first of several data-curation steps: the same high-quality-data lever reappears in instruction tuning and reward modeling.</li><li>Data quality at this stage shapes downstream behavior and is a large part of the cost and effort of building a frontier model.</li></ul>",
+      "terms": ["supervised fine-tuning", "next-token prediction", "data curation"]
+    },
+    {
+      "t": 907,
+      "title": "Instruction tuning",
+      "problem": "Even a well-fine-tuned base model does not naturally behave like an assistant responding to user requests.",
+      "why": "Raw text lacks explicit instruction→answer mappings, so the model never learns the conversational format of following a directive and producing the desired answer.",
+      "how": "Train on instruction/question–answer pairs (human-generated data/templates plus synthetic data) so the model learns to answer and walk through processes; chain-of-thought fine-tuning includes the reasoning with the label.",
+      "detail": "<p><b>Instruction tuning</b> exposes the model to <b>instruction + question/answer pairs</b>. Traditionally the data is a combination of <b>human-generated data or templates</b> plus <b>synthetic data</b>.</p><ul><li>Example instruction: \"Please answer the following question. What is the boiling point of nitrogen?\" followed by the answer.</li><li><b>Chain-of-thought fine-tuning</b> goes further and shows the model a process to reach the answer, with the label/result provided.</li><li>The <b>quality and generality</b> of this dataset \"has a lot of impact on the quality of the model.\"</li><li>After this stage the model \"becomes more and more like the models we see today\"—you can ask questions and go back and forth.</li></ul>",
+      "terms": ["instruction tuning", "chain-of-thought fine-tuning", "synthetic data"]
+    },
+    {
+      "t": 1011,
+      "title": "RLHF and reward modeling",
+      "problem": "Supervised pairs cover only so many behaviors, and there is no scalar objective telling the model which of two plausible answers is better.",
+      "why": "The RLHF objective is not a fixed supervised label but a learned <b>reward model</b> distilled from human preference ratings, so generation can be optimized against an approximate human judge.",
+      "how": "Have humans (sometimes experts) rate model answers, train a reward model on those comparisons, then use it to guide the LLM's parameters toward high-reward generations; different reward types can be weighted.",
+      "detail": "<p><b>RLHF</b> = reinforcement learning from human feedback. The key difference from SFT is how the <b>objective and data</b> are created: instead of supervised prompt/label pairs, a <b>reward model</b> is built from human preferences.</p><ul><li>Companies spend heavily to have humans (sometimes experts, sometimes ordinary people) rate generated answers as correct or not.</li><li>The reward model replaces the human at training time and steers the LLM toward answers it scores highly.</li><li>Reward dimensions mentioned: <b>correctness, helpfulness, specificity, harmlessness</b>, weighted according to what a lab cares about (the transcript slips between RLHF and \"RLAIF\" here).</li><li>Together, <b>pre-training → high-quality fine-tuning → instruction tuning → RLHF</b> were the core components that made ChatGPT far more capable than GPT-3 and prior models.</li></ul>",
+      "terms": ["RLHF", "reward model", "human preferences", "helpfulness", "harmlessness"]
+    },
+    {
+      "t": 1177,
+      "title": "Inference scaling and Large Language Monkeys",
+      "problem": "Until roughly a year before the lecture, capability came from pretraining and fine-tuning; test-time compute was not treated as a scaling axis.",
+      "why": "Generations are stochastic (controllable via temperature), so a single sample reveals only one point in a much larger space—the model may already know a correct answer it rarely emits.",
+      "how": "Parallel sampling: sample many answers to the same problem, use a verifier/selection mechanism (e.g. unit tests), and output a verified-correct one—without changing any model parameters.",
+      "detail": "<p>Inference is a new frontier for capability. Azalia presents <b>Large Language Monkeys</b>, inspired by the <b>infinite monkey theorem</b>: let the LLM be the monkey and repeatedly ask it to solve the same input problem.</p><ul><li>Instead of one generation, produce many (<b>parallel sampling</b>) and use a <b>verifier</b> to select a correct one—e.g. run unit tests on generated code and keep the version that passes.</li><li>Why it works: model responses have variance; they are non-deterministic, and <b>temperature</b> controls that diversity.</li><li>\"Inference scaling\" means the model's parameters stay <b>fixed</b>—only decoding/sampling changes to produce harder-problem solutions.</li><li>A Q&A notes the space of possible answers is vastly larger than what 10,000 samples can cover, and that raising temperature too high yields gibberish (usually beyond ~1.2).</li></ul>",
+      "terms": ["inference scaling", "parallel sampling", "verifier", "temperature", "Large Language Monkeys"]
+    },
+    {
+      "t": 1403,
+      "title": "Repeated sampling results: coverage scaling",
+      "problem": "Does repeated sampling actually turn weak models into strong problem solvers?",
+      "why": "If any sample is correct, a perfect verifier recovers it, so coverage—the fraction of problems solved by at least one of k samples—should rise with k even when single-sample accuracy is low.",
+      "how": "Measure coverage as samples-per-problem grow from 1 to 10,000 on math and coding benchmarks.",
+      "detail": "<p>The experiment sweeps samples per problem from <b>1 to 10,000</b> on math and coding benchmarks and plots <b>coverage</b> (fraction solved by at least one sample).</p><ul><li>At one sample, smaller open models (LLaMA 3 8B, LLaMA 7B) trail <b>GPT-4o</b>.</li><li>As samples increase, the smaller models' coverage curves cross above GPT-4o in all cases shown.</li><li>Interpretation: models \"already know a whole lot more\" than a single generation exposes.</li><li>For some hard problems only <b>3–4 of 10,000</b> samples were correct—showing both the potential and the sample-inefficiency.</li><li>This motivates inference scaling without touching parameter count, and \"there are many other ways\" to do it beyond repeated sampling.</li></ul>",
+      "terms": ["coverage", "pass@k", "GPT-4o", "LLaMA", "sample efficiency"]
+    },
+    {
+      "t": 1496,
+      "title": "Q&A: sampling cost, verifiers, and temperature",
+      "problem": "Students probe the practical limits of repeated sampling: latency, verification when no checker exists, and diversity control.",
+      "why": "Parallel samples can run concurrently, so latency is less of an issue than total compute cost; and selection requires a verifier, which is hard in open-ended domains.",
+      "how": "Use reward models / LLM-as-judge when unit-test-style verifiers are unavailable; tune temperature and other tricks for diversity; trade compute cost against problem complexity.",
+      "detail": "<p>Key points from the Q&A:</p><ul><li><b>Answer space:</b> the model can only select among answers it can generate; the full space is far larger than 10,000 samples, yet 10,000 is \"highly sample efficient\" relative to IMO-level problems a tiny 7B/8B LLaMA can occasionally solve.</li><li><b>Latency/cost:</b> parallel samples can be batched, so latency is less of an issue, but there is a compute-cost trade-off that varies with problem complexity—covered later in the course.</li><li><b>Verifiers:</b> easier when available; otherwise there is research on <b>LLM judges, LLM reward functions, and LLMs with tools</b>. A dedicated lecture covers verifiers.</li><li><b>Temperature:</b> cannot be too high (gibberish); beyond ~1.2 it is \"not great,\" and there is research on tuning it plus other tricks for answer diversity.</li></ul>",
+      "terms": ["LLM-as-judge", "reward model", "temperature", "latency", "verifier"]
+    },
+    {
+      "t": 1696,
+      "title": "DeepSeek/o1 and closing the train–test loop",
+      "problem": "Inference scaling improves outputs on a fixed model but does not itself make the model better; reasoning releases (DeepSeek, o1, Gemini thinking) raised a new question.",
+      "why": "Test-time generation can become training data: when the answer is known (math) or verifiable (code), many generated solutions/traces can be filtered and used as synthetic supervision, improving the model rather than just the outputs.",
+      "how": "Combine fine-tuning and test-time scaling in a loop—generate large volumes of quality synthetic data at test time, add it to the training set, fine-tune—so the model continually improves itself.",
+      "detail": "<p>DeepSeek (released <b>December 2024</b>), OpenAI's <b>o1</b> series, and Gemini thinking models marked a shift. The new move is to <b>bring fine-tuning and test-time scaling together</b>.</p><ul><li>For math, where the answer is known, the model can generate many reasoning paths that lead to the golden answer.</li><li>For coding problems, it can generate tons of quality data during test-time scaling that becomes part of the training set.</li><li>Fine-tuning on that data makes the model better—\"the self-improving piece that we are very excited about.\"</li><li>The instructors call the loop open-ended: \"there is no boundary in how good the models can become with test time scaling\" fed back into training.</li></ul>",
+      "terms": ["DeepSeek", "o1", "test-time scaling", "synthetic data", "self-improvement"]
+    },
+    {
+      "t": 1820,
+      "title": "Reasoning models and test-time compute",
+      "problem": "Hard problems need more than one forward pass; a fixed amount of computation caps quality on math/IMO-level tasks.",
+      "why": "Like humans, reasoning models spend more compute—longer chains of thought and multiple strategies—so accuracy can scale with test-time compute while parameter count stays fixed.",
+      "how": "Train/elicit thinking traces that perform problem analysis, task decomposition, self-evaluation with feedback (tests, calculator), self-correction, and backtracking; OpenAI's o1 showed a log-linear rise in pass@1 with test-time compute on AIME.",
+      "detail": "<p>Motivation: for difficult problems, humans think longer and try different strategies; thinking models do the same. Steps named in the lecture:</p><ul><li><b>Problem analysis</b> — parse what is being asked.</li><li><b>Task decomposition</b> — break into simpler, more addressable subproblems.</li><li><b>Self-evaluation / feedback</b> — run tests, use a calculator, or judge the answer.</li><li><b>Self-correction and backtracking</b> — abandon a wrong approach and try another.</li></ul><p>Some of this was curated into training data; much is acquired during fine-tuning and RL-from-synthetic-data. OpenAI's o1 showed <b>log-linear</b> growth of <b>pass@1</b> with test-time compute on the hard AIME math benchmark, at fixed parameters. A worked example is o1 writing a bash script to transpose a matrix, producing its own analysis, decomposition, and mid-stream self-corrections (\"wait, something is wrong\").</p>",
+      "terms": ["test-time compute", "pass@1", "AIME", "problem analysis", "backtracking", "self-correction"]
+    },
+    {
+      "t": 2086,
+      "title": "Reasoning vs GPT-4o and mechanism Q&A",
+      "problem": "Are reasoning-model gains due to actually generating the reasoning, or merely the instruction to think step by step?",
+      "why": "The answer differs by metric: coverage/pass@k can improve from sampling alone, but pass@1 requires the model to know which chain is correct—which is what train-time/RL learning adds.",
+      "how": "Treat the training data as teaching a generalized thinker: models learn decomposition, backtracking, and analysis that generalize beyond the instructions they were trained on.",
+      "detail": "<p>Reasoning models like o1 outperform GPT-4o on math calculation, data analysis, and programming, but not necessarily on creative/personal writing and text editing.</p><ul><li>A student asks whether the gain comes from generating the reasoning process or just from asking the model to think step by step and discovering latent capability; the instructors reply that the data has turned the model into a \"generalized thinker,\" with skills that generalize to new problems.</li><li>A base model can reason somewhat but \"doesn't quite know which one is correct\"; much of train-time/test-time scaling teaches correctness selection, which is why <b>pass@1</b> rises in reasoning models vs. <b>pass@k / coverage</b> in repeated sampling.</li><li>Thinking is expensive, but \"we want them to generate those because it leads to better answers.\"</li></ul>",
+      "terms": ["pass@1", "pass@k", "GPT-4o", "generalized thinker"]
+    },
+    {
+      "t": 2257,
+      "title": "Q&A: reasoning traces and how reasoning is taught",
+      "problem": "Should a separate (smaller) model produce the reasoning while a larger model gives the final answer? Are reasoning traces hardcoded or learned?",
+      "why": "Reasoning capability has scaled with model size, and models empirically prefer their own generated traces even over traces from a better model—so mixing models naively is unreliable.",
+      "how": "Bootstrap from CoT-heavy instruction data and templates, then let models generalize through fine-tuning and RL; outcome-reward and process-reward models supply the feedback that teaches better reasoning.",
+      "detail": "<p>Q&A highlights:</p><ul><li>Typically the <b>larger</b> model does reasoning, and you might use a smaller model to summarize the final answer—but \"models like their own traces more,\" even when traces come from a better model.</li><li>How reasoning is taught: \"it's a bit of both.\" The base model already had some thinking capability; CoT is heavily used in instruction-tuning data and templates; much is learned via fine-tuning and RL from synthetic data. No single published work fully covers this.</li><li>The course will cover <b>outcome reward models</b> and <b>process reward models</b>. There is always some bootstrapping (templates, CoT), but models generalize well beyond their training instructions.</li><li>A student asks whether sample count should depend on problem difficulty; absent published work, a <b>reward model</b> with a complexity notion could gate more (repeated or parallel) sampling.</li></ul>",
+      "terms": ["own traces", "outcome reward model", "process reward model", "bootstrapping", "RL from synthetic data"]
+    },
+    {
+      "t": 2449,
+      "title": "From LLMs to agents",
+      "problem": "LLMs as chatbots or reasoning models are essentially single-turn: they are fun to interact with but do not accomplish tasks for you.",
+      "why": "Achieving a task requires more than one generation: the system must hold a goal, plan, interact with an environment, react to feedback, and decide when to stop—plus memory to stay on task.",
+      "how": "Wrap the model in an agent loop—goal, planning, tool calls, environment feedback, self-correction, and stopping conditions—as in Claude Code and Deep Research.",
+      "detail": "<p>Recent agents (Claude Code, Deep Research, Codex) let people complete real workflows end-to-end. Azalia's example: research where to rent a home for a year while taking a Stanford class—the agent browses many sites, summarizes, and returns pros/cons. \"This used to not be possible before.\"</p><ul><li>Distinguishing feature of agents: <b>a goal → plan → take actions → get feedback → decide when to stop</b>.</li><li>They may require <b>external tools</b> and some form of <b>memory</b> to keep track of the task.</li><li>Today's reality is mostly <b>static agentic workflows</b>: one model produces a solution, another judges it and decides whether to accept; Deep Research calls the LLM on multiple inputs and aggregates into a summary.</li><li>Coding and research are where end-to-end autonomy is starting to show \"signs of life.\"</li></ul>",
+      "terms": ["agent", "Claude Code", "Deep Research", "tool use", "memory"]
+    },
+    {
+      "t": 2703,
+      "title": "Agentic workflow building blocks and orchestration",
+      "problem": "Open-ended agent loops are hard to make reliable, so most deployed systems use hand-constructed graphs of LLM calls.",
+      "why": "Decomposing a task into a fixed workflow lets you insert verification and control, which is easier to make dependable than an unconstrained loop.",
+      "how": "Compose primitives—LLM calls, verifiers (unit tests in code/math), critics/judges (LLM-as-judge), tool calls (search, weather)—and orchestrate with prompt chaining, routing, parallelization, and an orchestrator/LLM manager.",
+      "detail": "<p>Typical workflows contain:</p><ul><li><b>LLM calls</b> with an instruction/input, producing an output.</li><li><b>Verifiers</b> (a full lecture is devoted to these) and <b>critics/judges</b>—effectively the LLM-as-judge paradigm.</li><li><b>Tool calls</b>—e.g. web search for Deep Research, looking up the weather.</li></ul><p>Orchestration patterns named: <b>prompt chaining</b> (chaining subtasks to the end goal), <b>routing</b> (complex vs. simple paths), <b>parallelization</b> (independent subtasks run simultaneously, then aggregated), and an <b>orchestrator / LLM manager</b> that plans and issues subsequent LLM calls (as seen in Claude Code). An evaluator or judge can replace real-world test feedback. All of this demands better <b>planning, multi-step reasoning, and self-improvement</b> than plain reasoning LLMs provide.</p>",
+      "terms": ["prompt chaining", "routing", "parallelization", "orchestrator", "LLM-as-judge"]
+    },
+    {
+      "t": 2889,
+      "title": "Coding agents, reliability, and RL",
+      "problem": "A year ago the edit-run-inspect loop of coding agents was unreliable; making it dependable is the crux of useful autonomy.",
+      "why": "The agent must navigate repositories, search/edit files, run terminal commands, and use command output to decide the next edit—errors compound unless the loop is verifiable and self-correcting.",
+      "how": "Same loop as before, enabled by more powerful models, better RL, RL with verifiable rewards, and train-time scaling; once models improve, a self-improvement loop kicks in where the model generates and verifies its own tasks.",
+      "detail": "<p>A coding agent interacts with the computer through the <b>terminal</b>: edit files, navigate/search the repo, run commands, inspect output, and branch to other files. The loop \"very much mirrors\" the agent loop—\"not quite reliable last year,\" now \"just starting to get reliable.\"</p><ul><li>Instructors argue the paradigm is unchanged; progress comes from <b>more powerful models and better RL</b>.</li><li><b>RL with verifiable rewards</b> and <b>train-time scaling</b> are working.</li><li>The <b>self-improvement loop</b>: as models improve, they can <b>generate tasks</b> and the tasks become more reliable; e.g. in <b>Code Monkeys</b>, generating unit tests for model-generated code and checking whether they help is a strong verification signal.</li><li>They invite research projects on making generation/verification more robust.</li></ul>",
+      "terms": ["coding agent", "RLVR", "train-time scaling", "Code Monkeys", "unit tests"]
+    },
+    {
+      "t": 3042,
+      "title": "The generator–verifier gap",
+      "problem": "Models can generate huge amounts of content, but generating is not the same as producing something useful.",
+      "why": "Usefulness requires a feedback signal; where feedback is cheap (math, code, rule-based domains) improvement continues, but in open-ended domains like creative writing human feedback becomes a bottleneck.",
+      "how": "Invest in robust verification—combining verifiers, LLM judges/reward models, tools—and accept that verification, not generation, is the limiting factor.",
+      "detail": "<p>This is the <b>generator–verifier gap</b>: it is easy for models to generate nonsense or plausible reasoning traces, but deciding usefulness needs a feedback loop.</p><ul><li>In domains with good, cheap feedback (math, code, rule-based tasks), continued improvement is possible.</li><li>In domains like <b>creative writing</b>, human feedback \"ends up becoming a bottleneck.\"</li><li>Getting <b>robust verification</b> is hard; Azalia's lab has a paper on <b>combining verifiers</b>, and verification \"continues to be one of the bottlenecks in this space.\"</li><li>A follow-up student discussion asks whether the big jump comes from RL or from diverse pre-training data—instructors say there is <b>no consensus</b>; both help, the loop is not well understood, and it is \"first signs of life\" being commercialized with much research still open.</li></ul>",
+      "terms": ["generator-verifier gap", "verification bottleneck", "creative writing", "RL"]
+    },
+    {
+      "t": 3172,
+      "title": "The agent task loop and repetitive knowledge work",
+      "problem": "Even with a goal, it is often unclear what the user actually wants, and there may be no obvious signal that the task was completed.",
+      "why": "User intent is usually underspecified, so the agent must clarify it, search for the right context, and rely on verification (often tests it generates itself) to know when it is done.",
+      "how": "Use the goal → clarify intent → search → act → verify loop, and target tasks where verification and repetition make delegation easy: code migrations, version upgrades, restructuring, data engineering, data-warehouse migration.",
+      "detail": "<p>One abstraction from the agent chart: even when given a goal, the model must <b>clarify user intent</b>, then search for relevant files, choose actions, and <b>verify</b>—in the coding example, by passing tests it may itself generate.</p><ul><li>The key question is how the agent knows it completed what was asked, since <b>users often do not specify the problem well enough</b>.</li><li>Models like <b>o3</b> have seen many such end-to-end traces, so they can plan, reason, and conclude; much is still needed for full end-to-end goals.</li><li><b>Repetitive tasks</b> are where agents shine: code migrations, version upgrades, code-base restructuring, data extraction and cleanup, and data-warehouse migration—tedious for humans, easy to delegate.</li></ul>",
+      "terms": ["intent clarification", "verification", "code migration", "data engineering"]
+    },
+    {
+      "t": 3279,
+      "title": "Customer support agents",
+      "problem": "Customer support is a high-volume, thankless job, and the domain spans many sub-tasks that are hard to cover with one system.",
+      "why": "Much of support is lookup and summarization rather than deep reasoning, so LLMs can supply live knowledge and drafts that reduce the agent's cognitive load.",
+      "how": "Deploy focused capabilities: live transcription, knowledge assist that surfaces the relevant article from a database, smart reply drafting, and call summaries; some segments are heading toward end-to-end automation.",
+      "detail": "<p>Customer support is called one of the most prevalent agent applications. Concrete LLM capabilities mentioned:</p><ul><li><b>Live transcription</b>—gives a clean record of interactions (now common in meetings too).</li><li><b>Knowledge assist</b>—the support agent does not need to know everything; consult the LLM to get an answer and surface the relevant article, \"better than having just search like an index.\"</li><li><b>Smart replies</b>—agents draft chat responses.</li><li><b>Call summaries</b>—improve the customer experience on their own.</li></ul><p>Multiple companies target this space, each covering a different segment of the problem, with live transcription and lookup-style assist already useful today and some end-to-end automation starting to appear. The pattern generalizes: high-volume, lookup-heavy workflows with cheap feedback are the easiest to delegate to LLM agents.</p>",
+      "terms": ["knowledge assist", "smart replies", "transcription", "call summary"]
+    },
+    {
+      "t": 3359,
+      "title": "Deep research agents",
+      "problem": "Comprehensive reports used to require a manual literature review: read and summarize each paper, then synthesize them.",
+      "why": "The multi-step research process—identify references, judge relevance, summarize, combine—is decomposable, so an agent can automate the pipeline.",
+      "how": "Give the agent a topic; it identifies references to consult, builds an outline, summarizes relevant content from each, and combines them into a full-length article—one of the homework assignments.",
+      "detail": "<p>For complex topics, agents can produce comprehensive reports that previously required a full literature review.</p><ul><li>Pipeline: identify which <b>references</b> to look at → construct an <b>outline</b> judging relevance → <b>summarize</b> each reference's relevant content → <b>combine</b> into a full-length article.</li><li>Example prompt: \"2022 Winter Olympics opening ceremony.\"</li><li>The results are \"very impressive in certain cases\"; students will try it in one of the homeworks, which makes this one of the more directly testable agent capabilities in the course.</li><li>Mechanistically it is a fan-out/fan-in pattern: parallel retrieval and summarization, then aggregation—similar to the parallelization orchestration primitive discussed earlier. The quality bottleneck is reference relevance and faithful summarization, not text generation.</li></ul>",
+      "terms": ["deep research", "literature review", "outline", "summarization"]
+    },
+    {
+      "t": 3409,
+      "title": "AI scientists",
+      "problem": "Scientific discovery is open-ended and expensive; researchers need help generating ideas and iterating on experiments.",
+      "why": "LLMs can act as broad brainstorming engines that combine knowledge from the web, potentially proposing ideas outside an individual researcher's frame.",
+      "how": "Use agents across the research lifecycle—idea generation, experiment iteration, and paper write-up—as in the AI Scientist paper.",
+      "detail": "<p>A forward-looking direction: using research agents as <b>AI scientists</b> to assist with math and science problems.</p><ul><li><b>Idea generation</b>: the LLM brainstorms hypotheses.</li><li><b>Experiment iteration</b>: it helps iterate on the experiments you want to run (from the <b>AI Scientist</b> paper).</li><li><b>Paper write-up</b>: it helps improve the write-up itself.</li><li>Even though these models <b>hallucinate</b>, their ability to generate many ideas—drawing on reading the web—can surface out-of-the-box directions a long-time researcher or someone who only took courses might miss, making them valuable brainstorming partners.</li><li>The trade-off is explicit: creativity/diversity is valuable precisely <i>because</i> generation is cheap, but hallucination means outputs must be filtered—again pushing the bottleneck onto verification and human judgment.</li></ul>",
+      "terms": ["AI Scientist", "idea generation", "experiment iteration", "hallucination"]
+    },
+    {
+      "t": 3485,
+      "title": "Course topics and guest lectures",
+      "problem": "Students need to understand the scope of the course and what distinguishes this offering from the previous one.",
+      "why": "The field moves fast, so the syllabus mixes core lectures with guest lectures from frontier labs to keep content current.",
+      "how": "A mix of lectures, guest talks (post-training evolution, multimodal agents, robotics), and student project presentations, all organized around the same central theme.",
+      "detail": "<p>The course covers a broad list of topics; the <b>overall theme stays the same</b> across the quarter. Format:</p><ul><li><b>Lectures</b> plus <b>guest lectures</b> from people at frontier AI labs.</li><li>Guest topics include how <b>post-training has evolved</b>, and <b>multimodal agents and robotics</b>.</li><li><b>Project presentations</b> by students.</li><li>The reading list (papers) is posted on the website; students are expected to read along to build deeper intuition and can base projects on critiquing or improving those papers.</li><li>Azalia calls the topic list \"very cool\" and stresses the through-line: planning, multi-step reasoning, and self-improvement are the capabilities that run through every week, tying the guest talks back to the core lectures.</li></ul>",
+      "terms": ["guest lectures", "post-training", "multimodal agents", "robotics"]
+    },
+    {
+      "t": 3683,
+      "title": "Course logistics and homeworks",
+      "problem": "Grades and deadlines depend on understanding the mechanics, and the course is large this quarter.",
+      "why": "Because the class is big, policies must be applied uniformly—no exceptions—so students must plan around deadlines.",
+      "how": "Use the website and Canvas for updates; prerequisites, three homeworks this quarter (one more than last offering), a course project, and fixed due dates are posted; lectures are uploaded before class.",
+      "detail": "<p>Logistics:</p><ul><li>Check prerequisites and register only if comfortable; official updates go through <b>Canvas</b>, with an external website for materials.</li><li>Lectures are uploaded before each class; all assignment and project due dates are already posted.</li><li>This quarter has <b>three homeworks</b>—one more than the prior offering—designed with the TAs to help students learn the topics more deeply.</li><li>Plus a <b>course project</b> where students build agentic systems or design experiments around a research question, with examples/suggestions provided.</li><li>Because the class is large this quarter, the instructors say they cannot make exceptions on deadlines, so late days should be used wisely; audits are not allowed and lecture videos will eventually appear on YouTube.</li></ul>",
+      "terms": ["Canvas", "prerequisites", "homeworks", "course project"]
+    },
+    {
+      "t": 3794,
+      "title": "Course project, milestones, and grading",
+      "problem": "Students must scope a research-grade project and manage milestones rather than build a demo.",
+      "why": "The course values research contribution (hypothesis, question, measurable improvement), so negative examples like a survey or a plain app do not qualify.",
+      "how": "Do researchy work: a new eval dataset/benchmark, a reliability study of an existing agentic system, or hill-climbing an existing benchmark; deliver a proposal, midterm progress, a final report, and a poster.",
+      "detail": "<p>Project mechanics and expectations:</p><ul><li>Work in teams of <b>2–4</b> (solo possible); more teammates means more pooled <b>API credits</b> for experiments. Successful prior projects are posted on the website.</li><li>Acceptable directions: a <b>new evaluation dataset/benchmark</b>, a <b>reliability study</b> of an existing agentic system, or <b>hill-climbing an existing benchmark</b>; you can also build on or critique papers from the course.</li><li>Not acceptable: just a <b>survey</b> or a <b>demo app</b> (\"just live coding\"); the project needs a hypothesis and a measurable improvement or property analysis.</li><li>Milestones: project proposal (~early October), midterm presentation with real progress, final report, and poster session <b>December 12, 4–6 pm</b> with industry guests.</li><li>Grading: <b>50% homeworks / 50% project</b>; honor code required.</li><li>Office hours on Canvas; ask questions publicly on <b>Ed Stem</b>; submit milestones/homeworks via <b>GradeScope</b>.</li><li>Late policy is on the generous side but has no exceptions due to class size; no audits; lecture videos eventually on YouTube. Prior students published papers from their projects.</li></ul>",
+      "terms": ["benchmark", "hill climbing", "poster session", "GradeScope", "Ed Stem", "honor code"]
+    }
+  ]
+}

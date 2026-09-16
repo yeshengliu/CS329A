@@ -1,0 +1,56 @@
+[
+  {
+    "id": "6YnLB0XbTnI",
+    "part": "01",
+    "title": "Course Overview",
+    "file": "subtitles/01 - Course Overview.srt"
+  },
+  {
+    "id": "-Ggc37xLj_Y",
+    "part": "02",
+    "title": "Test-Time Compute Scaling",
+    "file": "subtitles/02 - Test-Time Compute Scaling.srt"
+  },
+  {
+    "id": "p7TdPUcPoik",
+    "part": "03",
+    "title": "Robust Verification",
+    "file": "subtitles/03 - Robust Verification.srt"
+  },
+  {
+    "id": "Lxh9RF5S-K0",
+    "part": "04",
+    "title": "Learning from Feedback with Tools and Code",
+    "file": "subtitles/04 - Learning from Feedback with Tools and Code.srt"
+  },
+  {
+    "id": "Ml_fp9XkB8Y",
+    "part": "05",
+    "title": "Planning and Multi-Step Reasoning",
+    "file": "subtitles/05 - Planning and Multi-Step Reasoning.srt"
+  },
+  {
+    "id": "yVnmHSAy3ck",
+    "part": "06",
+    "title": "Train-Time Scaling and Scaling RL",
+    "file": "subtitles/06 - Train-Time Scaling and Scaling RL.srt"
+  },
+  {
+    "id": "Uni9dqyuuDM",
+    "part": "07",
+    "title": "Self-Improvement and Deep Research Agents",
+    "file": "subtitles/07 - Self-Improvement and Deep Research Agents.srt"
+  },
+  {
+    "id": "8JAqLnTaZu4",
+    "part": "08",
+    "title": "Agentic Evaluations and Long Horizon Tasks",
+    "file": "subtitles/08 - Agentic Evaluations and Long Horizon Tasks.srt"
+  },
+  {
+    "id": "AyO6wyu4DEg",
+    "part": "09",
+    "title": "Future Research Areas",
+    "file": "subtitles/09 - Future Research Areas.srt"
+  }
+]

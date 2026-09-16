@@ -1,0 +1,259 @@
+{
+  "n": 8,
+  "title": "Agentic Evaluations and Long Horizon Tasks",
+  "summary": "Classic chatbot/QA/single-shot benchmarks saturate and cannot track agentic progress, so this lecture builds a framework for evaluating long-horizon autonomy along three axes: task duration, real-world economic value, and research-synthesis quality. It walks METR's human-calibrated time horizon (SWAA/EdgeCast/RE-Bench, ~170 tasks from 1s to 8h, doubling every ~7 months at 50% success, far shorter at 80%), OpenAI's GDPval (pairwise win rate vs decade-experienced professionals on top-5%-of-GDP tasks, rising roughly linearly to ~48%), and Stanford's DeepScholarBench (live, contamination-resistant related-work synthesis where no system exceeds 19%). Recurring gaps are reliability, context/reference-data grounding, error recovery, and faithful instruction following rather than raw task length.",
+  "sections": [
+    {
+      "t": 5,
+      "title": "Framing: What Counts as an Agentic Evaluation",
+      "problem": "Most practitioners run no formal evaluation, and the ones who do reach for short, single-purpose tasks that say little about long-horizon autonomy.",
+      "why": "The field lacks a shared definition of an agentic eval; ad-hoc task choices vary wildly in horizon, tool use, and grounding, so they cannot track progress.",
+      "how": "The instructor polls the room, collects concrete eval examples, then lays out the lecture's three anchor papers: METR, GDPval, and DeepScholarBench.",
+      "detail": "<p>The instructor opens by polling who has run an evaluation and what tasks they used. Answers cluster around <b>multihop QA</b> (HotpotQA-style), <b>SweBench</b>, and an agent that distills a <b>private wiki</b> into notes before feeding a coding agent.</p><ul><li>The framing question is what makes <b>agentic evaluations hard</b> relative to prior evaluation regimes.</li><li>Three anchor papers structure the lecture: <b>METR</b> (time horizon of completable tasks), <b>GDPval</b> (real-world economically valuable tasks, OpenAI), and <b>DeepScholarBench</b> (live generative research synthesis, Stanford).</li><li>These evals differ along <b>task duration</b>, <b>economic value</b>, and <b>grounding in reference data</b>; each is a distinct measurement axis.</li><li>They are also more expensive and higher-variance than chat/QA suites because they require tool loops and human grading.</li><li>The instructor warns that any benchmark is a representation of what we believe is measurable, not ground truth.</li></ul>",
+      "terms": ["agentic evaluation", "multihop QA", "SweBench", "private-wiki QA", "METR", "GDPval", "DeepScholarBench"]
+    },
+    {
+      "t": 164,
+      "title": "Why Measure: Saturation, Capability, and Economic Value",
+      "problem": "Traditional chatbot, question-answering, and single-shot benchmarks whose answer is already in context are saturating quickly.",
+      "why": "We must forecast capability and economic/safety impact, and shallow in-context recall scores no longer discriminate frontier agents.",
+      "how": "Track two complementary metrics -- METR's human-calibrated time horizon (capability) and GDPval's win rate vs experts (economic value) -- then add a third for research synthesis.",
+      "detail": "<p>The instructor frames the core challenge: to assess AI progress we must measure <b>what matters</b>, and what matters now spans both <b>capability</b> and <b>economic/safety impact</b>.</p><ul><li>Four to five years ago, merely generating a fluent explanation was a milestone; today we ask whether models affect economics or safety.</li><li><b>Traditional benchmarks</b> -- chatbots, question answering, and single-shot tasks whose answer is already in context -- are <b>saturating quickly</b>.</li><li>Two complementary metrics are introduced: <b>METR</b> measures the <b>time horizon</b> of tasks (how long or complex a task a model can finish), calibrated by human professionals; <b>GDPval</b> measures the model's <b>win rate</b> versus experts on real work.</li><li>Both are equally valid and yield similar qualitative insights, but the <b>trends they measure differ</b> -- exponential versus roughly linear.</li><li>A third metric, research-synthesis quality, is added via DeepScholarBench.</li></ul>",
+      "terms": ["benchmark saturation", "single-shot", "time horizon", "win rate", "economic impact", "capability"]
+    },
+    {
+      "t": 272,
+      "title": "The Time Horizon: Duration plus Reliability",
+      "problem": "A raw can-the-model-do-this question is too coarse; there is no unit of how long a model can keep working or how often it succeeds.",
+      "why": "Chatbots lost context after a few turns, so sustained multi-turn work is itself new; and duration without reliability is meaningless for deployment.",
+      "how": "METR measures task duration and associates a reliability level (e.g. 50% or 80% success) with it, anchored to how long human professionals need.",
+      "detail": "<p>The horizon framing starts from a concrete observation: three to five years ago a chatbot would lose the thread after a couple of turns, whereas today conversations stay coherent over long multi-turn exchanges. That contextual endurance is the raw substrate for long-horizon work.</p><ul><li><b>METR</b> therefore measures two things: the <b>duration</b> of the task the model can complete and the <b>reliability</b> with which it does so.</li><li>Reliability is reported as a success threshold -- e.g. completion with <b>50% success</b> versus <b>80% success</b>.</li><li>The universal anchor for difficulty is <b>how long a human professional</b> takes on the same task, making durations comparable across domains.</li><li>Horizon is not a single number: the 50%-reliability and 80%-reliability horizons can differ by an order of magnitude.</li></ul>",
+      "terms": ["time horizon", "reliability", "success rate", "duration", "human professional"]
+    },
+    {
+      "t": 342,
+      "title": "METR's Three Suites, from Seconds to Eight Hours",
+      "problem": "No single task set spans the full range from atomic software actions to multi-hour ML research.",
+      "why": "To fit a horizon curve you need tasks whose human completion times cover several orders of magnitude.",
+      "how": "METR combines three suites -- SWAA (1-30s atomic), EdgeCast (1 min-30h diverse SWE/research), RE-Bench (up to 8h ML research) -- about 170 tasks total.",
+      "detail": "<p>METR assembles three suites to span the duration range:</p><ul><li><b>SWAA-style small suite:</b> <b>1-30 seconds</b>, purely <b>atomic software actions</b> (e.g. open a file) -- about <b>66 tasks</b>.</li><li><b>EdgeCast:</b> <b>1 minute to ~30 hours</b> of diverse software and research engineering tasks -- about <b>97 tasks</b>.</li><li><b>RE-Bench:</b> full <b>ML research</b> tasks up to about <b>8 hours</b> (AI-scientist style) -- only about <b>7 tasks</b>.</li><li>In total roughly <b>170 tasks</b> from one second to eight hours, mapped onto a single duration axis.</li><li>Example tasks span finding a shell script (~3 s) through detecting and fixing a bug in a simulation's input files (~10 min) to implementing custom <b>CUDA kernels</b> to a performance target (tens of hours, capped near 8 h).</li><li>The spread lets success rate be plotted smoothly against human time.</li></ul>",
+      "terms": ["SWAA", "EdgeCast", "RE-Bench", "task suite", "CUDA kernel", "AI scientist"]
+    },
+    {
+      "t": 410,
+      "title": "Constructing the Curve from Human Completion Times",
+      "problem": "Turning raw task outcomes into a single horizon number requires a principled aggregation pipeline.",
+      "why": "A model may pass some tasks and fail others in the same human-time bucket, so per-task results must be summarized into a curve.",
+      "how": "Collect and vet tasks, record human and agent time estimates, then fit success rate against human time and read off the horizon at a chosen reliability.",
+      "detail": "<p>The horizon number is produced by a pipeline, not a single score:</p><ul><li>Tasks are <b>collected and vetted</b> for each suite so the suite is representative.</li><li>For each task, <b>human runs</b> estimate completion time and difficulty; <b>agent runs</b> measure whether the task is completed reliably.</li><li>Given enough data points, METR <b>fits a curve of success rate versus human time estimate</b> and reads off the horizon at a chosen reliability.</li><li>Horizons are then plotted against <b>model release dates</b>, yielding the trend the lecture examines next.</li><li>This design makes a single time-horizon number meaningful, but the number also inherits every bias in the human estimates and in the fit.</li></ul>",
+      "terms": ["task vetting", "success-rate curve", "time estimate", "release date", "horizon fit"]
+    },
+    {
+      "t": 474,
+      "title": "Class Calibration: What Takes Minutes vs Hours",
+      "problem": "Students must calibrate which duration bucket a realistic task actually falls into.",
+      "why": "Suite assignment depends on human completion time, and students systematically underestimate how long real tasks take.",
+      "how": "The instructor solicits minute-scale and hour-scale tasks students would delegate, then maps each to SWAA, EdgeCast, or RE-Bench.",
+      "detail": "<p>To build intuition, the instructor asks students for a task taking a couple of minutes and one taking a couple of hours that they would delegate.</p><ul><li>A several-hour task lands in <b>EdgeCast or RE-Bench</b> territory.</li><li>Double-checking a bibliography entry by querying the right websites maps to the <b>EdgeCast</b>-style diverse-task bucket.</li><li><b>Refactoring code</b> can be small or large: moving code while preserving logic may take a few hours to a couple of days, and someone must verify correctness -- pushing it toward RE-Bench.</li><li>The exercise shows that suite assignment depends on <b>human completion time</b>, not on how a task &quot;feels.&quot;</li><li>It also surfaces a recurring theme: <b>verification cost</b> is often the hidden part of a task's true duration.</li></ul>",
+      "terms": ["task calibration", "refactoring", "bibliography verification", "EdgeCast", "RE-Bench", "verification cost"]
+    },
+    {
+      "t": 596,
+      "title": "Human Baselines: Experts, Agreement, Cost, and Bias",
+      "problem": "Human completion time is the universal anchor, but it varies across people and is expensive to collect at scale.",
+      "why": "Many experts per task is costly, the estimate is a distribution rather than a point, and expert self-assessment is systematically biased.",
+      "how": "Use a few skilled professionals (~5 years experience), record successful-attempt times, take a geometric mean for difficulty, check inter-human agreement, and gather more points only when estimates diverge.",
+      "detail": "<p>Human completion time is the anchor, but it is a distribution and expensive to collect.</p><ul><li>Rather than many experts, METR typically has <b>a few skilled professionals</b> (~<b>5 years</b> experience) solve each task, records times on <b>successful attempts</b>, and takes a <b>geometric mean</b> as the difficulty rating.</li><li><b>Inter-human agreement</b> is checked; more data points are gathered only when estimates diverge. Many experts would give a better distribution but cost far more.</li><li><b>Example ladder:</b> find a shell script (~3 s); Wikipedia research; detect/fix a bug in simulation input files (~10 min); munging JSON between formats; implement custom CUDA kernels to a target (up to ~8 h).</li><li><b>Expert bias:</b> experienced annotators are conditioned to know what &quot;success&quot; means and often <b>underestimate difficulty</b>, which may not match how a model perceives the task.</li></ul>",
+      "terms": ["geometric mean", "inter-rater agreement", "expert bias", "annotation cost", "human baseline", "CUDA kernel"]
+    },
+    {
+      "t": 757,
+      "title": "The Horizon Plot and the Seven-Month Doubling",
+      "problem": "It is unclear whether models really complete ever-longer tasks or whether reported gains are artifacts of easy tasks.",
+      "why": "A success-rate-versus-duration curve across suites and release dates is needed to see a trend and explain which capabilities move it.",
+      "how": "Plot success against human time, read the horizon at 50% success, compare release dates, and attribute gains to reasoning, code, tools, reliability, error recovery, and context engineering.",
+      "detail": "<p>On the horizon plot, the x-axis is human completion time and the y-axis is model success rate.</p><ul><li><b>SWAA (small) tasks</b> generally sit high; <b>EdgeCast</b> tasks scatter from about <b>0.8 down to 0</b>; <b>RE-Bench</b> tasks sit low -- <b>longer tasks are harder</b> to stay on track with.</li><li>Reading the horizon at <b>50% success</b> by release date: <b>GPT-2</b> (2019) ~<b>2 seconds</b>; <b>GPT-4</b> (2023) ~<b>8 minutes</b>; <b>Claude 3.7 Sonnet</b> (2025) up to <b>59 minutes</b> -- an apparent <b>doubling roughly every 7 months</b>.</li><li>The caveat: 50% success means the model fails half the time -- like an intern who only sometimes returns an answer, so uncertainty always remains.</li><li><b>Drivers</b> include better logical reasoning, code generation, tool use (ReAct), non-repetitive reliability, <b>error recovery</b>, goal awareness/memory of progress, and context engineering.</li></ul>",
+      "terms": ["doubling time", "GPT-2", "GPT-4", "Claude 3.7 Sonnet", "error recovery", "context engineering"]
+    },
+    {
+      "t": 895,
+      "title": "What Drives Progress: Reasoning, Code, Tools, Recovery",
+      "problem": "The horizon trend needs a mechanism; it is not obvious which capabilities produce longer autonomous runs.",
+      "why": "Longer tasks compound errors, so progress requires more than better next-token quality.",
+      "how": "Attribute gains to improved logical reasoning, code generation, tool use (ReAct), non-repetitive reliability, error recovery, goal/state awareness, and context management.",
+      "detail": "<p>Why do horizons keep growing? The instructor attributes the improvement to several concrete capabilities rather than scale alone.</p><ul><li><b>Logical reasoning:</b> models learned to reason in ways covered by earlier lectures, which helps decompose and execute multi-step tasks.</li><li><b>Code generation:</b> stronger coding drives gains on SWE and ML-research suites.</li><li><b>Tool use:</b> ReAct-style tool selection and invocation is now more reliable.</li><li><b>Reliability:</b> models repeat behavior less often and avoid getting stuck.</li><li><b>Error recovery:</b> an 8-hour task will contain wrong steps, so the model must detect and recover from them.</li><li><b>Goal awareness and memory:</b> the model must track the final goal and how far it has progressed.</li><li><b>Context engineering:</b> managing context across many steps (compaction, planning, replanning) is itself a major driver.</li></ul>",
+      "terms": ["logical reasoning", "code generation", "ReAct", "error recovery", "goal awareness", "context engineering"]
+    },
+    {
+      "t": 992,
+      "title": "Class Discussion: Context Engineering, Compaction, Replanning",
+      "problem": "Why do coding agents such as Claude Code improve year over year?",
+      "why": "Mechanisms inside the agent loop, not just the base model, determine long-horizon success.",
+      "how": "Collect student explanations: context engineering, compaction, planning/replanning, user-feedback loops, online RL from logs, and memory of the environment.",
+      "detail": "<p>The instructor asks why Claude Code and similar coding agents are better today than a year ago, and collects several mechanisms.</p><ul><li><b>Context engineering:</b> structuring context better across many steps is a new discipline that improves the tooling.</li><li><b>Compaction:</b> when the context window fills, the agent summarizes and compresses history and continues.</li><li><b>Planning and replanning:</b> on complex problems the agent first breaks the task into steps, and when execution reveals new data it may generate a <b>new set of steps</b>.</li><li><b>User feedback:</b> when the user says the output is wrong, the agent redoes the work -- like an assignment sent back.</li><li><b>Online RL from user logs:</b> students speculate products such as Cursor learn from real usage logs.</li><li><b>Memory of the environment:</b> understanding the codebase helps the agent once it has operated there before.</li></ul>",
+      "terms": ["context engineering", "compaction", "replanning", "user feedback", "online RL", "memory"]
+    },
+    {
+      "t": 1219,
+      "title": "The Reliability Axis: The 50% vs 80% Horizon Gap",
+      "problem": "A 59-minute horizon sounds deployable until you demand confidence: at 80% success the same model sustains far less.",
+      "why": "Capability and reliability are separate axes; a 50% success rate is unacceptable when a failed run has real cost.",
+      "how": "Report multiple reliability curves (gray = 50%, blue = 80%) and compare horizons at each; the gap quantifies headroom for systems built on top of the model.",
+      "detail": "<p>The reliability view re-plots the same horizon data with a higher bar.</p><ul><li>The <b>gray line</b> is 50% reliability; the <b>blue line</b> is <b>80% success rate</b>. x-axis is release date, y-axis is model time-to-complete.</li><li>For <b>Claude 3.7 Sonnet</b>, the 50% horizon is <b>59 minutes</b>, but the <b>80% horizon is roughly 15 minutes</b> (one plot suggests 8-10 minutes) -- a large delta.</li><li>The doubling time (~7 months) is similar on both curves, but the absolute deployable duration is far lower at 80%.</li><li>Implication: deploying models on real tasks hits <b>reliability challenges even for moderately complex tasks</b>, leaving headroom for <b>systems built on top</b> (verification, retries, tools).</li><li>This is also a cost/variance problem: failed attempts consume tokens and wall-clock time, and low success rates multiply them.</li></ul>",
+      "terms": ["reliability", "80% success", "50% success", "deployment gap", "headroom", "variance"]
+    },
+    {
+      "t": 1355,
+      "title": "Failure Modes of Long-Horizon Agents",
+      "problem": "Long tasks compound errors, but it is unclear which failure categories dominate and whether reasoning models fix them.",
+      "why": "Reaching a goal over many steps requires correct decomposition, tool choice, and global state awareness.",
+      "how": "METR classified failures on a non-reasoning model (GPT-4o) versus a reasoning model (o1): poor planning, poor tool choice, incorrect reasoning, premature abandonment, and repetitive loops.",
+      "detail": "<p>METR's failure analysis compares a non-reasoning model (<b>GPT-4o</b>) with a reasoning model (<b>o1</b>); the categories are the learning signal.</p><ul><li><b>Poor planning:</b> the model fails to break the given task into steps.</li><li><b>Poor tool choice:</b> it selects an inappropriate tool or malformed call.</li><li><b>Incorrect mental math / reasoning:</b> it attempts reasoning but gets it wrong.</li><li><b>Premature abandonment:</b> it loops on repetitive behavior and cannot determine what success means.</li><li><b>Repetitive loops:</b> after an action fails it remains the highest-probability action, so the model repeats it; this was high for GPT-4o and <b>lower for o1</b>.</li><li>Failure-mode analysis is standard on hard benchmarks and is exactly the self-refinement homework task: find where the agent's loop broke down.</li><li>These modes (planning, tool choice, goal detection, loops) map directly onto the capabilities needed for longer horizons.</li></ul>",
+      "terms": ["failure modes", "poor planning", "tool selection", "premature abandonment", "repetitive loop", "o1"]
+    },
+    {
+      "t": 1521,
+      "title": "METR's Limitations: Messiness, Contamination, Contractors",
+      "problem": "Horizon scores are optimistic proxies, distorted by distribution mismatch and training-data contamination.",
+      "why": "Suites reward clean, verifiable outcomes; models have seen public repos; annotators underestimate durations; and models lack an expert's accumulated context.",
+      "how": "Treat the numbers as bounded: expect lower messy-task performance, discount contamination-prone suites, and compare model behavior against low-context humans (contractors).",
+      "detail": "<p>The instructor stresses that no benchmark is perfect; METR is a first attempt at measuring time horizon and has three concrete limitations.</p><ul><li><b>Messiness:</b> performance is lower on tasks with no single correct answer or extra complexity, though similar trend shapes recur across categories.</li><li><b>Contamination:</b> on <b>SWE-bench</b> the models have seen most public GitHub repositories and annotators underestimate durations, so estimates are <b>shorter than they would be on unseen repos</b>.</li><li><b>Context gap:</b> for internal pull requests, <b>contractors</b> (no codebase context) are <b>5-18x slower</b> than <b>maintainers</b>, and model performance tracks closer to <b>contractor times</b>.</li><li>Implication: the model operates as a <b>low-context worker</b>, valuable but not an area expert; when accumulated context matters, the model is at a disadvantage.</li></ul>",
+      "terms": ["data contamination", "SWE-bench", "contractor vs maintainer", "messiness", "context gap", "low-context worker"]
+    },
+    {
+      "t": 1672,
+      "title": "GDPval: Scoring Real Work Against Experts",
+      "problem": "Horizon metrics say nothing about economic usefulness, and there was no quantitative way to measure which professional tasks models can do.",
+      "why": "Real work is subjective, multimodal, and context-heavy, so it cannot be reduced to pass/fail unit tests.",
+      "how": "GDPval sources real deliverables from professionals with 10+ years experience and scores models by pairwise win rate against those experts.",
+      "detail": "<p><b>GDPval</b> (OpenAI) flips the question: if a task were handed to the model instead of a professional, is the output <b>good enough</b>?</p><ul><li>Tasks are real deliverables sourced from professionals with <b>10+ years</b> of experience across a broad set of industries.</li><li>Scoring is a <b>pairwise win rate</b> against those experts, reported as <b>wins+ties</b> and <b>wins-only</b> preferences.</li><li>Because the models are multimodal, the suite includes video, CAD, audio, spreadsheets, and presentations, not just text.</li><li>The design deliberately accepts subjectivity: real work is evaluated relative to a human expert rather than a single ground-truth answer, capturing whether output is useful rather than exactly right.</li></ul>",
+      "terms": ["GDPval", "win rate", "pairwise preference", "expert", "multimodal deliverable"]
+    },
+    {
+      "t": 1746,
+      "title": "GDPval Example Tasks Across Professions",
+      "problem": "Concrete examples are needed to judge which real deliverables are tractable.",
+      "why": "Task realism and subjectivity determine whether a win rate is meaningful.",
+      "how": "Walk through the suite: manufacturing, finance, nursing, video editing, customer service, concierge, audit, real estate, and recreation tasks, all sourced from professionals.",
+      "detail": "<p>Concrete tasks make the abstraction tangible; all are sourced from professionals in their fields.</p><ul><li><b>Manufacturing engineer:</b> design a 3D model of a cable-reel stand for an assembly line.</li><li><b>Financial/investment analyst:</b> create the competitive landscape (research heavy).</li><li><b>Registered nurse:</b> assess images of an issue and produce a consultation report.</li><li><b>Film/video editor:</b> create an intro reel from a script.</li><li><b>Customer service:</b> draft an email response to a dissatisfied customer.</li><li><b>Concierge:</b> build an itinerary for a family of four.</li><li><b>Auditor:</b> find pricing inconsistencies across purchase orders.</li><li><b>Real-estate agent:</b> design a sales brochure for a new property.</li><li><b>Recreation worker:</b> optimize the layout for a vendor fair.</li></ul><p>These range from objective (audit) to subjective (brochure), which motivates the win-rate metric and the later discussion of context.</p>",
+      "terms": ["manufacturing engineer", "competitive landscape", "consultation report", "vendor fair", "sales brochure", "audit"]
+    },
+    {
+      "t": 1822,
+      "title": "Subjectivity, Win Rate, and Expert Context",
+      "problem": "Many real tasks are subjective, so no single correct answer exists and a model's chosen style may not hold for all cases.",
+      "why": "Real work requires both context and subjective judgment; capability and appropriateness are separate questions.",
+      "how": "Use pairwise preference versus experts; separate can-models-do-it from should-we-deploy-it; prefer deliverables with a fairly clear working/not-working signal.",
+      "detail": "<p>Students note that many tasks are <b>subjective</b> -- there may be no single right answer, and a model's chosen style may not hold for all cases. The instructor agrees and separates concerns.</p><ul><li>Subjectivity is exactly why GDPval uses a <b>win rate</b> rather than pass/fail, and why real work requires both <b>context</b> and subjective judgment.</li><li>The instructor separates whether models are good at a task from whether we want to use them for <b>ethics/compliance</b> -- e.g. legal tasks may be capable but not appropriate to delegate.</li><li>Healthcare examples skew to <b>registered nurses/nurse practitioners</b> rather than doctors; music composition may appear later but is not in the benchmark yet because <b>verification is hard</b>.</li><li>The discussion favors deliverables with a <b>fairly clear working/not-working signal</b>, which makes grading tractable.</li></ul>",
+      "terms": ["subjectivity", "win rate", "pairwise preference", "compliance", "verification", "multimodal"]
+    },
+    {
+      "t": 2020,
+      "title": "GDPval Dataset Anatomy: Top 5% of GDP, 220 Tasks",
+      "problem": "The suite must represent economically valuable work and be well specified, or win rates reflect prompt artifacts.",
+      "why": "Coverage and specification determine whether results generalize to the professions the benchmark claims to measure.",
+      "how": "Build top-down across 9 sectors targeting the top 5% of GDP, 44 occupations and ~220 gold tasks, with multimodal artifacts and expert vetting.",
+      "detail": "<p>The suite is built top-down to be economically representative:</p><ul><li><b>9 sectors</b> chosen to target the <b>top 5% of GDP</b> -- the most economically valuable tasks.</li><li><b>44 occupations</b> and roughly <b>220 tasks</b> in the open <b>gold set</b>, with about <b>60%</b> of computer-based <b>O*NET</b> tasks included.</li><li>Task characteristics: average completion up to <b>~7 hours</b>, some spanning <b>weeks</b>; text plus <b>multimodal</b> artifacts (CAD, video, audio, spreadsheets, presentations); average task value around <b>$400</b>.</li><li>About <b>70%</b> of tasks require <b>interacting with reference files</b> to reach the final output.</li><li>About <b>89%</b> of tasks were <b>vetted by experts</b> as well specified -- not ill-specified traps that would fail models for the wrong reason.</li></ul>",
+      "terms": ["O*NET", "gold set", "top 5% of GDP", "reference files", "multimodal deliverable", "task value"]
+    },
+    {
+      "t": 2139,
+      "title": "GDPval Trend: Linear Win-Rate Growth",
+      "problem": "Economic win rate improves far more slowly than METR's exponential horizon story suggests.",
+      "why": "Real work requires tacit knowledge and faithful reference-data use, so models cannot substitute fluent generation for grounding.",
+      "how": "Plot win rate against model generation, report wins+ties vs wins-only, compare to METR in Q&A, and break results down by profession.",
+      "detail": "<p>Win rate versus model generation tells a different story than METR.</p><ul><li>x-axis: models from <b>GPT-4o</b> through <b>GPT-5-high</b> to <b>Claude Opus 4.1</b>; y-axis: win rate versus an industry professional. Light blue is <b>wins+ties</b>; dark blue is <b>wins only</b>.</li><li><b>GPT-4o</b> (2024) averages about <b>12.4%</b>; by 2025 models reach the 20s-30s; <b>Claude Opus 4.1</b> reaches about <b>47.6%</b>.</li><li>This is a <b>roughly linear</b> trend, not the ~7-month exponential doubling of METR.</li><li>In Q&A the instructor says the two are not directly comparable -- different metrics -- but GDPval shows that on multi-hour to multi-week, profession-specific real work models are <b>only so reliable</b>.</li><li>Breaking performance down <b>by profession</b> makes the assessment more realistic than a single hours-based number.</li></ul>",
+      "terms": ["win rate", "GPT-4o", "Claude Opus 4.1", "linear trend", "tacit knowledge", "reference data"]
+    },
+    {
+      "t": 2330,
+      "title": "Model Strengths, Instruction-Following Failures, Output Quality",
+      "problem": "The dominant failures are instruction following and grounding, not raw reasoning, and usefulness is capped by context the model lacks.",
+      "why": "Real tasks are well specified but require tacit knowledge and faithful use of provided reference data.",
+      "how": "Decompose failures by type and sector, grade output quality, and compare model profiles on aesthetics, formatting, calculations, and text.",
+      "detail": "<p>Two analyses dominate this chunk: which models are strong where, and what actually fails.</p><ul><li><b>Strengths:</b> some models win on <b>aesthetics, document formatting, PDFs, spreadsheets, and presentations</b>; GPT-5 tends to win on <b>instruction following, correct calculations, and text tasks</b>.</li><li><b>Failure modes</b> are dominated by <b>instruction following</b>: models <b>promise to consult reference data but do not</b>, override it with hallucinated content, and make formatting errors. GPT-5 shows fewer reference-data instruction failures.</li><li><b>Usefulness distribution:</b> roughly <b>half</b> of tasks are <b>acceptable but subpar</b> if delegated; about <b>20%</b> are tasks where the model would <b>genuinely be better</b>; about <b>29%</b> are <b>bad or catastrophic</b>.</li><li>There is measurable <b>disagreement between human graders</b>, which adds noise to these numbers.</li></ul>",
+      "terms": ["instruction following", "hallucination", "document formatting", "output quality", "grader disagreement", "aesthetics"]
+    },
+    {
+      "t": 2434,
+      "title": "Self-Refinement: n Attempts, 1.6x Cost, 1.4x Speed",
+      "problem": "One-shot win rates understate what iterative self-correction can add.",
+      "why": "Parallel and sequential sampling with self-correction can recover quality, directly relevant to a self-improving-agents class.",
+      "how": "Compare a single trial with n attempts where each iteration improves on the last; measure cost and speed versus an unaided expert and against salary.",
+      "detail": "<p>Because the course is about self-improving agents, the instructors test iterative self-correction.</p><ul><li>Protocol: a naive <b>single trial</b> versus <b>n attempts</b>, where in the sequential case each iteration is asked to improve on the previous one (parallel or sequential sampling).</li><li>Reported gains for <b>GPT-5</b>: about <b>1.6x cost improvement</b> and about <b>1.4x speed improvement</b> relative to an unaided expert.</li><li>Even when successful, the run still costs <b>less than 10% of a human expert's salary</b> -- so a subset of professions is already strongly served.</li><li>The caveat is that these gains apply <b>where the model is successful</b>; they do not remove the underlying reliability gap, and repeated attempts multiply evaluation cost.</li><li>This connects the evaluation to the self-improvement theme: sampling plus self-correction is a first-order knob.</li></ul>",
+      "terms": ["parallel sampling", "sequential sampling", "self-refinement", "cost improvement", "expert salary", "reliability"]
+    },
+    {
+      "t": 2514,
+      "title": "Sector Variation and Where Models Reach Parity",
+      "problem": "Aggregate win rate hides large per-occupation variation.",
+      "why": "Some task categories suit model strengths (digital, text, research) while others require expertise models lack.",
+      "how": "Compare per-occupation win rates against the red human-expert line and identify where models reach or exceed parity.",
+      "detail": "<p>Aggregate win rate hides large variation, so the lecture drills into occupations (red line = human expert; each color = a model).</p><ul><li><b>Approaching or at parity:</b> counter/rental clerks, real-estate brokers, shipping/receiving and inventory clerks, buyers and purchasing agents, computer/IT system managers, and software developers.</li><li><b>Doing extremely well:</b> government administrative service managers, compliance officers, medical and health service managers, personal financial advisors, customer service representatives, plus sales, editing, investigative/detective, and news-analyst tasks.</li><li><b>Caveat on software:</b> the human baseline may be repository <b>maintainers</b> rather than a full decade of experience; in fields such as industrial/mechanical engineering, decade-long expertise matters more.</li><li>These plots act as a <b>taxonomy</b> of where models are useful today and a starting point for studying failures.</li></ul>",
+      "terms": ["occupation parity", "real-estate brokers", "software developers", "compliance officers", "taxonomy", "maintainer"]
+    },
+    {
+      "t": 2740,
+      "title": "Underspecification and the Context Gap",
+      "problem": "When prompts are underspecified or require gathered context, models cannot figure out what to work on.",
+      "why": "Real work is context-heavy; humans hold context in their heads and architect the problem, while models cannot yet acquire it autonomously.",
+      "how": "Test underspecified prompts, compare contractor vs maintainer, frame near-term value as AI assistance with human oversight, and prioritize task categories over dollar value.",
+      "detail": "<p>The last GDPval theme is what models cannot do without help.</p><ul><li><b>Underspecification:</b> removing context from prompts lowers win rate only a few points, but the model's <b>output quality degrades more</b> because it cannot figure out <b>what to work on</b>.</li><li><b>Context gap:</b> a repository <b>maintainer</b> is far faster than an external <b>contractor</b>; models behave like the low-context contractor and cannot gather that context themselves.</li><li>Hence in real work <b>humans architect the set of problems</b> and supply context; the model then executes. Near-term, AI assistance is <b>cost-effective when coupled with human oversight</b>, and different models suit different task types.</li><li>On dollar value: the amount matters less than the <b>category of task</b> (deep research, code generation, synthesizing diverse sources); the benchmark is a quantifiable <b>taxonomy</b> of valuable categories.</li></ul>",
+      "terms": ["underspecification", "context gap", "contractor vs maintainer", "human oversight", "task taxonomy", "delegation"]
+    },
+    {
+      "t": 3094,
+      "title": "DeepScholarBench: Live Related-Work Synthesis",
+      "problem": "Real work also requires grounding in knowledge bases, not just long duration or economic value.",
+      "why": "Models are frozen at a knowledge cutoff, may miss foundational papers, and coherent writing is not the same as coverage or verifiability.",
+      "how": "DeepScholarBench (Stanford) generates related-work sections from recent PhD-level papers across 22 domains, rerun monthly and restricted to post-training papers; three human-validated axes.",
+      "detail": "<p><b>DeepScholarBench</b> (Stanford) targets the related-work section of a paper -- a task a classmate asked for and that practitioners constantly need.</p><ul><li><b>Live and contamination-resistant:</b> built from <b>recent arXiv papers</b> at PhD-level difficulty across <b>22 domains</b>, <b>rerun monthly</b> with new papers, and restricted to papers published <b>after a major model's training cutoff</b>.</li><li>Task: retrieve relevant references, synthesize findings into coherent claims, and support them with <b>verifiable citations</b>.</li><li>Prior art includes OpenAI Deep Research, Gemini Deep Research, Perplexity, Stanford's <b>STORM</b>, and <b>OpenScholar</b>.</li><li>Three human-validated axes: <b>knowledge synthesis</b> (coherent, captures key facts), <b>retrieval quality</b> (relevance, citation counts, foundational-paper coverage), and <b>verifiability</b> (do citations actually support the claims).</li><li>Metrics agree with humans about <b>70-80%</b> of the time.</li></ul>",
+      "terms": ["DeepScholarBench", "live benchmark", "data contamination", "knowledge synthesis", "retrieval quality", "verifiability"]
+    },
+    {
+      "t": 3318,
+      "title": "DeepScholarBench Results: No System Above 19%",
+      "problem": "Despite industrial deep-research prototypes, quality and verifiability remain far below expert level.",
+      "why": "Success requires finding comprehensive foundational sources, surfacing key facts, and keeping citations faithful -- capabilities current systems lack.",
+      "how": "Report per-axis scores and failure modes; probe retrieval and synthesis separately; vary whether perfect sources are supplied to isolate the bottleneck.",
+      "detail": "<p>Unlike most benchmarks, this one has enormous headroom: <b>no existing system exceeds 19%</b>.</p><ul><li><b>Knowledge synthesis:</b> OpenAI Deep Research writes well but <b>almost all models consistently miss key facts</b> -- coherent English without full coverage.</li><li><b>Retrieval quality:</b> overall only <b>okay-ish</b>; all systems struggle to find comprehensive and important sources; <b>document importance is below 12.5%</b>.</li><li><b>Verifiability:</b> DeepScholarBench reaches up to about <b>90% precision</b>, but Open Deep Research has lower verifiability despite fluent prose.</li><li><b>Failure modes:</b> not finding <b>foundational papers</b>; poor assessment of document importance; even when given the <b>perfect sources</b>, key-fact coverage is only about <b>50%</b>.</li><li><b>Trade-off:</b> no system excels at both synthesis quality and verifiability -- exactly the precision/recall balance an occupation needs.</li></ul>",
+      "terms": ["19% ceiling", "foundational papers", "key-fact coverage", "document importance", "precision/recall", "verifiability"]
+    },
+    {
+      "t": 3513,
+      "title": "DeepScholarBench Q&A and Synthesis in Horizon Terms",
+      "problem": "Why single out this narrow task, and how does it relate to horizon and economics?",
+      "why": "Real-world tasks need knowledge-base grounding, and related work is a representative, economically valuable research-synthesis task.",
+      "how": "Q&A clarifies claims/citations coverage, then the instructor places synthesis on the horizon axis and attributes gaps to multi-step reasoning, information gathering, verifiability, and context engineering.",
+      "detail": "<p>Q&A clarifies the benchmark, then the instructor places it on the horizon axis.</p><ul><li>Experts provide a <b>list of foundational papers</b>, but the benchmark also checks whether the written <b>claims</b> are supported and which papers back them -- not just the count retrieved.</li><li>On the METR duration axis, research-synthesis tasks are estimated at <b>30 minutes to 8 hours</b>, while current capability sits around <b>50 minutes</b>, often with only <b>~50% success</b>.</li><li>A task can look long-horizon on the plot yet produce low-quality, low-verifiability output -- duration and quality are different axes.</li><li>Gaps come from <b>multi-step reasoning</b>, comprehensive information gathering, and <b>maintaining verifiability while synthesizing</b>.</li><li>This mirrors homework 3: combining multiple agent calls requires <b>context engineering</b> across distributed sources and repeated tool calls while preserving provenance.</li></ul>",
+      "terms": ["related-work synthesis", "claims and citations", "multi-step reasoning", "context engineering", "distributed sources", "verifiability"]
+    },
+    {
+      "t": 3773,
+      "title": "Benchmark Comparison and Known vs Low-Confidence Gaps",
+      "problem": "Each benchmark measures one axis, so no single number tells you whether agents are deployable on real work.",
+      "why": "All three are proxies with known limitations, and confidence varies sharply by task type.",
+      "how": "Compare the three on scoring, multi-agent structure, resource constraints, and subjectivity, then list what is well established versus what remains low-confidence.",
+      "detail": "<p>The instructor compares the three benchmarks and separates confident from uncertain claims.</p><ul><li><b>METR:</b> automatically scored, no multi-agent interaction, no resource constraints, and <b>not punishing of mistakes</b> -- it targets single-agent, cleanly verifiable tasks.</li><li><b>GDPval:</b> tasks are <b>extremely well specified</b> (the human's implicit context is written into the prompt) and <b>one-shot</b>, with no iterative correction; it requires <b>tacit knowledge</b> already in the model.</li><li><b>DeepScholarBench:</b> fills the reference-data gap, exposing retrieval, foundational-paper, and verifiability failures.</li><li><b>Well established:</b> models improve on isolated, well-specified tasks; SWE and ML research show the most progress; stronger models produce well-organized output even when parts are wrong.</li><li><b>Low confidence:</b> context-heavy tasks, ambiguous prompts, adversarial environments, <b>95% reliability</b>, generalization beyond software/knowledge work, and finding/verifying sources in a knowledge base.</li></ul>",
+      "terms": ["benchmark limitations", "one-shot", "resource constraints", "adversarial environments", "95% reliability", "generalization"]
+    },
+    {
+      "t": 3994,
+      "title": "Final Synthesis: Forecasts, Reliability, Metrics",
+      "problem": "The exponential horizon story must be reconciled with the linear economic-value story, and it is unclear what to measure.",
+      "why": "Different metrics capture different progress; reliability and error recovery improve while performance stays task-dependent.",
+      "how": "Summarize METR's 7-month doubling and the 2028-2031 month-long-task forecast, contrast GDPval's linear 48% win rate, and prescribe duration-, economic-, and synthesis-quality metrics validated against humans.",
+      "detail": "<p>The closing synthesis ties the metrics together.</p><ul><li><b>METR:</b> a <b>7-month doubling</b> of the horizon at <b>50% reliability</b>, with a forecast that by <b>2028-2031</b> models will nearly complete <b>one-month tasks</b>.</li><li><b>GDPval:</b> a much more <b>linear</b> improvement over two years, reaching about <b>48% win rate</b> on some tasks while many categories remain low -- tempering the exponential story with real economic work.</li><li><b>Context/reference data</b> is the recurring gap: many GDPval tasks require context or reference files, and DeepScholarBench shows quality and verifiability lagging humans.</li><li><b>Forecast:</b> reliability and error recovery should keep improving, but performance will stay <b>task-dependent</b>; solving longer-horizon tasks does not guarantee reliable or high-quality outputs.</li><li><b>Metric prescription:</b> we need <b>duration-based</b>, <b>economic-value-based</b>, and <b>synthesis-quality-based</b> metrics, each validated against humans who can actually solve the tasks.</li></ul>",
+      "terms": ["seven-month doubling", "forecast", "win rate", "synthesis quality", "human validation", "task-dependent"]
+    },
+    {
+      "t": 4107,
+      "title": "Open Q&A: Deployability, Long Tail, AI Co-Scientist",
+      "problem": "Practitioners ask whether current reliability makes agents deployable and what fundamentally blocks the long tail.",
+      "why": "The last 20% -- reliability and hard domains -- is far harder than the first 80%, and both data and model capability matter.",
+      "how": "Instructor answers on the long tail, clarifies that METR's 50% is an average of per-task success rates across attempts, and frames today's systems as AI co-scientists rather than autonomous AI scientists.",
+      "detail": "<p>The final Q&A ranges from deployability to career advice.</p><ul><li><b>Long tail:</b> the first 80% is easy and the <b>last 20% takes a decade</b>; hard domains such as <b>distributed systems</b> stay difficult. SWE and verified coding keep improving, but many non-PR tasks remain hard.</li><li>On the METR 50% number: it is the <b>average of per-task success rates</b> across attempts (e.g. across 97 tasks), so a 50% task means the answer is good about half the time.</li><li><b>Trajectory:</b> timelines move fast and are hard to predict; today's systems are <b>AI co-scientists</b> -- strong brainstormers with broad knowledge -- not yet autonomous <b>AI scientists</b> that build the next generation of models.</li><li><b>What blocks the long tail:</b> both <b>data</b> and <b>fundamental model capability</b>; robotics startups, for instance, bet on data collection to close the gap.</li><li><b>Closing advice:</b> CS fundamentals remain valuable, and the durable skill is <b>providing the model the context it needs</b>.</li></ul>",
+      "terms": ["long tail", "distributed systems", "AI co-scientist", "AI scientist", "reliability", "data collection"]
+    }
+  ]
+}

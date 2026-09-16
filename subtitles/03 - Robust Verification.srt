@@ -1,0 +1,6143 @@
+1
+00:00:05,680 --> 00:00:13,599
+So lecture three is about verification.
+
+2
+00:00:09,920 --> 00:00:16,000
+In the last lecture when we talked about
+
+3
+00:00:13,599 --> 00:00:17,600
+uh inference time scaling and the
+
+4
+00:00:16,000 --> 00:00:21,920
+generation
+
+5
+00:00:17,600 --> 00:00:24,080
+verification gap. Uh basically what we
+
+6
+00:00:21,920 --> 00:00:28,160
+discussed was that language model seems
+
+7
+00:00:24,080 --> 00:00:31,279
+to be able to um seems to know the
+
+8
+00:00:28,160 --> 00:00:33,120
+answer to many of the hard questions um
+
+9
+00:00:31,279 --> 00:00:35,600
+and especially with methods such as
+
+10
+00:00:33,120 --> 00:00:37,840
+repeated sampling or other scaling test
+
+11
+00:00:35,600 --> 00:00:41,360
+test time techniques. they can generate
+
+12
+00:00:37,840 --> 00:00:44,320
+one but a question is how do they how
+
+13
+00:00:41,360 --> 00:00:47,280
+can we automatically select which answer
+
+14
+00:00:44,320 --> 00:00:49,760
+is correct or guide the model throughout
+
+15
+00:00:47,280 --> 00:00:52,239
+the process of answer generation. So
+
+16
+00:00:49,760 --> 00:00:56,000
+that leads us to verification where
+
+17
+00:00:52,239 --> 00:00:59,199
+which we are learning about today. Um so
+
+18
+00:00:56,000 --> 00:01:02,239
+in today's lecture we are going to learn
+
+19
+00:00:59,199 --> 00:01:04,799
+about the following four paper papers
+
+20
+00:01:02,239 --> 00:01:07,920
+and it kind of there is a progression of
+
+21
+00:01:04,799 --> 00:01:10,320
+like how our uh kind of the way we
+
+22
+00:01:07,920 --> 00:01:13,119
+approach verification changed or
+
+23
+00:01:10,320 --> 00:01:15,600
+progressed throughout the years. Uh so
+
+24
+00:01:13,119 --> 00:01:18,799
+let's first start with training
+
+25
+00:01:15,600 --> 00:01:24,080
+verifiers to solve math for problems.
+
+26
+00:01:18,799 --> 00:01:26,960
+This is a paper uh from OpenAI in 2021
+
+27
+00:01:24,080 --> 00:01:31,360
+and the motivation for this work was
+
+28
+00:01:26,960 --> 00:01:34,000
+that LLM hallucinate and um can
+
+29
+00:01:31,360 --> 00:01:36,960
+confidently present wrong solutions to
+
+30
+00:01:34,000 --> 00:01:38,799
+the users. Uh this still is true to this
+
+31
+00:01:36,960 --> 00:01:40,880
+day. Four years later, of course, the
+
+32
+00:01:38,799 --> 00:01:45,119
+model has have become significantly
+
+33
+00:01:40,880 --> 00:01:47,040
+better. Um there is also at the time one
+
+34
+00:01:45,119 --> 00:01:50,000
+of the contributions of this paper was
+
+35
+00:01:47,040 --> 00:01:52,880
+to introduce a new reasoning benchmark
+
+36
+00:01:50,000 --> 00:01:56,240
+the around math and you can see here in
+
+37
+00:01:52,880 --> 00:02:00,240
+blue one of these uh problems. Um this
+
+38
+00:01:56,240 --> 00:02:03,920
+is um this is a uh this is the type of
+
+39
+00:02:00,240 --> 00:02:07,439
+problem that um at the time it was hard
+
+40
+00:02:03,920 --> 00:02:11,200
+for LLMs to solve and uh this led to
+
+41
+00:02:07,439 --> 00:02:17,120
+this new data set and and and and that
+
+42
+00:02:11,200 --> 00:02:19,440
+that is has become kind of a a a a big
+
+43
+00:02:17,120 --> 00:02:22,560
+part of many of the benchmarking task
+
+44
+00:02:19,440 --> 00:02:24,959
+for LLMs and even to this day this data
+
+45
+00:02:22,560 --> 00:02:27,520
+set is called GSM8K and even to this
+
+46
+00:02:24,959 --> 00:02:30,560
+date um for smaller models and
+
+47
+00:02:27,520 --> 00:02:33,200
+benchmarking it's still a very useful
+
+48
+00:02:30,560 --> 00:02:36,000
+language modeling evaluation and you can
+
+49
+00:02:33,200 --> 00:02:38,160
+consider it for the type of evals that
+
+50
+00:02:36,000 --> 00:02:41,519
+you want to define on your projects as
+
+51
+00:02:38,160 --> 00:02:43,040
+well. So um it basically consists of
+
+52
+00:02:41,519 --> 00:02:46,000
+8,500
+
+53
+00:02:43,040 --> 00:02:48,959
+grade school math problems. uh and the
+
+54
+00:02:46,000 --> 00:02:51,040
+goal with was this for this was to have
+
+55
+00:02:48,959 --> 00:02:54,000
+uh the quality and diversity of the
+
+56
+00:02:51,040 --> 00:02:56,800
+problems but also importantly there was
+
+57
+00:02:54,000 --> 00:02:58,800
+a focus on multi-step reasoning meaning
+
+58
+00:02:56,800 --> 00:03:01,599
+that to solve the problems even though
+
+59
+00:02:58,800 --> 00:03:04,239
+the problems were uh simple but the the
+
+60
+00:03:01,599 --> 00:03:07,760
+model required a few steps of reasoning
+
+61
+00:03:04,239 --> 00:03:11,680
+to get to the answer. Um
+
+62
+00:03:07,760 --> 00:03:14,000
+and and you could also collect u the
+
+63
+00:03:11,680 --> 00:03:18,879
+solution in natural language uh as
+
+64
+00:03:14,000 --> 00:03:21,280
+opposed to uh pure math. Um but the
+
+65
+00:03:18,879 --> 00:03:23,360
+other contribution of this paper which I
+
+66
+00:03:21,280 --> 00:03:26,879
+which we're going to spend more time on
+
+67
+00:03:23,360 --> 00:03:29,760
+was to train a verification model where
+
+68
+00:03:26,879 --> 00:03:33,280
+the verifier outputs the probability
+
+69
+00:03:29,760 --> 00:03:35,519
+that a solution is correct. So let's see
+
+70
+00:03:33,280 --> 00:03:38,720
+about how this can be useful. For
+
+71
+00:03:35,519 --> 00:03:41,599
+example, the model jet the when as
+
+72
+00:03:38,720 --> 00:03:43,920
+humans we solve problems, it would be
+
+73
+00:03:41,599 --> 00:03:46,400
+very very good for us to have access to
+
+74
+00:03:43,920 --> 00:03:48,799
+kind of a rubric or a way for us to tell
+
+75
+00:03:46,400 --> 00:03:50,879
+whether we are correct or not. And we
+
+76
+00:03:48,799 --> 00:03:53,519
+kind of want to provide the same thing
+
+77
+00:03:50,879 --> 00:03:55,280
+through this verifier for the language
+
+78
+00:03:53,519 --> 00:03:58,159
+model.
+
+79
+00:03:55,280 --> 00:04:00,080
+So now how these verif the the the
+
+80
+00:03:58,159 --> 00:04:02,959
+verifier was trained in this case is
+
+81
+00:04:00,080 --> 00:04:06,560
+that assume that we have a question and
+
+82
+00:04:02,959 --> 00:04:09,360
+a solution for it. Then we do have a
+
+83
+00:04:06,560 --> 00:04:12,319
+label whether the it's a binary label
+
+84
+00:04:09,360 --> 00:04:14,400
+whether it's correct or incorrect. And
+
+85
+00:04:12,319 --> 00:04:16,959
+during the training process the
+
+86
+00:04:14,400 --> 00:04:20,239
+generator the language model which is in
+
+87
+00:04:16,959 --> 00:04:23,120
+charge of uh answering questions here uh
+
+88
+00:04:20,239 --> 00:04:27,199
+produces SI which is the solution to
+
+89
+00:04:23,120 --> 00:04:29,199
+question QI. Um and then we can generate
+
+90
+00:04:27,199 --> 00:04:31,919
+do repeated sampling and generate
+
+91
+00:04:29,199 --> 00:04:34,639
+multiple in this case 100 solutions per
+
+92
+00:04:31,919 --> 00:04:36,400
+problem. And then we create these labels
+
+93
+00:04:34,639 --> 00:04:39,040
+based on whether they were correct or
+
+94
+00:04:36,400 --> 00:04:42,960
+not. Um remember that these questions
+
+95
+00:04:39,040 --> 00:04:45,759
+and answers were selectively designed by
+
+96
+00:04:42,960 --> 00:04:48,080
+a lot of manual human supervision. So we
+
+97
+00:04:45,759 --> 00:04:50,400
+know what the answers the final answers
+
+98
+00:04:48,080 --> 00:04:52,720
+to these problems are. So we can just
+
+99
+00:04:50,400 --> 00:04:56,080
+based on that create these labels for
+
+100
+00:04:52,720 --> 00:04:58,960
+these problems. Um and then given that
+
+101
+00:04:56,080 --> 00:05:01,199
+we can train a verifier because now we
+
+102
+00:04:58,960 --> 00:05:03,840
+have a we have a question we have a
+
+103
+00:05:01,199 --> 00:05:07,440
+solution and then we have a label for
+
+104
+00:05:03,840 --> 00:05:10,160
+it. Um
+
+105
+00:05:07,440 --> 00:05:12,240
+um now the way we use it at test time is
+
+106
+00:05:10,160 --> 00:05:14,320
+that at test time again we generate a
+
+107
+00:05:12,240 --> 00:05:16,320
+lot of answers and then we use the
+
+108
+00:05:14,320 --> 00:05:19,520
+verifier and look at the score the
+
+109
+00:05:16,320 --> 00:05:21,759
+basically the log probability that is in
+
+110
+00:05:19,520 --> 00:05:24,560
+this model now to see which one has a
+
+111
+00:05:21,759 --> 00:05:30,919
+higher score and use that for as our f
+
+112
+00:05:24,560 --> 00:05:30,919
+and show that as our final answer. Um
+
+113
+00:05:31,039 --> 00:05:35,280
+so in this paper the verifier was
+
+114
+00:05:33,360 --> 00:05:37,520
+trained not just based on the
+
+115
+00:05:35,280 --> 00:05:40,880
+correctness prediction but there was
+
+116
+00:05:37,520 --> 00:05:42,960
+also a language modeling uh objective.
+
+117
+00:05:40,880 --> 00:05:46,240
+So the language modeling objective is
+
+118
+00:05:42,960 --> 00:05:48,880
+also like given uh for example here
+
+119
+00:05:46,240 --> 00:05:51,039
+given these tokens corresponding to the
+
+120
+00:05:48,880 --> 00:05:53,919
+questions. The moment we get to the
+
+121
+00:05:51,039 --> 00:05:57,120
+solution solution token we also add a
+
+122
+00:05:53,919 --> 00:06:00,320
+loss that kind of urges like motivates
+
+123
+00:05:57,120 --> 00:06:04,720
+the model to predict or reduce the the
+
+124
+00:06:00,320 --> 00:06:07,520
+solution um kind of um
+
+125
+00:06:04,720 --> 00:06:09,919
+uh distance from the true labels for
+
+126
+00:06:07,520 --> 00:06:11,919
+that solution. So in this paper they
+
+127
+00:06:09,919 --> 00:06:14,400
+said that it helped them to have two
+
+128
+00:06:11,919 --> 00:06:17,039
+losses. One is the binary loss and the
+
+129
+00:06:14,400 --> 00:06:20,240
+other one was the the normal language
+
+130
+00:06:17,039 --> 00:06:22,160
+modeling uh next prediction token loss.
+
+131
+00:06:20,240 --> 00:06:24,639
+Um and the verifier itself the
+
+132
+00:06:22,160 --> 00:06:27,759
+architecture of the verifier is also a
+
+133
+00:06:24,639 --> 00:06:30,639
+language model. Um but also this
+
+134
+00:06:27,759 --> 00:06:34,800
+language model has a small scalar head
+
+135
+00:06:30,639 --> 00:06:39,120
+that outputs the binary prediction
+
+136
+00:06:34,800 --> 00:06:42,080
+um on a per token basis. So basically on
+
+137
+00:06:39,120 --> 00:06:46,479
+a per token we are saying how close was
+
+138
+00:06:42,080 --> 00:06:50,160
+the solution to the to the true labels
+
+139
+00:06:46,479 --> 00:06:52,960
+uh generated by humans.
+
+140
+00:06:50,160 --> 00:06:55,759
+Um and then the tokens in questions are
+
+141
+00:06:52,960 --> 00:06:58,560
+masked out because we are not optimizing
+
+142
+00:06:55,759 --> 00:07:00,400
+for that. So we generate the question we
+
+143
+00:06:58,560 --> 00:07:02,639
+pass in fill in the model with the
+
+144
+00:07:00,400 --> 00:07:04,800
+questions and we ask it to generate the
+
+145
+00:07:02,639 --> 00:07:07,919
+solutions and we we work with these two
+
+146
+00:07:04,800 --> 00:07:09,759
+losses. Um
+
+147
+00:07:07,919 --> 00:07:12,080
+the way they trained the model was to
+
+148
+00:07:09,759 --> 00:07:15,680
+fine-tune the generator language model
+
+149
+00:07:12,080 --> 00:07:20,560
+for two epochs. Um and then sample a 100
+
+150
+00:07:15,680 --> 00:07:22,319
+completions per question um label it
+
+151
+00:07:20,560 --> 00:07:25,840
+whether they were correct or not and
+
+152
+00:07:22,319 --> 00:07:28,479
+then train a verifier uh for a single
+
+153
+00:07:25,840 --> 00:07:31,520
+epoch on this data set. So first they
+
+154
+00:07:28,479 --> 00:07:33,759
+did fine-tune the language model on a s
+
+155
+00:07:31,520 --> 00:07:37,599
+on that data set on a portion of that
+
+156
+00:07:33,759 --> 00:07:40,080
+data set. Um, and this step maybe
+
+157
+00:07:37,599 --> 00:07:42,240
+it's like debatable whether we we still
+
+158
+00:07:40,080 --> 00:07:44,479
+need this this step or not because
+
+159
+00:07:42,240 --> 00:07:46,479
+language models are already very good at
+
+160
+00:07:44,479 --> 00:07:49,120
+instruction following and understanding
+
+161
+00:07:46,479 --> 00:07:51,919
+math. So maybe and for a lot of newer
+
+162
+00:07:49,120 --> 00:07:54,000
+verifiers we directly go to the training
+
+163
+00:07:51,919 --> 00:07:57,280
+the verifier objective without any
+
+164
+00:07:54,000 --> 00:08:01,520
+supervised fine-tuning first.
+
+165
+00:07:57,280 --> 00:08:06,800
+Um, so they did a number of abilation
+
+166
+00:08:01,520 --> 00:08:10,000
+studies. one was to create this label of
+
+167
+00:08:06,800 --> 00:08:14,080
+correct or incorrect at the sentence
+
+168
+00:08:10,000 --> 00:08:16,879
+level. Um so
+
+169
+00:08:14,080 --> 00:08:18,720
+we have a loss that only concerns at
+
+170
+00:08:16,879 --> 00:08:20,560
+each sentence level for example after
+
+171
+00:08:18,720 --> 00:08:22,879
+each period looks into the previous
+
+172
+00:08:20,560 --> 00:08:27,280
+sentence and looks whether this is a
+
+173
+00:08:22,879 --> 00:08:29,520
+correct step given the steps of the
+
+174
+00:08:27,280 --> 00:08:32,719
+correct step for the for the solution or
+
+175
+00:08:29,520 --> 00:08:35,279
+not. or they could do at a token level.
+
+176
+00:08:32,719 --> 00:08:37,279
+So this is like very a very noisy kind
+
+177
+00:08:35,279 --> 00:08:43,200
+of label like basically we want every
+
+178
+00:08:37,279 --> 00:08:45,279
+token to follow um the the the the
+
+179
+00:08:43,200 --> 00:08:49,120
+pattern that leads to a final correct
+
+180
+00:08:45,279 --> 00:08:52,000
+solution at the end of this generation.
+
+181
+00:08:49,120 --> 00:08:55,920
+Um and then the way this is used at test
+
+182
+00:08:52,000 --> 00:08:58,160
+time is the final solution score is the
+
+183
+00:08:55,920 --> 00:09:01,040
+score after the last token. Because if
+
+184
+00:08:58,160 --> 00:09:04,160
+you have a token label prediction per if
+
+185
+00:09:01,040 --> 00:09:06,000
+you have a label prediction per token at
+
+186
+00:09:04,160 --> 00:09:08,160
+the end of the day we only we want only
+
+187
+00:09:06,000 --> 00:09:10,240
+one prediction for the entire generation
+
+188
+00:09:08,160 --> 00:09:12,480
+whether it's correct or not. And it
+
+189
+00:09:10,240 --> 00:09:14,880
+turns out in this case they looked it
+
+190
+00:09:12,480 --> 00:09:16,800
+after the last token. All right. So we
+
+191
+00:09:14,880 --> 00:09:18,880
+were talking about if you have a token
+
+192
+00:09:16,800 --> 00:09:22,080
+per a label per token at the end of the
+
+193
+00:09:18,880 --> 00:09:24,399
+day we just we want one token yes or no
+
+194
+00:09:22,080 --> 00:09:28,240
+whether this answer was correct or not
+
+195
+00:09:24,399 --> 00:09:30,640
+and um this is done in this case by just
+
+196
+00:09:28,240 --> 00:09:33,040
+looking at the very last token and if
+
+197
+00:09:30,640 --> 00:09:35,760
+that was a correct then it's the entire
+
+198
+00:09:33,040 --> 00:09:38,480
+answer is assumed correct and otherwise
+
+199
+00:09:35,760 --> 00:09:42,160
+uh it's assumed incorrect. So we predict
+
+200
+00:09:38,480 --> 00:09:43,920
+for S1 S2 uh SM we predict these labels
+
+201
+00:09:42,160 --> 00:09:48,160
+and then we only look at the very last
+
+202
+00:09:43,920 --> 00:09:50,880
+label for the to generate and allocate a
+
+203
+00:09:48,160 --> 00:09:54,640
+label for the entire solution.
+
+204
+00:09:50,880 --> 00:09:58,080
+So um here is um looking back at these
+
+205
+00:09:54,640 --> 00:10:00,240
+problems um when we get to the solution
+
+206
+00:09:58,080 --> 00:10:02,800
+we are looking at the token level
+
+207
+00:10:00,240 --> 00:10:05,279
+prediction by the trained verifier and
+
+208
+00:10:02,800 --> 00:10:08,240
+if it's green means the verifier has a
+
+209
+00:10:05,279 --> 00:10:11,440
+high score and the red ones means a low
+
+210
+00:10:08,240 --> 00:10:13,600
+score in this case and in this case this
+
+211
+00:10:11,440 --> 00:10:15,200
+was there were some lower scores in the
+
+212
+00:10:13,600 --> 00:10:17,920
+middle but towards the end it become
+
+213
+00:10:15,200 --> 00:10:20,720
+became greener and greener and this was
+
+214
+00:10:17,920 --> 00:10:23,360
+a correct prediction at the end at the
+
+215
+00:10:20,720 --> 00:10:25,200
+end the last the very last stage is a
+
+216
+00:10:23,360 --> 00:10:28,320
+green one and we assume the actual score
+
+217
+00:10:25,200 --> 00:10:30,480
+and the verifier predictions are um and
+
+218
+00:10:28,320 --> 00:10:33,600
+in in this case are matching. In this
+
+219
+00:10:30,480 --> 00:10:36,240
+other case uh the last verifier is red.
+
+220
+00:10:33,600 --> 00:10:40,000
+Uh it starts off well but it has a there
+
+221
+00:10:36,240 --> 00:10:42,240
+is something that a mistake is made um
+
+222
+00:10:40,000 --> 00:10:43,839
+which I
+
+223
+00:10:42,240 --> 00:10:45,600
+uh
+
+224
+00:10:43,839 --> 00:10:48,320
+uh
+
+225
+00:10:45,600 --> 00:10:51,040
+which is uh towards the the end of this
+
+226
+00:10:48,320 --> 00:10:53,040
+generation step and the actual score is
+
+227
+00:10:51,040 --> 00:10:55,279
+negative and the verifier prediction is
+
+228
+00:10:53,040 --> 00:10:59,040
+also negative. So this is how basically
+
+229
+00:10:55,279 --> 00:11:02,240
+this verifier is trained for GSM8K and
+
+230
+00:10:59,040 --> 00:11:04,720
+then they did some abilations or uh
+
+231
+00:11:02,240 --> 00:11:07,680
+comparisons with a baseline where we
+
+232
+00:11:04,720 --> 00:11:10,240
+just directly just fine-tune on this
+
+233
+00:11:07,680 --> 00:11:12,079
+data set. Um finetune meaning with
+
+234
+00:11:10,240 --> 00:11:14,399
+supervised fine tuning. So we just take
+
+235
+00:11:12,079 --> 00:11:18,000
+the base model and the next token bird
+
+236
+00:11:14,399 --> 00:11:22,079
+prediction or we do this verification
+
+237
+00:11:18,000 --> 00:11:24,480
+stage uh where we generate a 100 samples
+
+238
+00:11:22,079 --> 00:11:27,440
+uh at each at each generation and use
+
+239
+00:11:24,480 --> 00:11:30,160
+the highest score of the verifier as the
+
+240
+00:11:27,440 --> 00:11:34,160
+true as the delivered output by our
+
+241
+00:11:30,160 --> 00:11:38,240
+system. So the the idea to what we can
+
+242
+00:11:34,160 --> 00:11:39,839
+see here is that um for both 6B and
+
+243
+00:11:38,240 --> 00:11:43,279
+1775B
+
+244
+00:11:39,839 --> 00:11:45,440
+models the this one is a GPT3 model I
+
+245
+00:11:43,279 --> 00:11:48,720
+believe um for both of these
+
+246
+00:11:45,440 --> 00:11:51,040
+verification seems to work better
+
+247
+00:11:48,720 --> 00:11:54,560
+especially as the training set size for
+
+248
+00:11:51,040 --> 00:11:57,839
+the verifier increases. So, so this the
+
+249
+00:11:54,560 --> 00:12:03,360
+verifier model eventually outperform the
+
+250
+00:11:57,839 --> 00:12:06,880
+fine-tuning uh only uh approach.
+
+251
+00:12:03,360 --> 00:12:08,639
+Um and vice versa if you have smaller
+
+252
+00:12:06,880 --> 00:12:11,360
+data sets in this case less than a
+
+253
+00:12:08,639 --> 00:12:15,040
+thousand for the 175B
+
+254
+00:12:11,360 --> 00:12:18,040
+uh we um the verification is not helping
+
+255
+00:12:15,040 --> 00:12:18,040
+much.
+
+256
+00:12:24,880 --> 00:12:31,760
+Sorry, but what can you speak up? Um
+
+257
+00:12:27,040 --> 00:12:37,120
+like the test score rate um um I mean it
+
+258
+00:12:31,760 --> 00:12:40,079
+has a sol of the 6B verification um is
+
+259
+00:12:37,120 --> 00:12:44,040
+still much higher than the
+
+260
+00:12:40,079 --> 00:12:44,040
+on smaller bit
+
+261
+00:12:44,079 --> 00:12:52,240
+like the orange still like
+
+262
+00:12:48,480 --> 00:12:53,760
+>> isn't it lower? Okay, I see.
+
+263
+00:12:52,240 --> 00:12:57,600
+>> Yeah.
+
+264
+00:12:53,760 --> 00:13:00,560
+>> Okay. Um, let me go here. So, this is
+
+265
+00:12:57,600 --> 00:13:02,079
+another result which which is very
+
+266
+00:13:00,560 --> 00:13:04,880
+interesting and some this is something
+
+267
+00:13:02,079 --> 00:13:07,839
+that could potentially be a research
+
+268
+00:13:04,880 --> 00:13:10,240
+project that you guys can look into. So,
+
+269
+00:13:07,839 --> 00:13:12,880
+what they did is that they tested two
+
+270
+00:13:10,240 --> 00:13:16,000
+idea two approaches. One having a larger
+
+271
+00:13:12,880 --> 00:13:17,920
+generator and smaller verifier and two
+
+272
+00:13:16,000 --> 00:13:20,959
+having a smaller generator and larger
+
+273
+00:13:17,920 --> 00:13:24,639
+verifier. And what they saw was that the
+
+274
+00:13:20,959 --> 00:13:27,839
+larger generator helps with a smaller
+
+275
+00:13:24,639 --> 00:13:29,920
+wave does better than vice versa. And to
+
+276
+00:13:27,839 --> 00:13:34,160
+some extent this is intuitive, right?
+
+277
+00:13:29,920 --> 00:13:37,680
+Because if we assume generation is
+
+278
+00:13:34,160 --> 00:13:40,800
+naturally or on an ex like um on average
+
+279
+00:13:37,680 --> 00:13:42,959
+is a harder task than verification, then
+
+280
+00:13:40,800 --> 00:13:45,760
+this this might make sense. But like
+
+281
+00:13:42,959 --> 00:13:49,040
+finding the parto optimal of like how
+
+282
+00:13:45,760 --> 00:13:50,800
+these two can um kind of be the sizes
+
+283
+00:13:49,040 --> 00:13:54,000
+with respect to each other would be a
+
+284
+00:13:50,800 --> 00:13:56,639
+very interesting um pro research
+
+285
+00:13:54,000 --> 00:13:59,279
+direction question especially right now
+
+286
+00:13:56,639 --> 00:14:01,680
+as the base model or generators have
+
+287
+00:13:59,279 --> 00:14:03,839
+improved a lot and also we have access
+
+288
+00:14:01,680 --> 00:14:05,839
+to a lot of verifiers on hugging face
+
+289
+00:14:03,839 --> 00:14:08,160
+there's like there's a leaderboard of
+
+290
+00:14:05,839 --> 00:14:11,120
+like verification verifier models or
+
+291
+00:14:08,160 --> 00:14:14,880
+reward models that can be tested against
+
+292
+00:14:11,120 --> 00:14:17,920
+um So um again uh this was the main
+
+293
+00:14:14,880 --> 00:14:19,760
+message from this this uh abilation
+
+294
+00:14:17,920 --> 00:14:24,160
+study.
+
+295
+00:14:19,760 --> 00:14:26,399
+Another result that uh about test time
+
+296
+00:14:24,160 --> 00:14:29,279
+uh scaling that they they're showing is
+
+297
+00:14:26,399 --> 00:14:31,199
+that as they increase the number of
+
+298
+00:14:29,279 --> 00:14:33,600
+completions per problem and then they
+
+299
+00:14:31,199 --> 00:14:37,519
+use the verifier it seems like around
+
+300
+00:14:33,600 --> 00:14:39,279
+400 or so the verifier
+
+301
+00:14:37,519 --> 00:14:41,199
+that's that's where they get a lot of
+
+302
+00:14:39,279 --> 00:14:43,279
+benefit but after that they're not
+
+303
+00:14:41,199 --> 00:14:46,639
+getting a lot of benefit. So if they
+
+304
+00:14:43,279 --> 00:14:49,120
+sample 800 uh solutions and they use the
+
+305
+00:14:46,639 --> 00:14:52,240
+verifier against that the verifier kind
+
+306
+00:14:49,120 --> 00:14:54,800
+of fails to track what's best and what's
+
+307
+00:14:52,240 --> 00:14:58,560
+not compared to the true true kind of
+
+308
+00:14:54,800 --> 00:15:01,519
+distribution of the of the solutions. So
+
+309
+00:14:58,560 --> 00:15:03,680
+um the uh one question for you is that
+
+310
+00:15:01,519 --> 00:15:06,320
+do you remember last time when we talked
+
+311
+00:15:03,680 --> 00:15:08,880
+about majority voting what was the range
+
+312
+00:15:06,320 --> 00:15:11,839
+that we were getting out of that? Like
+
+313
+00:15:08,880 --> 00:15:14,000
+we show that majority voting although is
+
+314
+00:15:11,839 --> 00:15:18,560
+useful to some extent as we increase the
+
+315
+00:15:14,000 --> 00:15:21,440
+number of samples per query it fails
+
+316
+00:15:18,560 --> 00:15:23,760
+after some point to track and that's the
+
+317
+00:15:21,440 --> 00:15:27,959
+generation verification gap. Does any
+
+318
+00:15:23,760 --> 00:15:27,959
+does anyone remember that?
+
+319
+00:15:28,720 --> 00:15:36,959
+Okay. Uh so that was we saw that the
+
+320
+00:15:32,800 --> 00:15:39,279
+failure happens after 10 to like we
+
+321
+00:15:36,959 --> 00:15:42,639
+never got to 50 samples like even though
+
+322
+00:15:39,279 --> 00:15:45,120
+the coverage goes up the the pass at one
+
+323
+00:15:42,639 --> 00:15:49,519
+or basically how we can generate select
+
+324
+00:15:45,120 --> 00:15:52,480
+the correct response uh fails for around
+
+325
+00:15:49,519 --> 00:15:54,399
+50 or less for the majority voting
+
+326
+00:15:52,480 --> 00:15:57,600
+approach. But here they're showing that
+
+327
+00:15:54,399 --> 00:15:59,600
+up until 400 they can increase the
+
+328
+00:15:57,600 --> 00:16:02,600
+accuracy and their verifier is still
+
+329
+00:15:59,600 --> 00:16:02,600
+useful.
+
+330
+00:16:06,560 --> 00:16:11,920
+Yes, but these uh but the but when they
+
+331
+00:16:10,000 --> 00:16:14,399
+they have so they do have the true
+
+332
+00:16:11,920 --> 00:16:16,639
+labels per problem and then when they
+
+333
+00:16:14,399 --> 00:16:20,079
+are testing this verifier the verifier
+
+334
+00:16:16,639 --> 00:16:23,839
+ranks these uh at each point say for 400
+
+335
+00:16:20,079 --> 00:16:26,639
+these 400 solutions they they take the
+
+336
+00:16:23,839 --> 00:16:28,160
+highest score and they compare that
+
+337
+00:16:26,639 --> 00:16:29,920
+against ground truth and that's what
+
+338
+00:16:28,160 --> 00:16:32,399
+they're reporting here whether that was
+
+339
+00:16:29,920 --> 00:16:36,560
+correct or not.
+
+340
+00:16:32,399 --> 00:16:39,680
+83 times performance monitor completion
+
+341
+00:16:36,560 --> 00:16:41,600
+>> at test time and training time as well
+
+342
+00:16:39,680 --> 00:16:42,480
+for the verifier but not for the
+
+343
+00:16:41,600 --> 00:16:44,399
+generator.
+
+344
+00:16:42,480 --> 00:16:46,000
+>> Okay. for the training types all are
+
+345
+00:16:44,399 --> 00:16:47,839
+human
+
+346
+00:16:46,000 --> 00:16:50,079
+for the training like
+
+347
+00:16:47,839 --> 00:16:52,880
+>> there there's only so for each problem
+
+348
+00:16:50,079 --> 00:16:56,320
+the human has once generated an answer
+
+349
+00:16:52,880 --> 00:16:59,519
+that's offline that's done once then you
+
+350
+00:16:56,320 --> 00:17:02,959
+take the model generate a 100 solutions
+
+351
+00:16:59,519 --> 00:17:05,120
+per problem and you compare each of the
+
+352
+00:17:02,959 --> 00:17:07,600
+solutions against the ground truth which
+
+353
+00:17:05,120 --> 00:17:09,439
+which is generated only once by humans
+
+354
+00:17:07,600 --> 00:17:12,640
+and you see whether they match or not
+
+355
+00:17:09,439 --> 00:17:12,640
+that's how you create the label
+
+356
+00:17:13,280 --> 00:17:16,280
+Okay.
+
+357
+00:17:17,039 --> 00:17:21,919
+Okay. Any questions from this paper?
+
+358
+00:17:20,000 --> 00:17:25,199
+Yes.
+
+359
+00:17:21,919 --> 00:17:27,760
+>> Question for it makes sense. It's the
+
+360
+00:17:25,199 --> 00:17:30,320
+verifier is increasing result but after
+
+361
+00:17:27,760 --> 00:17:33,200
+that why does it drop like intuitively
+
+362
+00:17:30,320 --> 00:17:35,039
+like why doesn't it stay constant?
+
+363
+00:17:33,200 --> 00:17:38,320
+>> Okay. So the question is why does it
+
+364
+00:17:35,039 --> 00:17:40,720
+drop after a after 400? It shouldn't be
+
+365
+00:17:38,320 --> 00:17:42,799
+constant because we are not showing the
+
+366
+00:17:40,720 --> 00:17:45,600
+coverage. If you're showing the output
+
+367
+00:17:42,799 --> 00:17:48,480
+of this entire system where the verifier
+
+368
+00:17:45,600 --> 00:17:50,480
+ranks these say at this point 800
+
+369
+00:17:48,480 --> 00:17:53,200
+different solutions and we are getting
+
+370
+00:17:50,480 --> 00:17:55,360
+the max score of the verifier but the
+
+371
+00:17:53,200 --> 00:17:58,000
+precision of the verifier drops like
+
+372
+00:17:55,360 --> 00:18:00,000
+it's like if two solution are too close
+
+373
+00:17:58,000 --> 00:18:03,280
+to each other but one is correct and
+
+374
+00:18:00,000 --> 00:18:05,280
+incorrect at across 800 it can't like
+
+375
+00:18:03,280 --> 00:18:08,480
+distinguish between the two as well as
+
+376
+00:18:05,280 --> 00:18:10,240
+it could do for 400. Right? So, so
+
+377
+00:18:08,480 --> 00:18:12,960
+that's where we get the drop in
+
+378
+00:18:10,240 --> 00:18:15,600
+accuracy. And in reality, when they're
+
+379
+00:18:12,960 --> 00:18:17,600
+outputting their they they created this
+
+380
+00:18:15,600 --> 00:18:20,640
+system, they said that we stopped at uh
+
+381
+00:18:17,600 --> 00:18:22,720
+they stopped at 100 samples because
+
+382
+00:18:20,640 --> 00:18:24,320
+that's where they get most of the gains
+
+383
+00:18:22,720 --> 00:18:27,320
+anyway and that's where they're
+
+384
+00:18:24,320 --> 00:18:27,320
+consistent
+
+385
+00:18:35,039 --> 00:18:42,080
+>> repeated sound. So parallel.
+
+386
+00:18:39,039 --> 00:18:47,360
+>> So same question you ask the model 100
+
+387
+00:18:42,080 --> 00:18:48,960
+different times to solve that.
+
+388
+00:18:47,360 --> 00:18:52,799
+>> Yes.
+
+389
+00:18:48,960 --> 00:18:56,240
+>> When they generate the label sentences,
+
+390
+00:18:52,799 --> 00:18:59,880
+how do you distinguish like like one can
+
+391
+00:18:56,240 --> 00:18:59,880
+just be a paraph?
+
+392
+00:19:01,520 --> 00:19:07,120
+Because this is trained on a larger data
+
+393
+00:19:04,000 --> 00:19:09,039
+set and because the the verifier and
+
+394
+00:19:07,120 --> 00:19:13,039
+they consider both sentence based and
+
+395
+00:19:09,039 --> 00:19:15,280
+token based it still works because the
+
+396
+00:19:13,039 --> 00:19:17,919
+data that the trainer first of all the
+
+397
+00:19:15,280 --> 00:19:20,960
+verifier is a language model itself. So
+
+398
+00:19:17,919 --> 00:19:24,080
+it knows a lot about this space itself
+
+399
+00:19:20,960 --> 00:19:27,120
+but also through this uh label training
+
+400
+00:19:24,080 --> 00:19:28,720
+it has been trained to be able to
+
+401
+00:19:27,120 --> 00:19:31,720
+distinguish between correct and
+
+402
+00:19:28,720 --> 00:19:31,720
+incorrect.
+
+403
+00:19:32,000 --> 00:19:34,799
+>> Yes.
+
+404
+00:19:32,480 --> 00:19:37,600
+>> Uh does it make sense because I'm
+
+405
+00:19:34,799 --> 00:19:39,760
+standing on the verification itself?
+
+406
+00:19:37,600 --> 00:19:41,840
+>> So the question let me repeat the
+
+407
+00:19:39,760 --> 00:19:45,039
+questions because one of you asked this
+
+408
+00:19:41,840 --> 00:19:47,120
+before. So the question is does it make
+
+409
+00:19:45,039 --> 00:19:49,200
+sense to scale the verifier? do test
+
+410
+00:19:47,120 --> 00:19:51,039
+time scaling on the verifier. Yes. And
+
+411
+00:19:49,200 --> 00:19:55,400
+we're going to see that in the in the
+
+412
+00:19:51,039 --> 00:19:55,400
+future slides.
+
+413
+00:19:56,720 --> 00:19:59,520
+>> Yes.
+
+414
+00:19:57,200 --> 00:20:02,000
+>> Um the you showed like verification
+
+415
+00:19:59,520 --> 00:20:04,320
+versus fine tuning. You showed that like
+
+416
+00:20:02,000 --> 00:20:07,200
+before like around like a thousand steps
+
+417
+00:20:04,320 --> 00:20:09,760
+like thousand like training size, right?
+
+418
+00:20:07,200 --> 00:20:11,679
+Um the fine tuning actually does better
+
+419
+00:20:09,760 --> 00:20:15,039
+than the verified. Does that happen
+
+420
+00:20:11,679 --> 00:20:18,400
+again? Like if you scale like to higher
+
+421
+00:20:15,039 --> 00:20:21,200
+>> um the verifi finetuning versus
+
+422
+00:20:18,400 --> 00:20:23,440
+verification, do they cross each other?
+
+423
+00:20:21,200 --> 00:20:26,440
+>> Yeah, I get
+
+424
+00:20:23,440 --> 00:20:26,440
+>> um
+
+425
+00:20:28,000 --> 00:20:33,440
+like if you were to actually if you do
+
+426
+00:20:30,880 --> 00:20:37,480
+need that much data for for for example
+
+427
+00:20:33,440 --> 00:20:37,480
+for one for a task.
+
+428
+00:20:37,840 --> 00:20:43,760
+I mean I think they would like if you
+
+429
+00:20:39,679 --> 00:20:46,720
+have a ton of data like at a a whole lot
+
+430
+00:20:43,760 --> 00:20:48,799
+of data then fine-tuning and
+
+431
+00:20:46,720 --> 00:20:50,799
+verification probably they're going to
+
+432
+00:20:48,799 --> 00:20:53,600
+be the same going to kind of converge to
+
+433
+00:20:50,799 --> 00:20:55,919
+the same thing. But the but the beauty
+
+434
+00:20:53,600 --> 00:20:58,080
+of a verifier is that you are not
+
+435
+00:20:55,919 --> 00:21:00,159
+fine-tuning your base language model.
+
+436
+00:20:58,080 --> 00:21:03,039
+You're not making it like really custom
+
+437
+00:21:00,159 --> 00:21:06,000
+to like one data set or one specific
+
+438
+00:21:03,039 --> 00:21:08,960
+task. So that base model the generator
+
+439
+00:21:06,000 --> 00:21:12,799
+model remains general and then now you
+
+440
+00:21:08,960 --> 00:21:15,840
+have a verifier that you can um kind of
+
+441
+00:21:12,799 --> 00:21:18,000
+lead the the langu the the base model.
+
+442
+00:21:15,840 --> 00:21:21,360
+Okay.
+
+443
+00:21:18,000 --> 00:21:25,919
+Um now let's go through the second
+
+444
+00:21:21,360 --> 00:21:30,600
+paper. Uh another paper by openai. Um
+
+445
+00:21:25,919 --> 00:21:30,600
+let's verify step by step.
+
+446
+00:21:32,320 --> 00:21:37,039
+And
+
+447
+00:21:34,159 --> 00:21:39,280
+so this was this came about a couple
+
+448
+00:21:37,039 --> 00:21:42,480
+years like less than two years after
+
+449
+00:21:39,280 --> 00:21:43,840
+that first paper. Again pro LLMs have
+
+450
+00:21:42,480 --> 00:21:45,600
+had the same challenges. They
+
+451
+00:21:43,840 --> 00:21:48,480
+hallucinated.
+
+452
+00:21:45,600 --> 00:21:50,640
+um if you if they're solving a problem
+
+453
+00:21:48,480 --> 00:21:53,840
+step by step and they make a step in a
+
+454
+00:21:50,640 --> 00:21:57,200
+single in in an S step early on it can
+
+455
+00:21:53,840 --> 00:21:59,760
+derail the entire answer right uh so the
+
+456
+00:21:57,200 --> 00:22:03,679
+solution that they were proposing here
+
+457
+00:21:59,760 --> 00:22:06,880
+is that um they consider these two kind
+
+458
+00:22:03,679 --> 00:22:10,240
+of approaches to reward modeling one is
+
+459
+00:22:06,880 --> 00:22:12,480
+outcome uh based reward model and the
+
+460
+00:22:10,240 --> 00:22:14,960
+other is processbased reward model so
+
+461
+00:22:12,480 --> 00:22:17,520
+the outcomebased one like we saw earlier
+
+462
+00:22:14,960 --> 00:22:20,000
+earlier in the previous paper it
+
+463
+00:22:17,520 --> 00:22:23,039
+generates a reward to the entire
+
+464
+00:22:20,000 --> 00:22:25,520
+solution. It's about the correctness of
+
+465
+00:22:23,039 --> 00:22:28,960
+the solution uh of the entire solution
+
+466
+00:22:25,520 --> 00:22:30,960
+whereas the process one um assigns a
+
+467
+00:22:28,960 --> 00:22:34,840
+different reward per step of the
+
+468
+00:22:30,960 --> 00:22:34,840
+optimization problem.
+
+469
+00:22:36,640 --> 00:22:41,679
+And so let's take a look exactly how
+
+470
+00:22:39,200 --> 00:22:44,000
+this training can be done for the OM
+
+471
+00:22:41,679 --> 00:22:46,400
+versus PRM. So we have a math problem.
+
+472
+00:22:44,000 --> 00:22:49,600
+The generator instead of generating a
+
+473
+00:22:46,400 --> 00:22:52,559
+100 solutions like it uh uh right now we
+
+474
+00:22:49,600 --> 00:22:54,880
+are only looking into a one solution and
+
+475
+00:22:52,559 --> 00:22:56,720
+it has a bunch of steps. Step one, two
+
+476
+00:22:54,880 --> 00:23:00,240
+and all the way until we get to the
+
+477
+00:22:56,720 --> 00:23:04,000
+final answer. Um and then we have the
+
+478
+00:23:00,240 --> 00:23:06,000
+ground truth. So we can um know whether
+
+479
+00:23:04,000 --> 00:23:07,760
+the final answer is correct or not
+
+480
+00:23:06,000 --> 00:23:11,280
+because we can match the final answer
+
+481
+00:23:07,760 --> 00:23:13,840
+against the ground truth. Um now with
+
+482
+00:23:11,280 --> 00:23:16,480
+ORM we are done there because we we
+
+483
+00:23:13,840 --> 00:23:20,799
+that's how we assigned the label for for
+
+484
+00:23:16,480 --> 00:23:23,440
+the model but for PRM uh the way they
+
+485
+00:23:20,799 --> 00:23:27,919
+did it in this paper was that they
+
+486
+00:23:23,440 --> 00:23:31,360
+looked into they had human annotators go
+
+487
+00:23:27,919 --> 00:23:34,400
+through the steps of the generations
+
+488
+00:23:31,360 --> 00:23:37,039
+um by the model and assign a score to
+
+489
+00:23:34,400 --> 00:23:38,880
+each step. So step one in this case was
+
+490
+00:23:37,039 --> 00:23:42,080
+correct. Step two was correct and
+
+491
+00:23:38,880 --> 00:23:43,760
+probably because the uh the uh maybe all
+
+492
+00:23:42,080 --> 00:23:46,159
+of these steps were correct. That's why
+
+493
+00:23:43,760 --> 00:23:49,360
+we we let it led to the final correct
+
+494
+00:23:46,159 --> 00:23:53,760
+answer. But basically they created this
+
+495
+00:23:49,360 --> 00:23:56,159
+entire data set of human annotated uh
+
+496
+00:23:53,760 --> 00:23:58,640
+stepwise kind of correct or incorrect
+
+497
+00:23:56,159 --> 00:24:00,720
+labels.
+
+498
+00:23:58,640 --> 00:24:04,480
+Um and the final reward for this
+
+499
+00:24:00,720 --> 00:24:06,720
+step-wise now can again in this case
+
+500
+00:24:04,480 --> 00:24:10,000
+could be what they propose is that could
+
+501
+00:24:06,720 --> 00:24:12,960
+can be calculated as the product of the
+
+502
+00:24:10,000 --> 00:24:15,279
+the stepwise rewards per step of the
+
+503
+00:24:12,960 --> 00:24:18,240
+model. So they basically train a model
+
+504
+00:24:15,279 --> 00:24:20,480
+against this step-wise annotations and
+
+505
+00:24:18,240 --> 00:24:23,039
+then they use that they create steps
+
+506
+00:24:20,480 --> 00:24:25,840
+like you can even ask the model to
+
+507
+00:24:23,039 --> 00:24:28,240
+generate the answers to a solution step
+
+508
+00:24:25,840 --> 00:24:30,400
+by step. So the steps are clear. They
+
+509
+00:24:28,240 --> 00:24:32,240
+run this PRM against each of those step.
+
+510
+00:24:30,400 --> 00:24:34,559
+They get a score. They multiply them
+
+511
+00:24:32,240 --> 00:24:38,400
+with each other. They they get a range
+
+512
+00:24:34,559 --> 00:24:40,640
+of like um what the the quality of the
+
+513
+00:24:38,400 --> 00:24:44,320
+answer and they can based on that they
+
+514
+00:24:40,640 --> 00:24:47,919
+can uh decide whether they uh output the
+
+515
+00:24:44,320 --> 00:24:51,279
+answer or try again. Um so this is
+
+516
+00:24:47,919 --> 00:24:53,440
+called process supervision. Um obviously
+
+517
+00:24:51,279 --> 00:24:56,960
+there is this credit assignment and then
+
+518
+00:24:53,440 --> 00:24:59,200
+it's the more precise way of collecting
+
+519
+00:24:56,960 --> 00:25:01,360
+uh data and assigning labels to
+
+520
+00:24:59,200 --> 00:25:04,559
+different steps of the problem rather
+
+521
+00:25:01,360 --> 00:25:06,559
+than just looking at the output answer.
+
+522
+00:25:04,559 --> 00:25:08,799
+Um
+
+523
+00:25:06,559 --> 00:25:11,440
+a property here that's very important
+
+524
+00:25:08,799 --> 00:25:14,320
+actually this is like a really kind it
+
+525
+00:25:11,440 --> 00:25:16,480
+could be a pitfall for uh test time
+
+526
+00:25:14,320 --> 00:25:19,200
+scaling is that with processor
+
+527
+00:25:16,480 --> 00:25:22,320
+supervision we can manage the false
+
+528
+00:25:19,200 --> 00:25:25,200
+positives way better than we can do with
+
+529
+00:25:22,320 --> 00:25:28,240
+just outcome supervisions supervision.
+
+530
+00:25:25,200 --> 00:25:30,320
+Why? Because model might hallucinate and
+
+531
+00:25:28,240 --> 00:25:32,960
+this happens surprisingly model can
+
+532
+00:25:30,320 --> 00:25:35,440
+hallucinate and get to a final correct
+
+533
+00:25:32,960 --> 00:25:37,520
+answer while the process for it is like
+
+534
+00:25:35,440 --> 00:25:39,600
+really wrong.
+
+535
+00:25:37,520 --> 00:25:41,679
+Whereas with process supervision because
+
+536
+00:25:39,600 --> 00:25:43,360
+we are kind of pro like we are
+
+537
+00:25:41,679 --> 00:25:45,919
+supervising we are seeing all the steps
+
+538
+00:25:43,360 --> 00:25:49,360
+and we have a score for it. It's less
+
+539
+00:25:45,919 --> 00:25:52,720
+likely that we get into that um mode
+
+540
+00:25:49,360 --> 00:25:55,760
+where the steps are wrong but we are uh
+
+541
+00:25:52,720 --> 00:25:59,120
+the final answer is correct.
+
+542
+00:25:55,760 --> 00:26:02,960
+Um also it encourages interpretable
+
+543
+00:25:59,120 --> 00:26:05,360
+reasoning and um human endorsed uh
+
+544
+00:26:02,960 --> 00:26:07,520
+process of solutions. It's human
+
+545
+00:26:05,360 --> 00:26:11,520
+endorsed again because humans have
+
+546
+00:26:07,520 --> 00:26:15,360
+created the labels. Um so this paper
+
+547
+00:26:11,520 --> 00:26:19,360
+produced this data set PRM 800K.
+
+548
+00:26:15,360 --> 00:26:24,080
+Um it's an open-source data set uh of
+
+549
+00:26:19,360 --> 00:26:25,919
+800K step level labels. So, so and and
+
+550
+00:26:24,080 --> 00:26:28,880
+um
+
+551
+00:26:25,919 --> 00:26:30,559
+so the way they did this was a generator
+
+552
+00:26:28,880 --> 00:26:32,720
+model against a language they took a
+
+553
+00:26:30,559 --> 00:26:35,120
+language model and they generated a
+
+554
+00:26:32,720 --> 00:26:38,080
+large number of samples per problem in a
+
+555
+00:26:35,120 --> 00:26:40,720
+step-wise matter manner and then they
+
+556
+00:26:38,080 --> 00:26:43,520
+also did this trick of like because they
+
+557
+00:26:40,720 --> 00:26:47,120
+wanted to collect higher quality
+
+558
+00:26:43,520 --> 00:26:51,600
+stepwise labels, they took him to um
+
+559
+00:26:47,120 --> 00:26:55,919
+what they call convincing wrong uh uh
+
+560
+00:26:51,600 --> 00:26:59,039
+kind of answers meaning that the they
+
+561
+00:26:55,919 --> 00:27:02,799
+gave higher pri priority to samples
+
+562
+00:26:59,039 --> 00:27:06,080
+where the the final answers were um
+
+563
+00:27:02,799 --> 00:27:10,000
+correct but the intermediate steps were
+
+564
+00:27:06,080 --> 00:27:14,240
+incorrect. Um
+
+565
+00:27:10,000 --> 00:27:16,720
+and this enabled them to be 2.6 times
+
+566
+00:27:14,240 --> 00:27:19,200
+more data efficient just than just
+
+567
+00:27:16,720 --> 00:27:21,200
+randomly selecting these samples and
+
+568
+00:27:19,200 --> 00:27:24,480
+give it to humans. So they did
+
+569
+00:27:21,200 --> 00:27:27,440
+iteratively. So they had like a very you
+
+570
+00:27:24,480 --> 00:27:30,480
+can have a step a PRM by just asking an
+
+571
+00:27:27,440 --> 00:27:33,520
+LLM to judge a step, right? You can have
+
+572
+00:27:30,480 --> 00:27:36,559
+that. Uh so they iteratively upgraded
+
+573
+00:27:33,520 --> 00:27:40,000
+the PRM by collecting this data and then
+
+574
+00:27:36,559 --> 00:27:43,840
+training on the PRM for it and then um
+
+575
+00:27:40,000 --> 00:27:46,720
+increasing the quality of the data. So
+
+576
+00:27:43,840 --> 00:27:48,480
+um and at each step the label was that
+
+577
+00:27:46,720 --> 00:27:50,320
+was collected was either positive or
+
+578
+00:27:48,480 --> 00:27:53,679
+negative or neutral. For example, let's
+
+579
+00:27:50,320 --> 00:27:57,360
+take a look at this problem. Uh the
+
+580
+00:27:53,679 --> 00:28:01,360
+denominator of a fraction is 7 less than
+
+581
+00:27:57,360 --> 00:28:04,000
+um uh 3 * the the numerator. If the
+
+582
+00:28:01,360 --> 00:28:06,480
+fraction is equivalent to 2 over 5, what
+
+583
+00:28:04,000 --> 00:28:08,880
+is the numer numerator of the fraction?
+
+584
+00:28:06,480 --> 00:28:11,360
+And then there are these steps and the
+
+585
+00:28:08,880 --> 00:28:13,200
+first step was labeled correct, second
+
+586
+00:28:11,360 --> 00:28:16,240
+was correct and all the way to the fifth
+
+587
+00:28:13,200 --> 00:28:18,000
+step was correct. U but this last step
+
+588
+00:28:16,240 --> 00:28:21,279
+obviously the model failed to do the
+
+589
+00:28:18,000 --> 00:28:23,039
+math. X should be 15 14 but it's seven.
+
+590
+00:28:21,279 --> 00:28:24,720
+So that was labeled incorrect. So that's
+
+591
+00:28:23,039 --> 00:28:28,360
+how they
+
+592
+00:28:24,720 --> 00:28:28,360
+collected the labels.
+
+593
+00:28:29,279 --> 00:28:35,520
+Um here is the process. So they took
+
+594
+00:28:32,080 --> 00:28:38,960
+GPT4 as their base model. Um [snorts]
+
+595
+00:28:35,520 --> 00:28:41,679
+they still fine-tune GPT4 for both the
+
+596
+00:28:38,960 --> 00:28:44,000
+OM and PRM training on this data set
+
+597
+00:28:41,679 --> 00:28:47,039
+first. So the supervised
+
+598
+00:28:44,000 --> 00:28:49,360
+uh uh finetuning first
+
+599
+00:28:47,039 --> 00:28:51,120
+uh
+
+600
+00:28:49,360 --> 00:28:53,279
+and
+
+601
+00:28:51,120 --> 00:28:55,520
+for OM of course they just have the
+
+602
+00:28:53,279 --> 00:28:58,399
+pairs of generated samples and final
+
+603
+00:28:55,520 --> 00:29:01,440
+correctness but for PRM they had this
+
+604
+00:28:58,399 --> 00:29:04,880
+generator generate the sample and then
+
+605
+00:29:01,440 --> 00:29:07,919
+the stepwise corre correctness label. Uh
+
+606
+00:29:04,880 --> 00:29:10,399
+for OM the final score was the score of
+
+607
+00:29:07,919 --> 00:29:12,399
+the final token in the completion. again
+
+608
+00:29:10,399 --> 00:29:16,320
+they again went to the token level
+
+609
+00:29:12,399 --> 00:29:19,679
+approach for ORM um but for PRM it was
+
+610
+00:29:16,320 --> 00:29:22,320
+the product of uh probabilities
+
+611
+00:29:19,679 --> 00:29:25,039
+uh for every stop now let's take a look
+
+612
+00:29:22,320 --> 00:29:28,320
+at some of the solutions um they were
+
+613
+00:29:25,039 --> 00:29:31,600
+showing that PRM outperforms OM and
+
+614
+00:29:28,320 --> 00:29:34,480
+majority voting so again here n is the
+
+615
+00:29:31,600 --> 00:29:37,520
+number of solutions per problem majority
+
+616
+00:29:34,480 --> 00:29:40,640
+voting again fails after in this case
+
+617
+00:29:37,520 --> 00:29:43,360
+100 or so samples Uh the blue line is
+
+618
+00:29:40,640 --> 00:29:48,320
+the OM model and the orange one is the
+
+619
+00:29:43,360 --> 00:29:51,279
+PRM approach that is doing better. Um
+
+620
+00:29:48,320 --> 00:29:53,760
+and the but they notice that PRM detects
+
+621
+00:29:51,279 --> 00:29:56,799
+correct solutions for some of the very
+
+622
+00:29:53,760 --> 00:29:59,760
+rare kind of occurrences of correct
+
+623
+00:29:56,799 --> 00:30:01,840
+answers on problems with less than 5%
+
+624
+00:29:59,760 --> 00:30:04,640
+correct answers in the distribution of
+
+625
+00:30:01,840 --> 00:30:06,480
+samples.
+
+626
+00:30:04,640 --> 00:30:09,279
+Um
+
+627
+00:30:06,480 --> 00:30:11,200
+they also showed the benefit of larger
+
+628
+00:30:09,279 --> 00:30:14,399
+data and this active learning uh
+
+629
+00:30:11,200 --> 00:30:17,600
+approach that they had.
+
+630
+00:30:14,399 --> 00:30:19,840
+Again um the
+
+631
+00:30:17,600 --> 00:30:21,520
+and and the other the other kind of
+
+632
+00:30:19,840 --> 00:30:24,480
+observation that they were showing is
+
+633
+00:30:21,520 --> 00:30:27,120
+that PRM seems to be more data
+
+634
+00:30:24,480 --> 00:30:29,840
+efficient. So the number of labels that
+
+635
+00:30:27,120 --> 00:30:36,240
+they collected for PRM if they match
+
+636
+00:30:29,840 --> 00:30:38,399
+that against um uh OM u both PRM and ORM
+
+637
+00:30:36,240 --> 00:30:40,720
+benefit from more and more labels but it
+
+638
+00:30:38,399 --> 00:30:44,799
+turns out that the PRM is more sample
+
+639
+00:30:40,720 --> 00:30:47,279
+efficient right so um so if they have
+
+640
+00:30:44,799 --> 00:30:50,080
+100 solutions label labeled per problem
+
+641
+00:30:47,279 --> 00:30:51,600
+for an OM model that's kind of like
+
+642
+00:30:50,080 --> 00:30:54,320
+having
+
+643
+00:30:51,600 --> 00:30:59,080
+like one solution per problem based on
+
+644
+00:30:54,320 --> 00:30:59,080
+the PRM approach and so on.
+
+645
+00:30:59,919 --> 00:31:07,039
+Um the other interesting property uh and
+
+646
+00:31:04,080 --> 00:31:09,120
+that's what what we all should strive as
+
+647
+00:31:07,039 --> 00:31:11,200
+we gener as we are training these kind
+
+648
+00:31:09,120 --> 00:31:13,279
+of verifier and reward model is the
+
+649
+00:31:11,200 --> 00:31:16,960
+gener generalizability
+
+650
+00:31:13,279 --> 00:31:18,880
+to new domains and new data sets. Uh
+
+651
+00:31:16,960 --> 00:31:21,600
+here what they're showing is that
+
+652
+00:31:18,880 --> 00:31:24,559
+majority voting actually is better than
+
+653
+00:31:21,600 --> 00:31:28,559
+OM in terms of how it generalizes. Uh
+
+654
+00:31:24,559 --> 00:31:32,240
+but PRM is a better u is a better than
+
+655
+00:31:28,559 --> 00:31:33,600
+majority voting overall. Um and uh it
+
+656
+00:31:32,240 --> 00:31:36,720
+can tolerate a whole lot more
+
+657
+00:31:33,600 --> 00:31:40,640
+distribution shift than majority voting.
+
+658
+00:31:36,720 --> 00:31:43,200
+Um and so overall this seems like a much
+
+659
+00:31:40,640 --> 00:31:46,320
+better approach here.
+
+660
+00:31:43,200 --> 00:31:47,600
+Um any questions?
+
+661
+00:31:46,320 --> 00:31:50,399
+Yes,
+
+662
+00:31:47,600 --> 00:31:52,480
+>> PRM obviously like could lead to like
+
+663
+00:31:50,399 --> 00:31:53,919
+false credit assignment if like a step
+
+664
+00:31:52,480 --> 00:31:55,600
+looks good but doesn't actually
+
+665
+00:31:53,919 --> 00:31:57,279
+contribute to the final answer. Are
+
+666
+00:31:55,600 --> 00:32:00,320
+there domains that you would expect PRM
+
+667
+00:31:57,279 --> 00:32:03,279
+to actually hurt?
+
+668
+00:32:00,320 --> 00:32:06,320
+>> Um so the question is can PRM hurt
+
+669
+00:32:03,279 --> 00:32:09,519
+sometimes because um the final answer
+
+670
+00:32:06,320 --> 00:32:11,600
+might still be incorrect. Um so the
+
+671
+00:32:09,519 --> 00:32:13,840
+truth is like a lot of the newer
+
+672
+00:32:11,600 --> 00:32:16,240
+approaches combine the two like the
+
+673
+00:32:13,840 --> 00:32:18,640
+reality is they combine both the PRM and
+
+674
+00:32:16,240 --> 00:32:21,519
+OM based solutions because you want to
+
+675
+00:32:18,640 --> 00:32:24,320
+get the bene benefit of of both
+
+676
+00:32:21,519 --> 00:32:26,320
+approaches. Um and the other thing is
+
+677
+00:32:24,320 --> 00:32:30,320
+that like the threshold that you can
+
+678
+00:32:26,320 --> 00:32:32,000
+define for for a PRM then is also like a
+
+679
+00:32:30,320 --> 00:32:33,679
+hyperparameter that now you have
+
+680
+00:32:32,000 --> 00:32:36,240
+introduced that you have to like deal
+
+681
+00:32:33,679 --> 00:32:38,399
+with and optimize for your system and
+
+682
+00:32:36,240 --> 00:32:41,360
+that that's an additional complexity
+
+683
+00:32:38,399 --> 00:32:43,760
+here but yes
+
+684
+00:32:41,360 --> 00:32:46,399
+>> the previous one
+
+685
+00:32:43,760 --> 00:32:49,279
+um does it make sense to this comparison
+
+686
+00:32:46,399 --> 00:32:52,320
+because J requests much more labels than
+
+687
+00:32:49,279 --> 00:32:54,880
+RN so does it show up where the access
+
+688
+00:32:52,320 --> 00:32:57,600
+Texas access is like nimble.
+
+689
+00:32:54,880 --> 00:32:59,200
+Um I think they were trying to Yeah,
+
+690
+00:32:57,600 --> 00:33:01,919
+because they also mentioned that it's
+
+691
+00:32:59,200 --> 00:33:06,960
+hard to compare and they did they did
+
+692
+00:33:01,919 --> 00:33:11,039
+manage to like have because um it's true
+
+693
+00:33:06,960 --> 00:33:14,320
+OM needs like K labels per problems but
+
+694
+00:33:11,039 --> 00:33:16,320
+PRM needs K times some number of steps
+
+695
+00:33:14,320 --> 00:33:17,919
+but then it's very hard to control that
+
+696
+00:33:16,320 --> 00:33:20,080
+number of steps of like how do you
+
+697
+00:33:17,919 --> 00:33:22,000
+exactly control but they did try to
+
+698
+00:33:20,080 --> 00:33:23,919
+manage that and I believe some of the
+
+699
+00:33:22,000 --> 00:33:26,480
+graphs they they do that but that's a
+
+700
+00:33:23,919 --> 00:33:29,039
+good Right. Yes.
+
+701
+00:33:26,480 --> 00:33:34,000
+>> Majority voting mean in this context.
+
+702
+00:33:29,039 --> 00:33:37,760
+>> So majority voting is you have n sample
+
+703
+00:33:34,000 --> 00:33:39,840
+you uh you don't have any access to any
+
+704
+00:33:37,760 --> 00:33:42,399
+reward model. You just see which sample
+
+705
+00:33:39,840 --> 00:33:46,640
+or solution is repeated most and you
+
+706
+00:33:42,399 --> 00:33:48,799
+take that as your final answer.
+
+707
+00:33:46,640 --> 00:33:49,360
+>> Are you also working on the reason
+
+708
+00:33:48,799 --> 00:33:53,640
+process?
+
+709
+00:33:49,360 --> 00:33:53,640
+>> No, you look into the final answer.
+
+710
+00:33:53,760 --> 00:33:59,519
+Um, in this case, are they using the
+
+711
+00:33:55,440 --> 00:34:03,039
+same PRM 800K for all of those tasks or
+
+712
+00:33:59,519 --> 00:34:04,799
+are they using different terms for each?
+
+713
+00:34:03,039 --> 00:34:07,440
+>> Um, because they're talking about
+
+714
+00:34:04,799 --> 00:34:08,000
+generalization, I assume this should be
+
+715
+00:34:07,440 --> 00:34:13,240
+>> the same
+
+716
+00:34:08,000 --> 00:34:13,240
+>> the same one. But yeah,
+
+717
+00:34:14,480 --> 00:34:17,599
+>> yes.
+
+718
+00:34:15,520 --> 00:34:19,520
+>> Uh, how does this avoid when the
+
+719
+00:34:17,599 --> 00:34:23,280
+reasoning is actually bad but rated
+
+720
+00:34:19,520 --> 00:34:25,520
+high? Like for example um if you go back
+
+721
+00:34:23,280 --> 00:34:28,760
+to slide
+
+722
+00:34:25,520 --> 00:34:28,760
+>> this one
+
+723
+00:34:30,560 --> 00:34:36,320
+>> yeah this one like what if like the uh
+
+724
+00:34:34,000 --> 00:34:40,159
+reasoning is let's call the numerator x
+
+725
+00:34:36,320 --> 00:34:44,320
+and then x = to 14 and it jumps immunity
+
+726
+00:34:40,159 --> 00:34:46,480
+to the x how does that avoid like 31
+
+727
+00:34:44,320 --> 00:34:47,679
+>> so you're saying the prm can give a high
+
+728
+00:34:46,480 --> 00:34:49,760
+score
+
+729
+00:34:47,679 --> 00:34:50,720
+>> like what if it's like skip all the
+
+730
+00:34:49,760 --> 00:34:53,040
+reasoning
+
+731
+00:34:50,720 --> 00:34:55,359
+um like let's call the numerator x and
+
+732
+00:34:53,040 --> 00:34:57,839
+then x= to 14 like how does that avoid
+
+733
+00:34:55,359 --> 00:35:00,640
+like that kind of hacking?
+
+734
+00:34:57,839 --> 00:35:03,200
+>> Sorry, I don't get it. Can you speak up
+
+735
+00:35:00,640 --> 00:35:04,320
+what's the alternative scenario you're
+
+736
+00:35:03,200 --> 00:35:07,040
+talking about?
+
+737
+00:35:04,320 --> 00:35:11,040
+uh like the the reasoning step would
+
+738
+00:35:07,040 --> 00:35:12,960
+just be numerator x and then x= 4 and
+
+739
+00:35:11,040 --> 00:35:15,599
+how does the like the PRM avoid the kind
+
+740
+00:35:12,960 --> 00:35:18,720
+of like real typing scenario
+
+741
+00:35:15,599 --> 00:35:21,119
+directly skip some steps and directly
+
+742
+00:35:18,720 --> 00:35:24,000
+generate the answer
+
+743
+00:35:21,119 --> 00:35:27,040
+like speed
+
+744
+00:35:24,000 --> 00:35:29,599
+>> so the parents are trained like parents
+
+745
+00:35:27,040 --> 00:35:31,280
+can also see the previous steps like the
+
+746
+00:35:29,599 --> 00:35:33,920
+questions previous step and here is the
+
+747
+00:35:31,280 --> 00:35:36,880
+current steps to score Right. You're
+
+748
+00:35:33,920 --> 00:35:38,160
+right. Um, so if X is 14, then it's
+
+749
+00:35:36,880 --> 00:35:39,760
+great, right?
+
+750
+00:35:38,160 --> 00:35:41,599
+>> It doesn't really encourage like the
+
+751
+00:35:39,760 --> 00:35:43,200
+thinking process of like going to step
+
+752
+00:35:41,599 --> 00:35:44,960
+by step.
+
+753
+00:35:43,200 --> 00:35:46,880
+>> It doesn't. No,
+
+754
+00:35:44,960 --> 00:35:49,440
+>> no, it doesn't. But you can prompt the
+
+755
+00:35:46,880 --> 00:35:51,119
+model to to do this cuz you're not
+
+756
+00:35:49,440 --> 00:35:53,839
+changing the model, right? You're not
+
+757
+00:35:51,119 --> 00:35:56,240
+changing your generator. You can't like
+
+758
+00:35:53,839 --> 00:35:58,000
+uh the that failure mode could be when
+
+759
+00:35:56,240 --> 00:36:00,240
+you were fine-tuning your generator
+
+760
+00:35:58,000 --> 00:36:02,960
+model and the model kind of stops
+
+761
+00:36:00,240 --> 00:36:05,119
+reasoning and just generates and final
+
+762
+00:36:02,960 --> 00:36:07,359
+answer that the PRM likes, right? But
+
+763
+00:36:05,119 --> 00:36:09,599
+you're not touching your generator. The
+
+764
+00:36:07,359 --> 00:36:11,760
+generators can still be prompted to do
+
+765
+00:36:09,599 --> 00:36:14,800
+reasoning, create these steps, and then
+
+766
+00:36:11,760 --> 00:36:16,160
+the verifier just scores them.
+
+767
+00:36:14,800 --> 00:36:18,800
+Um
+
+768
+00:36:16,160 --> 00:36:20,800
+>> but if let's say we want to use the PRM
+
+769
+00:36:18,800 --> 00:36:22,960
+to train the
+
+770
+00:36:20,800 --> 00:36:24,960
+>> yeah then you have to be careful then
+
+771
+00:36:22,960 --> 00:36:27,440
+you have to like make sure that the
+
+772
+00:36:24,960 --> 00:36:31,040
+chain of thought makes sense right and
+
+773
+00:36:27,440 --> 00:36:33,440
+your PRM again your PRM can the way you
+
+774
+00:36:31,040 --> 00:36:36,480
+train your PRM can also be aware of that
+
+775
+00:36:33,440 --> 00:36:40,480
+because your PRM could be as your your
+
+776
+00:36:36,480 --> 00:36:43,280
+PRM these are like human generated
+
+777
+00:36:40,480 --> 00:36:45,040
+labels in this case right if we had like
+
+778
+00:36:43,280 --> 00:36:47,839
+skipped all of this and then we would go
+
+779
+00:36:45,040 --> 00:36:50,400
+to X14. Probably the human says this is
+
+780
+00:36:47,839 --> 00:36:52,960
+this doesn't make sense. This step is
+
+781
+00:36:50,400 --> 00:36:56,480
+lower because this step is skipping a
+
+782
+00:36:52,960 --> 00:36:58,240
+few kind of reasoning steps.
+
+783
+00:36:56,480 --> 00:37:02,760
+Does that make sense? So these labels
+
+784
+00:36:58,240 --> 00:37:02,760
+are created by humans here.
+
+785
+00:37:05,200 --> 00:37:09,040
+>> So if the labels are not generated by
+
+786
+00:37:07,599 --> 00:37:11,119
+humans and we're going to see that in
+
+787
+00:37:09,040 --> 00:37:13,440
+the next paper. Yes, that is definitely
+
+788
+00:37:11,119 --> 00:37:15,599
+a caveat like and something that you can
+
+789
+00:37:13,440 --> 00:37:18,079
+make sure but there are ways to handle
+
+790
+00:37:15,599 --> 00:37:20,079
+that as well. Okay, so for now let's
+
+791
+00:37:18,079 --> 00:37:22,160
+assume these are human labels. So the
+
+792
+00:37:20,079 --> 00:37:24,720
+processes are labeled in a way that they
+
+793
+00:37:22,160 --> 00:37:26,960
+make sense as well. We have so many
+
+794
+00:37:24,720 --> 00:37:29,119
+things to encourage these gener
+
+795
+00:37:26,960 --> 00:37:31,760
+generation to make sense. First of all
+
+796
+00:37:29,119 --> 00:37:33,680
+the generator
+
+797
+00:37:31,760 --> 00:37:36,800
+should should generate the steps. The
+
+798
+00:37:33,680 --> 00:37:38,800
+PRM is trained on human annotations that
+
+799
+00:37:36,800 --> 00:37:43,440
+also they also make sure that this step
+
+800
+00:37:38,800 --> 00:37:47,000
+makes sense given the prior steps.
+
+801
+00:37:43,440 --> 00:37:47,000
+Any other questions?
+
+802
+00:37:48,480 --> 00:37:54,880
+Okay, let's go through the next the next
+
+803
+00:37:51,680 --> 00:37:56,960
+paper. Matt Shepard verify and reinforce
+
+804
+00:37:54,880 --> 00:37:59,280
+LLM step by step without human
+
+805
+00:37:56,960 --> 00:38:03,280
+annotation. So we're getting to what if
+
+806
+00:37:59,280 --> 00:38:05,200
+we um didn't want to collect that many
+
+807
+00:38:03,280 --> 00:38:10,079
+annotations
+
+808
+00:38:05,200 --> 00:38:12,880
+um from humans. So again motivation is
+
+809
+00:38:10,079 --> 00:38:15,359
+that um
+
+810
+00:38:12,880 --> 00:38:17,680
+having stronger vifiers shows the
+
+811
+00:38:15,359 --> 00:38:19,680
+potential to really improve models
+
+812
+00:38:17,680 --> 00:38:23,280
+reasoning behavior especially if you do
+
+813
+00:38:19,680 --> 00:38:26,800
+test time scaling. um PRM have shown
+
+814
+00:38:23,280 --> 00:38:28,880
+more potential than OMS but they require
+
+815
+00:38:26,800 --> 00:38:32,880
+a lot of data and it's hard to collect
+
+816
+00:38:28,880 --> 00:38:37,119
+these data so can be um automate the
+
+817
+00:38:32,880 --> 00:38:40,880
+process of label collection for PRMS
+
+818
+00:38:37,119 --> 00:38:44,960
+um so this paper talks about two kind of
+
+819
+00:38:40,880 --> 00:38:47,440
+approaches one is automatic annotation
+
+820
+00:38:44,960 --> 00:38:50,560
+um and also
+
+821
+00:38:47,440 --> 00:38:53,920
+u kind of brings the the the the reward
+
+822
+00:38:50,560 --> 00:38:55,920
+model as a into the loop of uh generator
+
+823
+00:38:53,920 --> 00:38:58,960
+optimization via a reinforcement
+
+824
+00:38:55,920 --> 00:39:03,440
+learning approach uh which uh we are
+
+825
+00:38:58,960 --> 00:39:07,040
+going to briefly mention that. So
+
+826
+00:39:03,440 --> 00:39:10,160
+in this case u the way they tried to go
+
+827
+00:39:07,040 --> 00:39:13,680
+about this um automatic kind of
+
+828
+00:39:10,160 --> 00:39:17,359
+annotation of steps was that they define
+
+829
+00:39:13,680 --> 00:39:19,440
+the quality of the reason step as the
+
+830
+00:39:17,359 --> 00:39:22,160
+potential of the step to reach to the
+
+831
+00:39:19,440 --> 00:39:25,760
+final correct answer. So let's say we
+
+832
+00:39:22,160 --> 00:39:28,640
+have we are at a given step. we sample n
+
+833
+00:39:25,760 --> 00:39:32,480
+kind of completions from that given step
+
+834
+00:39:28,640 --> 00:39:34,960
+and see the potential for um a correct
+
+835
+00:39:32,480 --> 00:39:37,440
+solution at the very end. So and they
+
+836
+00:39:34,960 --> 00:39:43,200
+introduce two ways of doing this. One is
+
+837
+00:39:37,440 --> 00:39:48,160
+the hard estimate uh where the the step
+
+838
+00:39:43,200 --> 00:39:51,520
+is annotated u as a success if
+
+839
+00:39:48,160 --> 00:39:55,200
+it any of those n generations after that
+
+840
+00:39:51,520 --> 00:39:58,000
+step gets to a final correct answer. The
+
+841
+00:39:55,200 --> 00:40:00,000
+soft estimate thinks of measures the
+
+842
+00:39:58,000 --> 00:40:02,560
+frequency like what portion of the
+
+843
+00:40:00,000 --> 00:40:04,960
+generations after a current step reached
+
+844
+00:40:02,560 --> 00:40:08,000
+the final correct answer. So here is
+
+845
+00:40:04,960 --> 00:40:11,680
+like how it works. um say here is the
+
+846
+00:40:08,000 --> 00:40:15,040
+problem and this is our current state.
+
+847
+00:40:11,680 --> 00:40:17,359
+Instead of just sampling one step, we
+
+848
+00:40:15,040 --> 00:40:21,119
+sample n is three in this case. So we
+
+849
+00:40:17,359 --> 00:40:23,599
+sample three steps and then we continue
+
+850
+00:40:21,119 --> 00:40:25,680
+um and and we measure the frequency in
+
+851
+00:40:23,599 --> 00:40:27,839
+the soft estimate. We we measure the
+
+852
+00:40:25,680 --> 00:40:30,720
+frequency of correct answer at the very
+
+853
+00:40:27,839 --> 00:40:34,640
+end. In hard estimate, we see whether
+
+854
+00:40:30,720 --> 00:40:36,960
+any any of these um uh are correct or
+
+855
+00:40:34,640 --> 00:40:40,000
+not. So hard estimate would be one for
+
+856
+00:40:36,960 --> 00:40:42,880
+step one. Soft estimate would be 2/3 for
+
+857
+00:40:40,000 --> 00:40:45,920
+step one.
+
+858
+00:40:42,880 --> 00:40:51,119
+Um anyone can
+
+859
+00:40:45,920 --> 00:40:55,359
+um kind of name it a challenge or a
+
+860
+00:40:51,119 --> 00:40:58,960
+drawback of this approach. So basically
+
+861
+00:40:55,359 --> 00:41:02,160
+the this soft or hard um kind of
+
+862
+00:40:58,960 --> 00:41:04,960
+estimation is replacing the human
+
+863
+00:41:02,160 --> 00:41:07,040
+annotations. So we're getting a score
+
+864
+00:41:04,960 --> 00:41:09,520
+per step by just rolling out more
+
+865
+00:41:07,040 --> 00:41:11,920
+samples from that step and and seeing
+
+866
+00:41:09,520 --> 00:41:13,920
+whether we reach to the final correct
+
+867
+00:41:11,920 --> 00:41:19,400
+answer or not and assume that we do have
+
+868
+00:41:13,920 --> 00:41:19,400
+final labels for these problems. Um
+
+869
+00:41:21,280 --> 00:41:28,079
+>> yes
+
+870
+00:41:23,920 --> 00:41:31,599
+>> or um where are predictable paths on the
+
+871
+00:41:28,079 --> 00:41:33,760
+lower right uh the when the
+
+872
+00:41:31,599 --> 00:41:35,520
+unpredictable path could be the only way
+
+873
+00:41:33,760 --> 00:41:37,440
+to solve
+
+874
+00:41:35,520 --> 00:41:38,400
+>> sorry speak up again if it's
+
+875
+00:41:37,440 --> 00:41:40,880
+unpredictable
+
+876
+00:41:38,400 --> 00:41:43,440
+>> unpredict or like unusual approaches to
+
+877
+00:41:40,880 --> 00:41:46,160
+solving a problem but it could be scored
+
+878
+00:41:43,440 --> 00:41:48,240
+as low or something that might You know
+
+879
+00:41:46,160 --> 00:41:51,119
+a way to be able to solve that problem.
+
+880
+00:41:48,240 --> 00:41:54,640
+So it might be really hard problem
+
+881
+00:41:51,119 --> 00:41:58,079
+to lose that path to that solution.
+
+882
+00:41:54,640 --> 00:42:01,280
+>> That is correct. So basically say n is
+
+883
+00:41:58,079 --> 00:42:05,040
+three here. Maybe we needed like 100 n
+
+884
+00:42:01,280 --> 00:42:09,280
+equal 100 to see that final correct kind
+
+885
+00:42:05,040 --> 00:42:11,280
+of like trajectory to score this step.
+
+886
+00:42:09,280 --> 00:42:13,119
+But we won't see that if we just look
+
+887
+00:42:11,280 --> 00:42:19,319
+into three, right? And then we give a
+
+888
+00:42:13,119 --> 00:42:19,319
+score of zero. Um, anything else?
+
+889
+00:42:23,599 --> 00:42:26,079
+>> Yes,
+
+890
+00:42:24,480 --> 00:42:27,920
+>> I guess this is similar, but if you're
+
+891
+00:42:26,079 --> 00:42:29,359
+dealing with like a hard question, if
+
+892
+00:42:27,920 --> 00:42:31,280
+you're taking the approach of like
+
+893
+00:42:29,359 --> 00:42:33,359
+generating a lot of samples, a lot of
+
+894
+00:42:31,280 --> 00:42:35,760
+the samples can just not be correct or
+
+895
+00:42:33,359 --> 00:42:36,560
+not the correct way to do it. So,
+
+896
+00:42:35,760 --> 00:42:38,960
+>> you just
+
+897
+00:42:36,560 --> 00:42:41,119
+>> you don't get any signal for hard
+
+898
+00:42:38,960 --> 00:42:44,319
+problems in this case.
+
+899
+00:42:41,119 --> 00:42:48,720
+>> Um, that's right.
+
+900
+00:42:44,319 --> 00:42:51,200
+that service doesn't mean any
+
+901
+00:42:48,720 --> 00:42:53,040
+>> exactly I think this is like probably
+
+902
+00:42:51,200 --> 00:42:55,599
+like these two that you all mentioned
+
+903
+00:42:53,040 --> 00:42:57,920
+here one is for hard problems you don't
+
+904
+00:42:55,599 --> 00:43:00,319
+get signal the other one is what if
+
+905
+00:42:57,920 --> 00:43:03,440
+there are like wrong steps in the middle
+
+906
+00:43:00,319 --> 00:43:06,319
+and we got to the final correct solution
+
+907
+00:43:03,440 --> 00:43:07,920
+um we still label those uh steps as
+
+908
+00:43:06,319 --> 00:43:10,000
+correct
+
+909
+00:43:07,920 --> 00:43:12,960
+um so the hope is that if you have more
+
+910
+00:43:10,000 --> 00:43:16,560
+samples it shows the wrongness in one of
+
+911
+00:43:12,960 --> 00:43:20,119
+these these kind of uh trajectories but
+
+912
+00:43:16,560 --> 00:43:20,119
+it's not guaranteed.
+
+913
+00:43:20,480 --> 00:43:24,280
+So um
+
+914
+00:43:25,440 --> 00:43:31,200
+so here is the verification process. You
+
+915
+00:43:27,920 --> 00:43:34,240
+sample and again you sample in candidate
+
+916
+00:43:31,200 --> 00:43:37,280
+solutions uh score them using the PRM
+
+917
+00:43:34,240 --> 00:43:41,440
+and you select the highest kind of PRM
+
+918
+00:43:37,280 --> 00:43:44,640
+score across across the the generated
+
+919
+00:43:41,440 --> 00:43:47,920
+samples. They also took this PRM and
+
+920
+00:43:44,640 --> 00:43:50,800
+trained the model with this PRM to
+
+921
+00:43:47,920 --> 00:43:52,800
+encourage the model to generate uh steps
+
+922
+00:43:50,800 --> 00:43:55,839
+that are scored higher and higher by
+
+923
+00:43:52,800 --> 00:43:59,599
+PRM. So PRM basically uh served as the
+
+924
+00:43:55,839 --> 00:44:01,440
+reward model uh for this. Um so for they
+
+925
+00:43:59,599 --> 00:44:03,440
+looked into the hard versus soft
+
+926
+00:44:01,440 --> 00:44:08,480
+annotations and although the loss
+
+927
+00:44:03,440 --> 00:44:11,440
+function um as they increased n would be
+
+928
+00:44:08,480 --> 00:44:17,119
+um it seemed like the the the soft
+
+929
+00:44:11,440 --> 00:44:20,079
+annotations were uh doing better. Uh but
+
+930
+00:44:17,119 --> 00:44:23,599
+somehow um what they observed with that
+
+931
+00:44:20,079 --> 00:44:26,240
+with an n equal 4 the depth of like the
+
+932
+00:44:23,599 --> 00:44:28,720
+trajectory completions to collect these
+
+933
+00:44:26,240 --> 00:44:32,079
+labels that's where they get like their
+
+934
+00:44:28,720 --> 00:44:33,680
+best results anyway. So it really didn't
+
+935
+00:44:32,079 --> 00:44:35,359
+matter whether they used the hard
+
+936
+00:44:33,680 --> 00:44:37,359
+estimate or softest estimate and they
+
+937
+00:44:35,359 --> 00:44:39,599
+went with the hard estimate at the very
+
+938
+00:44:37,359 --> 00:44:46,200
+end because it's um because it was just
+
+939
+00:44:39,599 --> 00:44:46,200
+easier to to measure that. So um
+
+940
+00:44:47,359 --> 00:44:52,720
+here is another comparison with
+
+941
+00:44:49,520 --> 00:44:54,960
+baseline. So here they have SC is major
+
+942
+00:44:52,720 --> 00:44:57,520
+self-consistency is another name for
+
+943
+00:44:54,960 --> 00:45:00,720
+majority voting which which solution was
+
+944
+00:44:57,520 --> 00:45:04,000
+most consistent. Uh that's the red one.
+
+945
+00:45:00,720 --> 00:45:07,599
+Um OM is the blue one and the shepherd
+
+946
+00:45:04,000 --> 00:45:09,839
+is this PRM approach uh is uh the green
+
+947
+00:45:07,599 --> 00:45:12,400
+one. And the interesting part here was
+
+948
+00:45:09,839 --> 00:45:14,720
+that there was no human annotation. All
+
+949
+00:45:12,400 --> 00:45:16,480
+the annotations were uh modeled
+
+950
+00:45:14,720 --> 00:45:19,359
+generated
+
+951
+00:45:16,480 --> 00:45:21,280
+um or the with the the mechanism that
+
+952
+00:45:19,359 --> 00:45:24,880
+they introduced.
+
+953
+00:45:21,280 --> 00:45:28,079
+Um here they also compare with PRM 800K
+
+954
+00:45:24,880 --> 00:45:30,400
+which was the way fire the that we that
+
+955
+00:45:28,079 --> 00:45:32,960
+in the previous paper that was trained
+
+956
+00:45:30,400 --> 00:45:35,760
+and it outperformed that as well on math
+
+957
+00:45:32,960 --> 00:45:38,000
+which is like a harder much harder uh
+
+958
+00:45:35,760 --> 00:45:41,200
+setup. This data set is more difficult
+
+959
+00:45:38,000 --> 00:45:45,599
+than GSM GSMHK and they were getting
+
+960
+00:45:41,200 --> 00:45:49,760
+even higher uh delta in there.
+
+961
+00:45:45,599 --> 00:45:52,800
+Uh they also compared the these results
+
+962
+00:45:49,760 --> 00:45:56,319
+uh with uh different types of verifiers
+
+963
+00:45:52,800 --> 00:46:00,000
+again across uh
+
+964
+00:45:56,319 --> 00:46:01,760
+GSM8K and MAT 500 problems. And you can
+
+965
+00:46:00,000 --> 00:46:06,160
+see that the difference between these
+
+966
+00:46:01,760 --> 00:46:11,040
+models and like these approaches um and
+
+967
+00:46:06,160 --> 00:46:13,280
+um there there is a notable difference
+
+968
+00:46:11,040 --> 00:46:16,079
+between these models and uh the
+
+969
+00:46:13,280 --> 00:46:18,640
+baselines which is self-consistency
+
+970
+00:46:16,079 --> 00:46:20,720
+approaches
+
+971
+00:46:18,640 --> 00:46:29,119
+and this is true across different models
+
+972
+00:46:20,720 --> 00:46:31,200
+70 lama 70B LMAD 34B and deepseek 67B
+
+973
+00:46:29,119 --> 00:46:33,040
+uh they also showed that they can get
+
+974
+00:46:31,200 --> 00:46:35,440
+even better they can make the model even
+
+975
+00:46:33,040 --> 00:46:38,000
+better if they they RL the model against
+
+976
+00:46:35,440 --> 00:46:41,040
+the PRMS that they trained. So in this
+
+977
+00:46:38,000 --> 00:46:43,520
+case the match sheepard on this their
+
+978
+00:46:41,040 --> 00:46:47,599
+their approach basically mis taking
+
+979
+00:46:43,520 --> 00:46:50,480
+mistral 7B this model and then they uh
+
+980
+00:46:47,599 --> 00:46:53,599
+po it against this PRM uh they're
+
+981
+00:46:50,480 --> 00:46:59,599
+getting much higher results u compared
+
+982
+00:46:53,599 --> 00:47:02,480
+to um doing this RL with just an OM um
+
+983
+00:46:59,599 --> 00:47:04,000
+the delta here is um slightly less I
+
+984
+00:47:02,480 --> 00:47:07,359
+would say than just the test time
+
+985
+00:47:04,000 --> 00:47:08,960
+scaling but um this is also
+
+986
+00:47:07,359 --> 00:47:11,920
+another way for the models to
+
+987
+00:47:08,960 --> 00:47:14,960
+self-improve, right? You generate the
+
+988
+00:47:11,920 --> 00:47:17,440
+annotation by the model itself. You
+
+989
+00:47:14,960 --> 00:47:19,599
+train the PRM and then use that PRM to
+
+990
+00:47:17,440 --> 00:47:21,520
+improve the mo the generator model as
+
+991
+00:47:19,599 --> 00:47:23,599
+well, both at test time and during with
+
+992
+00:47:21,520 --> 00:47:25,760
+this RL fine-tuning. So, it's like
+
+993
+00:47:23,599 --> 00:47:28,800
+multiple levels of using the model
+
+994
+00:47:25,760 --> 00:47:33,480
+itself to generate data and like RL
+
+995
+00:47:28,800 --> 00:47:33,480
+reward signal for for for itself.
+
+996
+00:47:34,720 --> 00:47:37,720
+Um
+
+997
+00:47:38,319 --> 00:47:43,920
+yeah and then they can do RL and PO and
+
+998
+00:47:41,359 --> 00:47:45,760
+do verification up on top and they get
+
+999
+00:47:43,920 --> 00:47:48,319
+even better results but it seems like
+
+1000
+00:47:45,760 --> 00:47:51,760
+kind of kind of their optimizations are
+
+1001
+00:47:48,319 --> 00:47:55,800
+plateauing at some point. Um any
+
+1002
+00:47:51,760 --> 00:47:55,800
+questions from this paper?
+
+1003
+00:47:56,319 --> 00:48:01,440
+>> Yes. Are there ways to build PRM that
+
+1004
+00:47:58,880 --> 00:48:03,119
+like incentivize like self error
+
+1005
+00:48:01,440 --> 00:48:04,960
+correction which I imagine be like a
+
+1006
+00:48:03,119 --> 00:48:07,200
+desirable thing but like if we're only
+
+1007
+00:48:04,960 --> 00:48:10,480
+you know rewarding each step be correct
+
+1008
+00:48:07,200 --> 00:48:14,000
+you don't necessarily end up reinforcing
+
+1009
+00:48:10,480 --> 00:48:17,280
+a lot of incorrect steps back
+
+1010
+00:48:14,000 --> 00:48:19,599
+>> so encourage parents to do more self
+
+1011
+00:48:17,280 --> 00:48:22,720
+correction
+
+1012
+00:48:19,599 --> 00:48:24,559
+>> yes absolutely like for example one of
+
+1013
+00:48:22,720 --> 00:48:27,680
+the methods that that can be done is
+
+1014
+00:48:24,559 --> 00:48:31,839
+that you have a rubric or a set of rules
+
+1015
+00:48:27,680 --> 00:48:34,640
+that you give the model as your scoring
+
+1016
+00:48:31,839 --> 00:48:37,119
+step. So the model can check the step
+
+1017
+00:48:34,640 --> 00:48:40,559
+against this rubric that your design for
+
+1018
+00:48:37,119 --> 00:48:43,040
+this data set and that can be used as
+
+1019
+00:48:40,559 --> 00:48:45,280
+extra signal whether this step makes
+
+1020
+00:48:43,040 --> 00:48:47,760
+sense or not
+
+1021
+00:48:45,280 --> 00:48:49,680
+right for example the very or like use a
+
+1022
+00:48:47,760 --> 00:48:51,839
+calculator in that case in the problem
+
+1023
+00:48:49,680 --> 00:48:54,160
+in the equation that we are seeing if
+
+1024
+00:48:51,839 --> 00:48:56,319
+the model could use could do tool use or
+
+1025
+00:48:54,160 --> 00:48:58,400
+use a calculator in that case it would
+
+1026
+00:48:56,319 --> 00:49:02,960
+not it could solve that problem easily
+
+1027
+00:48:58,400 --> 00:49:05,520
+right could for example use uh simp.
+
+1028
+00:49:02,960 --> 00:49:07,839
+So, so there are ways to bring more
+
+1029
+00:49:05,520 --> 00:49:11,119
+supervision and more signal and enable
+
+1030
+00:49:07,839 --> 00:49:13,119
+the model to use tools and test time
+
+1031
+00:49:11,119 --> 00:49:17,319
+scaling and agentic approaches to
+
+1032
+00:49:13,119 --> 00:49:17,319
+improve the verification process.
+
+1033
+00:49:19,760 --> 00:49:24,720
+>> Yes.
+
+1034
+00:49:22,480 --> 00:49:27,720
+>> Do they control the amount of test
+
+1035
+00:49:24,720 --> 00:49:27,720
+compute?
+
+1036
+00:49:28,480 --> 00:49:32,400
+Um
+
+1037
+00:49:30,000 --> 00:49:34,240
+I I believe so. You mean test s times
+
+1038
+00:49:32,400 --> 00:49:37,280
+when they're using the verifier like a
+
+1039
+00:49:34,240 --> 00:49:39,920
+baseline verifier versus themselves? I
+
+1040
+00:49:37,280 --> 00:49:42,079
+I'm actually not sure if they do they do
+
+1041
+00:49:39,920 --> 00:49:45,200
+that when they're doing process versus
+
+1042
+00:49:42,079 --> 00:49:49,640
+because again that's really hard to do
+
+1043
+00:49:45,200 --> 00:49:49,640
+like but
+
+1044
+00:49:50,079 --> 00:49:54,800
+>> you're scaling things right.
+
+1045
+00:49:52,079 --> 00:49:56,640
+>> Yeah. I think that could actually be a
+
+1046
+00:49:54,800 --> 00:49:59,040
+question that you could investigate like
+
+1047
+00:49:56,640 --> 00:50:01,680
+you can sample more on the generator,
+
+1048
+00:49:59,040 --> 00:50:03,920
+you could sample more on the verifier if
+
+1049
+00:50:01,680 --> 00:50:07,280
+you if you're controlling for a fixed
+
+1050
+00:50:03,920 --> 00:50:08,800
+compute. How do you allocate that? Um so
+
+1051
+00:50:07,280 --> 00:50:10,960
+one of the challenges here is that
+
+1052
+00:50:08,800 --> 00:50:13,440
+usually like the OM and PM should come
+
+1053
+00:50:10,960 --> 00:50:16,160
+from the same data for us to do like a
+
+1054
+00:50:13,440 --> 00:50:19,200
+good like apples to apples comparison,
+
+1055
+00:50:16,160 --> 00:50:21,200
+right? Um cuz if you do train a PRM and
+
+1056
+00:50:19,200 --> 00:50:23,200
+someone else train an RM makes things a
+
+1057
+00:50:21,200 --> 00:50:26,319
+bit harder. The training data also
+
+1058
+00:50:23,200 --> 00:50:28,720
+matters a lot.
+
+1059
+00:50:26,319 --> 00:50:31,359
+>> Any other questions? Yes.
+
+1060
+00:50:28,720 --> 00:50:33,119
+>> Um, can you go back to the 3D slide?
+
+1061
+00:50:31,359 --> 00:50:34,640
+>> No, I was just Oh, no. No. It was the
+
+1062
+00:50:33,119 --> 00:50:37,920
+basically for this one I was just
+
+1063
+00:50:34,640 --> 00:50:40,240
+curious as to why after using RL um they
+
+1064
+00:50:37,920 --> 00:50:42,800
+stuck with evaluating performances with
+
+1065
+00:50:40,240 --> 00:50:44,720
+3D decoding. Uh I was just curious like
+
+1066
+00:50:42,800 --> 00:50:46,559
+whether or not you know raising the
+
+1067
+00:50:44,720 --> 00:50:48,240
+temperature like really made a
+
+1068
+00:50:46,559 --> 00:50:50,079
+difference or that's the only way they
+
+1069
+00:50:48,240 --> 00:50:53,520
+could have seen like the you know
+
+1070
+00:50:50,079 --> 00:50:53,520
+smalish delta.
+
+1071
+00:50:53,760 --> 00:50:57,920
+So the the the reason so the question is
+
+1072
+00:50:55,920 --> 00:50:59,680
+why they they stopped greedy decoding
+
+1073
+00:50:57,920 --> 00:51:01,920
+why they didn't do like temperature
+
+1074
+00:50:59,680 --> 00:51:04,400
+changes and test time scaling again
+
+1075
+00:51:01,920 --> 00:51:08,880
+right I think that's what this slide is
+
+1076
+00:51:04,400 --> 00:51:12,240
+so they they then in this case
+
+1077
+00:51:08,880 --> 00:51:15,280
+um the verification is done against 256
+
+1078
+00:51:12,240 --> 00:51:17,359
+outputs so the previous one is um no
+
+1079
+00:51:15,280 --> 00:51:19,280
+verification right the ver verifier is
+
+1080
+00:51:17,359 --> 00:51:23,880
+just using the RL training here it is at
+
+1081
+00:51:19,280 --> 00:51:23,880
+test time as well Yeah,
+
+1082
+00:51:25,119 --> 00:51:28,400
+I think it's something that they didn't
+
+1083
+00:51:26,880 --> 00:51:31,839
+do and it would be interesting to see
+
+1084
+00:51:28,400 --> 00:51:35,520
+what if they repeat the process again
+
+1085
+00:51:31,839 --> 00:51:37,839
+um generate another set of labels and
+
+1086
+00:51:35,520 --> 00:51:40,160
+train a verifier and then but starting
+
+1087
+00:51:37,839 --> 00:51:43,800
+from this RLPPO
+
+1088
+00:51:40,160 --> 00:51:43,800
+model. Yeah.
+
+1089
+00:51:47,839 --> 00:51:53,599
+>> Okay. Let's get to the last paper. um
+
+1090
+00:51:51,119 --> 00:51:56,160
+shrinking the generation verification
+
+1091
+00:51:53,599 --> 00:52:01,839
+gap with weak verifiers. So this is the
+
+1092
+00:51:56,160 --> 00:52:05,359
+paper a paper um that uh from from
+
+1093
+00:52:01,839 --> 00:52:09,040
+Stanford that uh came out a couple of
+
+1094
+00:52:05,359 --> 00:52:14,559
+months ago at this point. So um it's a
+
+1095
+00:52:09,040 --> 00:52:17,599
+new 2025 paper. So the motivation again
+
+1096
+00:52:14,559 --> 00:52:19,440
+um is
+
+1097
+00:52:17,599 --> 00:52:22,800
+the same. We have we still have a
+
+1098
+00:52:19,440 --> 00:52:25,280
+generation verification gap and but the
+
+1099
+00:52:22,800 --> 00:52:27,200
+approach here was a bit different. The
+
+1100
+00:52:25,280 --> 00:52:29,760
+here we were not training a new
+
+1101
+00:52:27,200 --> 00:52:32,480
+verifier. We were thinking can we reduce
+
+1102
+00:52:29,760 --> 00:52:35,440
+the generation verification gap by using
+
+1103
+00:52:32,480 --> 00:52:38,720
+inference compute and inference scaling
+
+1104
+00:52:35,440 --> 00:52:41,040
+and specifically by using an ensemble of
+
+1105
+00:52:38,720 --> 00:52:44,079
+verifiers because it's but when we say
+
+1106
+00:52:41,040 --> 00:52:45,839
+weak we just assume that no verifier is
+
+1107
+00:52:44,079 --> 00:52:47,920
+perfect. So that's the weakness. We
+
+1108
+00:52:45,839 --> 00:52:49,520
+didn't purposefully choose like bad
+
+1109
+00:52:47,920 --> 00:52:51,520
+verifiers. These are the best verifiers
+
+1110
+00:52:49,520 --> 00:52:55,599
+that are out there, but we are using an
+
+1111
+00:52:51,520 --> 00:53:01,079
+ensemble of them to create uh a single
+
+1112
+00:52:55,599 --> 00:53:01,079
+uh much more capable verifier. Um
+
+1113
+00:53:02,720 --> 00:53:07,040
+so the property of weak verifiers is
+
+1114
+00:53:05,280 --> 00:53:09,040
+that they do have they do correlate with
+
+1115
+00:53:07,040 --> 00:53:10,880
+the true label of the problem but they
+
+1116
+00:53:09,040 --> 00:53:13,359
+have of the solution but they have
+
+1117
+00:53:10,880 --> 00:53:15,440
+imperfections. Um and there are two
+
+1118
+00:53:13,359 --> 00:53:18,319
+types of these verifiers. We learned
+
+1119
+00:53:15,440 --> 00:53:21,119
+about PRM and OMS. But another one that
+
+1120
+00:53:18,319 --> 00:53:23,920
+we briefly discussed in the in in a few
+
+1121
+00:53:21,119 --> 00:53:28,079
+minutes ago is that we can use LLMs
+
+1122
+00:53:23,920 --> 00:53:29,839
+themselves as a judge. We can show it an
+
+1123
+00:53:28,079 --> 00:53:31,760
+answer and ask it whether do you think
+
+1124
+00:53:29,839 --> 00:53:34,240
+this is correct or not. The prompt could
+
+1125
+00:53:31,760 --> 00:53:36,640
+be literally that or we can have the
+
+1126
+00:53:34,240 --> 00:53:39,760
+model use tools and use rubrics and all
+
+1127
+00:53:36,640 --> 00:53:42,480
+that to uh generate a score for a model.
+
+1128
+00:53:39,760 --> 00:53:44,960
+So that's a whole category of verifiers
+
+1129
+00:53:42,480 --> 00:53:48,640
+that we can use on top of just PRMs and
+
+1130
+00:53:44,960 --> 00:53:52,800
+OMS. Um so here this first graph just
+
+1131
+00:53:48,640 --> 00:53:55,680
+shows um how ensembling and using a
+
+1132
+00:53:52,800 --> 00:53:58,079
+number of verifiers that are they could
+
+1133
+00:53:55,680 --> 00:54:00,160
+be trained by different labs on
+
+1134
+00:53:58,079 --> 00:54:01,920
+different data sets. We just like and
+
+1135
+00:54:00,160 --> 00:54:04,079
+there are all these language models that
+
+1136
+00:54:01,920 --> 00:54:06,559
+take a query as input and give a score
+
+1137
+00:54:04,079 --> 00:54:08,880
+at on the output side. Here we are
+
+1138
+00:54:06,559 --> 00:54:12,559
+comparing uh we are seeing these four
+
+1139
+00:54:08,880 --> 00:54:15,119
+data sets. So in this case we showing
+
+1140
+00:54:12,559 --> 00:54:18,079
+the performance of top one versus top
+
+1141
+00:54:15,119 --> 00:54:20,559
+five versus top 10 verifiers based on
+
+1142
+00:54:18,079 --> 00:54:26,400
+like how good they are in some ranking
+
+1143
+00:54:20,559 --> 00:54:29,760
+system. Overall, it seems like um
+
+1144
+00:54:26,400 --> 00:54:32,960
+like just uh un ensembling them with
+
+1145
+00:54:29,760 --> 00:54:34,480
+each other um and using them at test
+
+1146
+00:54:32,960 --> 00:54:38,319
+time
+
+1147
+00:54:34,480 --> 00:54:41,280
+uh does improve things u but not in a
+
+1148
+00:54:38,319 --> 00:54:43,680
+necessarily in a monotonically monotonic
+
+1149
+00:54:41,280 --> 00:54:48,640
+way. But the thing that always helped
+
+1150
+00:54:43,680 --> 00:54:51,280
+was that if we train a model to a a way
+
+1151
+00:54:48,640 --> 00:54:53,599
+for them to to add them together. to
+
+1152
+00:54:51,280 --> 00:54:56,079
+assign weights for different members of
+
+1153
+00:54:53,599 --> 00:54:58,319
+the ensemble if we have labels from
+
+1154
+00:54:56,079 --> 00:55:00,800
+them. Here we have we have two methods
+
+1155
+00:54:58,319 --> 00:55:03,040
+naive base or logistic regression. These
+
+1156
+00:55:00,800 --> 00:55:05,839
+are very simple methods. Basically, you
+
+1157
+00:55:03,040 --> 00:55:08,240
+add a simple single weight per verifier
+
+1158
+00:55:05,839 --> 00:55:11,520
+to score them together to and if you
+
+1159
+00:55:08,240 --> 00:55:14,559
+have a training set set for for your
+
+1160
+00:55:11,520 --> 00:55:16,480
+with a with labels, you can basically
+
+1161
+00:55:14,559 --> 00:55:18,559
+come up with these weights and and now
+
+1162
+00:55:16,480 --> 00:55:21,280
+these results are on the test set
+
+1163
+00:55:18,559 --> 00:55:25,040
+corresponding to those tasks. So, you
+
+1164
+00:55:21,280 --> 00:55:27,520
+basically say for math 500 500 I have a
+
+1165
+00:55:25,040 --> 00:55:30,079
+set of labels. I use that to average my
+
+1166
+00:55:27,520 --> 00:55:33,440
+verifiers, find the weights and then I
+
+1167
+00:55:30,079 --> 00:55:35,760
+use this averages on a new on test data.
+
+1168
+00:55:33,440 --> 00:55:38,640
+So that does give it seems like it does
+
+1169
+00:55:35,760 --> 00:55:43,119
+give a lot lot of improvement just this
+
+1170
+00:55:38,640 --> 00:55:45,920
+simple task. Um now you can do other
+
+1171
+00:55:43,119 --> 00:55:48,240
+things. So the the way we works is by
+
+1172
+00:55:45,920 --> 00:55:51,040
+this score weight and select approach.
+
+1173
+00:55:48,240 --> 00:55:55,280
+So in the first step, we are going to
+
+1174
+00:55:51,040 --> 00:55:57,359
+score outputs of the verifiers and uh
+
+1175
+00:55:55,280 --> 00:56:01,839
+normalize them so they're all on the
+
+1176
+00:55:57,359 --> 00:56:04,160
+same scale and and um and filter out the
+
+1177
+00:56:01,839 --> 00:56:06,240
+lowquality verifier. So in this setup
+
+1178
+00:56:04,160 --> 00:56:08,720
+even we are assuming we have access to a
+
+1179
+00:56:06,240 --> 00:56:10,880
+very limited labels that we can say okay
+
+1180
+00:56:08,720 --> 00:56:13,119
+these verifiers are just so bad against
+
+1181
+00:56:10,880 --> 00:56:16,000
+our labels we just remove them from our
+
+1182
+00:56:13,119 --> 00:56:18,079
+ensemble. We have noticed that this is a
+
+1183
+00:56:16,000 --> 00:56:20,559
+very important step like your verifiers
+
+1184
+00:56:18,079 --> 00:56:24,960
+should be above a certain quality to be
+
+1185
+00:56:20,559 --> 00:56:26,799
+even be let in the pool of verifiers. So
+
+1186
+00:56:24,960 --> 00:56:28,640
+then you have your verifiers, you have
+
+1187
+00:56:26,799 --> 00:56:30,400
+your LM judges, you have your reward
+
+1188
+00:56:28,640 --> 00:56:32,640
+models and then you get these scores
+
+1189
+00:56:30,400 --> 00:56:36,960
+from them whether it's zero or one or
+
+1190
+00:56:32,640 --> 00:56:40,880
+the log prop of correctness per um per
+
+1191
+00:56:36,960 --> 00:56:44,240
+verifier. And then um what weieber did
+
+1192
+00:56:40,880 --> 00:56:46,640
+was to use weak su weak supervision to
+
+1193
+00:56:44,240 --> 00:56:50,319
+uh estimate kind of the verifier
+
+1194
+00:56:46,640 --> 00:56:53,280
+accuracy with very small uh data labeled
+
+1195
+00:56:50,319 --> 00:56:55,440
+data and then um and then we use those
+
+1196
+00:56:53,280 --> 00:56:59,680
+ways to combine the verifiers output and
+
+1197
+00:56:55,440 --> 00:57:02,160
+assign a score. Um I go briefly through
+
+1198
+00:56:59,680 --> 00:57:04,000
+like how this week to strong supervision
+
+1199
+00:57:02,160 --> 00:57:08,079
+works. Some of you if you have t taken
+
+1200
+00:57:04,000 --> 00:57:11,839
+deep learning courses or even CS 229s
+
+1201
+00:57:08,079 --> 00:57:13,680
+last time we talked about it about weak
+
+1202
+00:57:11,839 --> 00:57:16,400
+to strong supervision. There's a whole
+
+1203
+00:57:13,680 --> 00:57:20,559
+body of work here. Uh beaver was
+
+1204
+00:57:16,400 --> 00:57:23,839
+specifically u kind of uh
+
+1205
+00:57:20,559 --> 00:57:26,640
+um motivated by the work by snorkel by
+
+1206
+00:57:23,839 --> 00:57:29,839
+Alex ran ratnell atal and other work
+
+1207
+00:57:26,640 --> 00:57:32,160
+from Stanford. So the so here is how we
+
+1208
+00:57:29,839 --> 00:57:34,400
+have these weak verifiers like weak
+
+1209
+00:57:32,160 --> 00:57:36,799
+signal from our verifiers and combine
+
+1210
+00:57:34,400 --> 00:57:39,520
+them together to get a stronger signal.
+
+1211
+00:57:36,799 --> 00:57:42,880
+The setup is the following. We have n
+
+1212
+00:57:39,520 --> 00:57:44,880
+queries. For each query we create k
+
+1213
+00:57:42,880 --> 00:57:48,799
+solutions and then let's assume we have
+
+1214
+00:57:44,880 --> 00:57:54,079
+m verifiers. So we have a total of n * k
+
+1215
+00:57:48,799 --> 00:57:59,200
+* m labels. uh and our goal here is to
+
+1216
+00:57:54,079 --> 00:58:03,200
+create to get this probability of um
+
+1217
+00:57:59,200 --> 00:58:05,200
+query I sample J uh equal to one given
+
+1218
+00:58:03,200 --> 00:58:07,760
+all the labels that we get from all the
+
+1219
+00:58:05,200 --> 00:58:10,880
+verifiers. So how do we estimate this
+
+1220
+00:58:07,760 --> 00:58:14,319
+probability correctly? Um the assumption
+
+1221
+00:58:10,880 --> 00:58:17,839
+in beaver is that each verifier captures
+
+1222
+00:58:14,319 --> 00:58:19,599
+independent aspect of the correctness.
+
+1223
+00:58:17,839 --> 00:58:22,240
+So this is a key assumption that we
+
+1224
+00:58:19,599 --> 00:58:24,960
+made. Um to some extent the reason we
+
+1225
+00:58:22,240 --> 00:58:27,520
+get so think about it this way if you
+
+1226
+00:58:24,960 --> 00:58:30,319
+have a pool of verifiers if all of them
+
+1227
+00:58:27,520 --> 00:58:32,400
+agree on the score that they give to any
+
+1228
+00:58:30,319 --> 00:58:34,559
+sample then we are not learning anything
+
+1229
+00:58:32,400 --> 00:58:37,760
+new from them right if all of them are
+
+1230
+00:58:34,559 --> 00:58:40,880
+like 100% or the same score the signal
+
+1231
+00:58:37,760 --> 00:58:43,520
+here is on kind of similarity and
+
+1232
+00:58:40,880 --> 00:58:46,559
+dissimilarity across these whole set of
+
+1233
+00:58:43,520 --> 00:58:49,839
+verifiers with each other. So under this
+
+1234
+00:58:46,559 --> 00:58:52,799
+assumption we can write this probability
+
+1235
+00:58:49,839 --> 00:58:55,280
+for the the response being correct given
+
+1236
+00:58:52,799 --> 00:58:57,839
+the labels that we have and then we use
+
+1237
+00:58:55,280 --> 00:59:01,760
+two sets of equations. Again this the
+
+1238
+00:58:57,839 --> 00:59:03,760
+first equation uh is uh we can write it
+
+1239
+00:59:01,760 --> 00:59:05,839
+this way because we assume every two
+
+1240
+00:59:03,760 --> 00:59:08,240
+verifier I and J are independent from
+
+1241
+00:59:05,839 --> 00:59:12,319
+each other. The second equation is the
+
+1242
+00:59:08,240 --> 00:59:13,839
+the just the base uh kind of the the the
+
+1243
+00:59:12,319 --> 00:59:15,760
+way probability works. There's no
+
+1244
+00:59:13,839 --> 00:59:20,240
+assumption in writing this. And given
+
+1245
+00:59:15,760 --> 00:59:22,880
+these two uh we can kind of define uh we
+
+1246
+00:59:20,240 --> 00:59:25,040
+can write an optimization and def come
+
+1247
+00:59:22,880 --> 00:59:29,359
+up with the weights that we can assign
+
+1248
+00:59:25,040 --> 00:59:32,880
+to each of the the verifiers.
+
+1249
+00:59:29,359 --> 00:59:35,839
+Um and here we are comparing the results
+
+1250
+00:59:32,880 --> 00:59:38,240
+with a naive ensemble approach. And it
+
+1251
+00:59:35,839 --> 00:59:40,000
+turns out that it does help in some
+
+1252
+00:59:38,240 --> 00:59:44,079
+cases that the the gains are more
+
+1253
+00:59:40,000 --> 00:59:46,880
+significant in GPQA diamond um and math
+
+1254
+00:59:44,079 --> 00:59:49,760
+and ML MMLU pro and each of these
+
+1255
+00:59:46,880 --> 00:59:52,799
+problems that are relatively hard uh
+
+1256
+00:59:49,760 --> 00:59:56,240
+problems for example the GPQA are our
+
+1257
+00:59:52,799 --> 00:59:58,480
+our baseline um is already low but the
+
+1258
+00:59:56,240 --> 01:00:02,240
+very fire this way of weak to strong
+
+1259
+00:59:58,480 --> 01:00:04,720
+aggregation of uh responses is helping
+
+1260
+01:00:02,240 --> 01:00:07,920
+getting a large boost over naive
+
+1261
+01:00:04,720 --> 01:00:09,839
+ensemble. ing of them. Um, now there are
+
+1262
+01:00:07,920 --> 01:00:12,640
+different ways that we can scale the
+
+1263
+01:00:09,839 --> 01:00:15,359
+verification compute. We can sample more
+
+1264
+01:00:12,640 --> 01:00:18,000
+generations. So instead of 10 samples,
+
+1265
+01:00:15,359 --> 01:00:20,400
+we can do a 100 or a thousand. We can
+
+1266
+01:00:18,000 --> 01:00:23,280
+use larger models for generation and
+
+1267
+01:00:20,400 --> 01:00:27,520
+verification. We can increase the the
+
+1268
+01:00:23,280 --> 01:00:29,839
+number of verifiers in the pool. um uh
+
+1269
+01:00:27,520 --> 01:00:32,880
+and and in general there are different
+
+1270
+01:00:29,839 --> 01:00:35,920
+ways to assign flops or inference uh
+
+1271
+01:00:32,880 --> 01:00:38,480
+scale inference compute for um for
+
+1272
+01:00:35,920 --> 01:00:40,640
+solving a problem. Um here we are
+
+1273
+01:00:38,480 --> 01:00:44,799
+comparing uh some of these methods with
+
+1274
+01:00:40,640 --> 01:00:49,359
+each other. So the dashed uh kind of
+
+1275
+01:00:44,799 --> 01:00:53,440
+dark red line is the passetk oracle
+
+1276
+01:00:49,359 --> 01:00:56,160
+meaning that if we had like an oracle
+
+1277
+01:00:53,440 --> 01:00:58,079
+uh selector that would give us the
+
+1278
+01:00:56,160 --> 01:00:59,520
+correct answer. We don't have that and
+
+1279
+01:00:58,079 --> 01:01:03,760
+that's why we are training these
+
+1280
+01:00:59,520 --> 01:01:05,599
+verifiers. Um the the purple one is we
+
+1281
+01:01:03,760 --> 01:01:07,920
+were supervised and that's assumed that
+
+1282
+01:01:05,599 --> 01:01:10,319
+we have a large body of label data and
+
+1283
+01:01:07,920 --> 01:01:12,720
+we can use them to learn these weights.
+
+1284
+01:01:10,319 --> 01:01:15,040
+The blue one is the unsupervised. In
+
+1285
+01:01:12,720 --> 01:01:18,559
+this case, we're using 1% of the
+
+1286
+01:01:15,040 --> 01:01:20,960
+training labels for each data set. Um
+
+1287
+01:01:18,559 --> 01:01:24,400
+the orange one is the naive ensemble,
+
+1288
+01:01:20,960 --> 01:01:27,599
+meaning we just average them average the
+
+1289
+01:01:24,400 --> 01:01:29,599
+on the the the verifiers without any
+
+1290
+01:01:27,599 --> 01:01:32,480
+special treatment. We still are
+
+1291
+01:01:29,599 --> 01:01:34,799
+filtering um and keeping the good
+
+1292
+01:01:32,480 --> 01:01:36,799
+verifiers in the loop. And then all of
+
+1293
+01:01:34,799 --> 01:01:39,599
+these are significantly better than
+
+1294
+01:01:36,799 --> 01:01:42,000
+methods such as majority voting or
+
+1295
+01:01:39,599 --> 01:01:46,960
+multi- aent verification. And
+
+1296
+01:01:42,000 --> 01:01:50,000
+multi-agent verification just or MAV is
+
+1297
+01:01:46,960 --> 01:01:52,559
+um it's just based on prompting LLMs and
+
+1298
+01:01:50,000 --> 01:01:54,880
+asking them to score a given response
+
+1299
+01:01:52,559 --> 01:01:57,760
+based on different kind of aspects that
+
+1300
+01:01:54,880 --> 01:02:00,000
+is produced. So kind of a rubric base
+
+1301
+01:01:57,760 --> 01:02:02,160
+which is doesn't do that that much
+
+1302
+01:02:00,000 --> 01:02:06,359
+better or actually worse in these two
+
+1303
+01:02:02,160 --> 01:02:06,359
+cases than majority voting.
+
+1304
+01:02:08,640 --> 01:02:16,079
+Um but something to notice here is the
+
+1305
+01:02:12,079 --> 01:02:18,640
+drastic gains that the model can have
+
+1306
+01:02:16,079 --> 01:02:23,200
+going from something like 40 less like
+
+1307
+01:02:18,640 --> 01:02:26,000
+slightly over 40% to over 70% on these
+
+1308
+01:02:23,200 --> 01:02:30,960
+hard uh problems. and in this case
+
+1309
+01:02:26,000 --> 01:02:33,599
+matching a model like 03 mini. Um so the
+
+1310
+01:02:30,960 --> 01:02:36,960
+thing that is interesting here is that
+
+1311
+01:02:33,599 --> 01:02:39,599
+the we can use this weak to super weak
+
+1312
+01:02:36,960 --> 01:02:42,319
+to strong supervision to reduce the gap
+
+1313
+01:02:39,599 --> 01:02:44,559
+between model classes. So what we are
+
+1314
+01:02:42,319 --> 01:02:48,079
+saying here is that if we take a
+
+1315
+01:02:44,559 --> 01:02:51,680
+generator model of llama 3.18b instruct
+
+1316
+01:02:48,079 --> 01:02:54,079
+and the verifier um model which is like
+
+1317
+01:02:51,680 --> 01:02:58,559
+the the pool of verifiers that are 8b
+
+1318
+01:02:54,079 --> 01:03:01,440
+and below uh we get an average of 70% on
+
+1319
+01:02:58,559 --> 01:03:04,799
+these data set and this is almost
+
+1320
+01:03:01,440 --> 01:03:07,440
+comparable to the accuracy that we get
+
+1321
+01:03:04,799 --> 01:03:11,200
+with majority voting but when our models
+
+1322
+01:03:07,440 --> 01:03:13,599
+and uh models are at 7B. So we are kind
+
+1323
+01:03:11,200 --> 01:03:17,760
+of like
+
+1324
+01:03:13,599 --> 01:03:22,640
+making the model making this 8B model
+
+1325
+01:03:17,760 --> 01:03:25,280
+um the same roughly the same as the 7TB
+
+1326
+01:03:22,640 --> 01:03:27,680
+class by just doing this inference
+
+1327
+01:03:25,280 --> 01:03:30,400
+scaling and using the verifier and in
+
+1328
+01:03:27,680 --> 01:03:32,640
+this case unlike the what we saw in most
+
+1329
+01:03:30,400 --> 01:03:34,400
+of the previous lecture we are talking
+
+1330
+01:03:32,640 --> 01:03:36,240
+about the end results we're not talking
+
+1331
+01:03:34,400 --> 01:03:39,200
+about the coverage we're talking about
+
+1332
+01:03:36,240 --> 01:03:41,039
+the solution accuracy of the entire
+
+1333
+01:03:39,200 --> 01:03:44,160
+system.
+
+1334
+01:03:41,039 --> 01:03:46,720
+Um and here again in this case for when
+
+1335
+01:03:44,160 --> 01:03:50,559
+we do the same apply the same generation
+
+1336
+01:03:46,720 --> 01:03:52,400
+and verification to 70B class of models
+
+1337
+01:03:50,559 --> 01:03:55,599
+we are getting an average accuracy of
+
+1338
+01:03:52,400 --> 01:03:59,760
+86.2% 2% on these data sets and this is
+
+1339
+01:03:55,599 --> 01:04:04,880
+very comparable to this to O3 mini which
+
+1340
+01:03:59,760 --> 01:04:08,000
+um which has a much uh uh which is like
+
+1341
+01:04:04,880 --> 01:04:10,559
+a proprietary model and in general is a
+
+1342
+01:04:08,000 --> 01:04:12,960
+higher like a different class of models.
+
+1343
+01:04:10,559 --> 01:04:14,799
+So this shows how much verification or
+
+1344
+01:04:12,960 --> 01:04:18,400
+this work on verification can help with
+
+1345
+01:04:14,799 --> 01:04:20,319
+the results. Um, another uh work that
+
+1346
+01:04:18,400 --> 01:04:22,559
+was done on the increasing the
+
+1347
+01:04:20,319 --> 01:04:24,880
+usefulness of something like Vaver is
+
+1348
+01:04:22,559 --> 01:04:26,799
+that a challenge with ensembling
+
+1349
+01:04:24,880 --> 01:04:29,599
+verifiers is that you have a ton of like
+
+1350
+01:04:26,799 --> 01:04:31,680
+models that now you need to run for each
+
+1351
+01:04:29,599 --> 01:04:34,880
+solution to get a score and then to
+
+1352
+01:04:31,680 --> 01:04:37,440
+average them, right? To uh and that
+
+1353
+01:04:34,880 --> 01:04:40,160
+increases the cost especially if you
+
+1354
+01:04:37,440 --> 01:04:42,319
+instead of one sample per per you have a
+
+1355
+01:04:40,160 --> 01:04:46,720
+100 samples and then you want to create
+
+1356
+01:04:42,319 --> 01:04:48,720
+all these scores. So instead what uh the
+
+1357
+01:04:46,720 --> 01:04:50,880
+proposal here is that what if we do
+
+1358
+01:04:48,720 --> 01:04:54,720
+train wever once and then distill it
+
+1359
+01:04:50,880 --> 01:04:58,079
+into a much smaller model um and that's
+
+1360
+01:04:54,720 --> 01:05:00,799
+how instead of running each of these LLM
+
+1361
+01:04:58,079 --> 01:05:04,480
+judges or reward models per sample we
+
+1362
+01:05:00,799 --> 01:05:06,000
+just take this distilled uh LM which in
+
+1363
+01:05:04,480 --> 01:05:07,920
+this case we show that it could be
+
+1364
+01:05:06,000 --> 01:05:11,359
+really really tiny like something like
+
+1365
+01:05:07,920 --> 01:05:14,559
+400 million parameters as opposed to the
+
+1366
+01:05:11,359 --> 01:05:17,039
+original model which was in the 70B
+
+1367
+01:05:14,559 --> 01:05:18,799
+range. Um, and it turns out that with
+
+1368
+01:05:17,039 --> 01:05:23,200
+this distilled model, we can kind of
+
+1369
+01:05:18,799 --> 01:05:27,200
+capture 97% of accuracy of this large
+
+1370
+01:05:23,200 --> 01:05:31,520
+pool of L uh verifiers, but be
+
+1371
+01:05:27,200 --> 01:05:34,640
+significantly in this case 99 plus% use
+
+1372
+01:05:31,520 --> 01:05:37,520
+less compute at test time. And these uh
+
+1373
+01:05:34,640 --> 01:05:39,280
+and these um distilled version and the
+
+1374
+01:05:37,520 --> 01:05:40,960
+original version, they're all open
+
+1375
+01:05:39,280 --> 01:05:43,200
+sourced and the checkpoints are
+
+1376
+01:05:40,960 --> 01:05:46,079
+available. um if any of you are
+
+1377
+01:05:43,200 --> 01:05:49,039
+interested in working with them in your
+
+1378
+01:05:46,079 --> 01:05:52,039
+um agentic or test time scaling
+
+1379
+01:05:49,039 --> 01:05:52,039
+projects.
+
+1380
+01:05:52,640 --> 01:05:56,400
+Um
+
+1381
+01:05:54,160 --> 01:05:58,240
+and here is another graph. Here is the
+
+1382
+01:05:56,400 --> 01:06:01,599
+distilled one which is the light blue
+
+1383
+01:05:58,240 --> 01:06:04,400
+one and the original beaver is the dark
+
+1384
+01:06:01,599 --> 01:06:07,839
+blue one. And we are comparing again the
+
+1385
+01:06:04,400 --> 01:06:10,079
+efficiency the success rate over the
+
+1386
+01:06:07,839 --> 01:06:12,720
+inference compute the total inference
+
+1387
+01:06:10,079 --> 01:06:16,559
+compute that we are spending on this
+
+1388
+01:06:12,720 --> 01:06:18,400
+data set. Um and u
+
+1389
+01:06:16,559 --> 01:06:20,799
+um and the distilled one obviously is
+
+1390
+01:06:18,400 --> 01:06:23,119
+like significantly more efficient. uh
+
+1391
+01:06:20,799 --> 01:06:26,400
+but even the original weaver because it
+
+1392
+01:06:23,119 --> 01:06:28,480
+reaches higher levels of accuracy um at
+
+1393
+01:06:26,400 --> 01:06:30,319
+those levels it becomes more flop
+
+1394
+01:06:28,480 --> 01:06:34,599
+efficient than models like naive
+
+1395
+01:06:30,319 --> 01:06:34,599
+ensemble and majority voting
+
+1396
+01:06:35,839 --> 01:06:42,880
+and
+
+1397
+01:06:37,920 --> 01:06:45,680
+let's do a quick recap. So um here we
+
+1398
+01:06:42,880 --> 01:06:47,839
+today we covered like four papers that
+
+1399
+01:06:45,680 --> 01:06:49,839
+also showed the trajectory of how this
+
+1400
+01:06:47,839 --> 01:06:52,160
+work on verific how research on
+
+1401
+01:06:49,839 --> 01:06:54,400
+verification has progressed over the
+
+1402
+01:06:52,160 --> 01:06:56,319
+last like four years. We talked about
+
+1403
+01:06:54,400 --> 01:07:00,079
+how verification
+
+1404
+01:06:56,319 --> 01:07:02,960
+um can improve training both during uh
+
+1405
+01:07:00,079 --> 01:07:06,000
+can improve the outcome of the and the
+
+1406
+01:07:02,960 --> 01:07:08,319
+quality of results uh both uh during
+
+1407
+01:07:06,000 --> 01:07:11,200
+training and inference. uh process
+
+1408
+01:07:08,319 --> 01:07:15,520
+rewards seems to be very useful and
+
+1409
+01:07:11,200 --> 01:07:18,559
+overall uh very effective uh and more so
+
+1410
+01:07:15,520 --> 01:07:20,319
+than the outcome rewards but perhaps we
+
+1411
+01:07:18,559 --> 01:07:25,599
+need to combine them to get the best
+
+1412
+01:07:20,319 --> 01:07:27,839
+results both PRMS and OMS um and we also
+
+1413
+01:07:25,599 --> 01:07:29,839
+in Matt Shepard learned that scaling you
+
+1414
+01:07:27,839 --> 01:07:32,000
+need a lot of data and the more data you
+
+1415
+01:07:29,839 --> 01:07:34,240
+throw in the verifier training it
+
+1416
+01:07:32,000 --> 01:07:38,079
+becomes better and you can use it during
+
+1417
+01:07:34,240 --> 01:07:41,440
+your RL uh fine-tuning to increase the
+
+1418
+01:07:38,079 --> 01:07:44,240
+quality of your generator as well. And
+
+1419
+01:07:41,440 --> 01:07:46,319
+uh the beaver work was took a whole
+
+1420
+01:07:44,240 --> 01:07:49,039
+different approach to verification was
+
+1421
+01:07:46,319 --> 01:07:51,599
+and that was just uh doing this weak
+
+1422
+01:07:49,039 --> 01:07:54,160
+supervised optimization on an ensemble
+
+1423
+01:07:51,599 --> 01:07:56,480
+of verifiers and in a way we are using
+
+1424
+01:07:54,160 --> 01:07:58,880
+test time scaling but by bringing more
+
+1425
+01:07:56,480 --> 01:08:02,240
+verifiers rather than sampling a single
+
+1426
+01:07:58,880 --> 01:08:04,480
+verifier more um to to get the results
+
+1427
+01:08:02,240 --> 01:08:07,359
+and we can turns out we can distill that
+
+1428
+01:08:04,480 --> 01:08:10,240
+and capture a whole lot of the quality
+
+1429
+01:08:07,359 --> 01:08:13,440
+uh from a much smaller model and With
+
+1430
+01:08:10,240 --> 01:08:15,520
+that I can conclude the class. Any
+
+1431
+01:08:13,440 --> 01:08:16,799
+questions?
+
+1432
+01:08:15,520 --> 01:08:21,279
+Yes.
+
+1433
+01:08:16,799 --> 01:08:22,400
+>> The papers were on math or reasoning uh
+
+1434
+01:08:21,279 --> 01:08:23,359
+benchmarks. Do you think there's
+
+1435
+01:08:22,400 --> 01:08:26,640
+anything else that [clears throat] could
+
+1436
+01:08:23,359 --> 01:08:28,480
+work for project other ways to evaluate
+
+1437
+01:08:26,640 --> 01:08:30,799
+the model?
+
+1438
+01:08:28,480 --> 01:08:33,759
+>> Um like coding other ways to evaluate
+
+1439
+01:08:30,799 --> 01:08:36,159
+the model. You mean other areas like
+
+1440
+01:08:33,759 --> 01:08:38,799
+coding would be a very interesting uh
+
+1441
+01:08:36,159 --> 01:08:40,640
+area for for reasoning. So these like
+
+1442
+01:08:38,799 --> 01:08:42,960
+there were like some coding problems in
+
+1443
+01:08:40,640 --> 01:08:46,640
+this CT like in some of the benchmarks
+
+1444
+01:08:42,960 --> 01:08:49,759
+here. So it's not not just math uh but
+
+1445
+01:08:46,640 --> 01:08:52,480
+um coding is also a very interesting
+
+1446
+01:08:49,759 --> 01:08:55,120
+kind of uh area for verification. We
+
+1447
+01:08:52,480 --> 01:08:58,319
+will uh we will talk about code monkeys.
+
+1448
+01:08:55,120 --> 01:09:00,640
+This is a paper uh that instead of
+
+1449
+01:08:58,319 --> 01:09:03,520
+directly training a verifier, you can
+
+1450
+01:09:00,640 --> 01:09:06,319
+make the model create a test time system
+
+1451
+01:09:03,520 --> 01:09:07,920
+to make the model generate unit tests
+
+1452
+01:09:06,319 --> 01:09:09,759
+and those unit tests become your
+
+1453
+01:09:07,920 --> 01:09:13,040
+verifier. So that's an entire different
+
+1454
+01:09:09,759 --> 01:09:15,040
+approach. Um but these kind of
+
+1455
+01:09:13,040 --> 01:09:19,319
+verifications should also be useful for
+
+1456
+01:09:15,040 --> 01:09:19,319
+any kind of reasoning task.
+
+1457
+01:09:22,960 --> 01:09:30,799
+>> Yes. I'm curious like how do generation
+
+1458
+01:09:27,279 --> 01:09:35,440
+verification help
+
+1459
+01:09:30,799 --> 01:09:37,600
+us model like that internalized
+
+1460
+01:09:35,440 --> 01:09:39,279
+one.
+
+1461
+01:09:37,600 --> 01:09:41,759
+>> Okay. So the question is that for
+
+1462
+01:09:39,279 --> 01:09:43,839
+reasoning model how does the generation
+
+1463
+01:09:41,759 --> 01:09:45,839
+verification or these kind of test time
+
+1464
+01:09:43,839 --> 01:09:49,199
+scalings work for them? It actually
+
+1465
+01:09:45,839 --> 01:09:51,520
+helps them as well still. uh but the
+
+1466
+01:09:49,199 --> 01:09:53,359
+reasoning model like uh we're going to
+
+1467
+01:09:51,520 --> 01:09:55,440
+talk about them in this class but
+
+1468
+01:09:53,359 --> 01:09:57,440
+basically what they're doing a big part
+
+1469
+01:09:55,440 --> 01:10:01,679
+of it is to generate these reasoning
+
+1470
+01:09:57,440 --> 01:10:04,640
+steps use the reward for it and do an RL
+
+1471
+01:10:01,679 --> 01:10:07,120
+loop and generate positive trajectories
+
+1472
+01:10:04,640 --> 01:10:09,120
+and then use that positive trajectories
+
+1473
+01:10:07,120 --> 01:10:12,159
+as part of training for the next round.
+
+1474
+01:10:09,120 --> 01:10:15,440
+Right? So the test time scaling is
+
+1475
+01:10:12,159 --> 01:10:18,400
+inherently used to generate data and
+
+1476
+01:10:15,440 --> 01:10:21,040
+generate the training process. But they
+
+1477
+01:10:18,400 --> 01:10:24,000
+still would benefit because they still
+
+1478
+01:10:21,040 --> 01:10:29,239
+uh could explore different parts of the
+
+1479
+01:10:24,000 --> 01:10:29,239
+solution space with with more sampling
+
+1480
+01:10:29,440 --> 01:10:35,760
+kind of like knowledge using training on
+
+1481
+01:10:33,199 --> 01:10:39,120
+the test. Do you think in the future
+
+1482
+01:10:35,760 --> 01:10:42,880
+like this two parish or do you think
+
+1483
+01:10:39,120 --> 01:10:47,679
+like um maybe like repeat sampling would
+
+1484
+01:10:42,880 --> 01:10:50,159
+only be used for generating training for
+
+1485
+01:10:47,679 --> 01:10:52,480
+>> Yes. So the question is like would we
+
+1486
+01:10:50,159 --> 01:10:54,239
+converge to a future where these kind of
+
+1487
+01:10:52,480 --> 01:10:56,480
+test time scaling repeated sampling and
+
+1488
+01:10:54,239 --> 01:10:59,679
+science just for training time to create
+
+1489
+01:10:56,480 --> 01:11:01,760
+the data and then at test time we uh we
+
+1490
+01:10:59,679 --> 01:11:03,440
+just use ask the model once I think
+
+1491
+01:11:01,760 --> 01:11:05,280
+that's the direction we want to go right
+
+1492
+01:11:03,440 --> 01:11:07,679
+we want the model to be really really
+
+1493
+01:11:05,280 --> 01:11:10,239
+good at pass at one like the first time
+
+1494
+01:11:07,679 --> 01:11:11,760
+we ask it to do something we want it to
+
+1495
+01:11:10,239 --> 01:11:13,600
+generate and that increases the
+
+1496
+01:11:11,760 --> 01:11:16,000
+efficiency and all that like that would
+
+1497
+01:11:13,600 --> 01:11:19,199
+be the hope one challenge though with
+
+1498
+01:11:16,000 --> 01:11:21,360
+making the model too like like to make
+
+1499
+01:11:19,199 --> 01:11:23,280
+the the log props of the model too
+
+1500
+01:11:21,360 --> 01:11:26,080
+sharpened through through one answer is
+
+1501
+01:11:23,280 --> 01:11:28,000
+that the creativity and diversity of
+
+1502
+01:11:26,080 --> 01:11:32,080
+solutions may be lost some somehow
+
+1503
+01:11:28,000 --> 01:11:34,400
+during the training. Um so
+
+1504
+01:11:32,080 --> 01:11:37,760
+surprisingly we still like them like
+
+1505
+01:11:34,400 --> 01:11:40,159
+models that are very d like create have
+
+1506
+01:11:37,760 --> 01:11:42,320
+a lot of creativity and diversity in the
+
+1507
+01:11:40,159 --> 01:11:44,320
+way that they they think and that's like
+
+1508
+01:11:42,320 --> 01:11:46,320
+a good feature that we want to have in
+
+1509
+01:11:44,320 --> 01:11:48,159
+the models.
+
+1510
+01:11:46,320 --> 01:11:49,920
+>> Yes.
+
+1511
+01:11:48,159 --> 01:11:51,440
+Does it matter if generator and
+
+1512
+01:11:49,920 --> 01:11:52,960
+verifiers have very different
+
+1513
+01:11:51,440 --> 01:11:54,719
+architectures? For example, if the
+
+1514
+01:11:52,960 --> 01:11:56,480
+verifier is like a mini version of the
+
+1515
+01:11:54,719 --> 01:11:59,040
+generator versus if they're very
+
+1516
+01:11:56,480 --> 01:12:01,679
+different architectures,
+
+1517
+01:11:59,040 --> 01:12:04,480
+>> but does it matter like like which one
+
+1518
+01:12:01,679 --> 01:12:06,480
+which one is um empirically?
+
+1519
+01:12:04,480 --> 01:12:08,640
+>> Okay, so the question is like if the
+
+1520
+01:12:06,480 --> 01:12:11,120
+generator and verifier from the same
+
+1521
+01:12:08,640 --> 01:12:16,000
+family or not. That's that's a good
+
+1522
+01:12:11,120 --> 01:12:18,239
+research question. Um I think in general
+
+1523
+01:12:16,000 --> 01:12:20,880
+it's interesting like models like their
+
+1524
+01:12:18,239 --> 01:12:23,920
+own generations and their their own way
+
+1525
+01:12:20,880 --> 01:12:26,960
+of interpreting results much better than
+
+1526
+01:12:23,920 --> 01:12:30,239
+using a different family of models. Um
+
+1527
+01:12:26,960 --> 01:12:33,199
+we are going to talk about a paper that
+
+1528
+01:12:30,239 --> 01:12:35,280
+talks about how uh certain models can
+
+1529
+01:12:33,199 --> 01:12:37,920
+benefit from like a different class of
+
+1530
+01:12:35,280 --> 01:12:41,040
+verifiers over themselves. But like a
+
+1531
+01:12:37,920 --> 01:12:43,120
+specifically uh I am unaware of a study
+
+1532
+01:12:41,040 --> 01:12:46,159
+that has looked into that specific
+
+1533
+01:12:43,120 --> 01:12:48,960
+question of uh same kind of size and
+
+1534
+01:12:46,159 --> 01:12:50,719
+family versus uh different size
+
+1535
+01:12:48,960 --> 01:12:55,000
+different family. How does how that
+
+1536
+01:12:50,719 --> 01:12:55,000
+changes the behavior of the model?

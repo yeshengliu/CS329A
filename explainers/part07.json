@@ -1,0 +1,454 @@
+{
+  "n": 7,
+  "title": "Self-Improvement and Deep Research Agents",
+  "summary": "Self-improvement is framed as search over a model's output space: the solution often already exists among the samples, and the engineering problem is curating it out. The lecture first follows AlphaCode (pretrain on GitHub plus CodeContests, sample 1M programs per problem, filter with example tests, cluster semantically, submit about 10 to Codeforces) and then AlphaCode 2 (fine-tune Gemini Pro, train a family of generators for diversity, learn a scoring model for selection) to show that better base models and learned selection roughly double solve rate while cutting sample cost. It then pivots to deep research agents: reasoning models are frozen at a knowledge cutoff and hedge with uncertainty tokens on GPQA, so the lecture contrasts direct reasoning, plain RAG (one-shot retrieval), agentic RAG (search during reasoning), and Search-o1 (query on the fly and reason within retrieved documents), then closes with Search-R1 and calibration.",
+  "sections": [
+    {
+      "t": 5,
+      "title": "Framing: self-improvement as search over the output space",
+      "problem": "A model can emit many outputs, but a single stochastic trace is just a draw, and there is no built-in mechanism to pull the correct solution out of everything it can generate.",
+      "why": "Solutions are rare relative to the enormous space of possible programs or answers, so generation alone leaves value on the table; curation, not sampling, is the bottleneck.",
+      "how": "The lecture reframes self-improvement as search over model outputs, splitting into code-model massive-sampling search (AlphaCode / AlphaCode 2, reused in Homework 2) and deep-research agentic search (Homework 3), with coverage and selection as recurring concerns.",
+      "detail": "<p>The instructor frames the entire lecture around one claim: <b>a correct solution already lies somewhere in the model's output space</b>; the engineering problem is <i>curating</i> it out of everything the model can emit. Two search patterns are announced:</p><ul><li><b>Code-model sampling search</b> &mdash; generate many samples and search over them (AlphaCode / AlphaCode 2), the pattern reused in the HumanEval-focused homework.</li><li><b>Deep-research agentic search</b> &mdash; the retrieve-and-synthesize loop used in Homework 3.</li></ul><p>The concrete contrast is a coding assistant that behaves like <b>autocomplete</b> (complete a line) versus <b>competitive programming</b>, which supplies a problem description plus input/output examples acting as a contract and demands the model infer the algorithm before writing it. The recurring decomposition for the rest of the lecture: <b>coverage</b> (is a correct sample even present?) versus <b>selection</b> (can the pipeline identify it?).</p>",
+      "terms": [
+        "search",
+        "coverage",
+        "selection",
+        "competitive programming",
+        "autocomplete",
+        "deep research"
+      ]
+    },
+    {
+      "t": 71,
+      "title": "AlphaCode setup and preview: end-to-end competitive programming",
+      "problem": "Line-level code completion succeeds at high rates, but solving a whole competitive-programming problem end-to-end fails badly.",
+      "why": "A competitive problem requires reading a long description, inferring the intended algorithm from the docstring, then producing a long solution, whereas completion only extends a pattern a programmer already framed.",
+      "how": "AlphaCode (roughly 2022) attacks the full problem; at release it ranked near the top 54% among participants across 10 contests, the first demonstration that an AI could generalize beyond narrow tasks and solve problems end-to-end.",
+      "detail": "<p>AlphaCode (roughly 2022) is presented as a strictly harder version of a coding agent. A completion model sees a line and extends it; a competitive-programming problem hands over a long description plus input/output pairs and asks for an end-to-end program, so the model must infer the intended algorithm before solving.</p><ul><li><b>Why the jump matters:</b> longer problem descriptions, longer solutions, and reasoning about the <i>approach</i> rather than extending a pattern a programmer already framed.</li><li><b>Preview of achievement:</b> at release AlphaCode ranked near the <b>top 54%</b> among contest participants across <b>10 contests</b> &mdash; the first demonstration that an AI could generalize beyond narrow tasks and solve problems end-to-end.</li><li><b>Benchmark contrast:</b> much harder than HumanEval, where the instruction already states exactly what to implement, so there is no need to reason about what it would take to solve the problem.</li><li><b>Setup:</b> the speaker then walks the pipeline block diagrams one by one.</li></ul>",
+      "terms": [
+        "AlphaCode",
+        "HumanEval",
+        "docstring",
+        "generalization",
+        "competitive programming",
+        "end-to-end"
+      ]
+    },
+    {
+      "t": 228,
+      "title": "AlphaCode pretraining: own model, masked-LM loss, 700 GB of GitHub",
+      "problem": "AlphaCode predates the practice of borrowing a frontier LLM, so the authors had to build and train their own model from scratch.",
+      "why": "The base model's quality sets the ceiling for coverage: you can only cluster and select from the space of programs it can actually generate.",
+      "how": "Pretrain an encoder-decoder model with masked-language-model loss and next-token prediction on roughly 700 GB of GitHub code plus CodeContests, a large corpus of competitive-programming problems and solutions.",
+      "detail": "<p>AlphaCode predates the practice of borrowing a frontier LLM, so the authors pretrained their own model. The slide walkthrough shows a <b>pre-training stage</b> producing a distribution to sample from, later replaced by a large language model in newer systems.</p><ul><li><b>Objective and data:</b> masked-language-model loss (with next-token prediction), pretrained on roughly <b>700 GB of GitHub</b> code plus <b>CodeContests</b>, a large corpus of competitive-programming problems and solutions.</li><li><b>Architecture:</b> an <b>encoder-decoder</b> model initially; decoder-only variants were tried in AlphaCode 2.</li><li><b>Why it matters:</b> the base model's quality sets the ceiling on <b>coverage</b> &mdash; you can only cluster and select from the space of programs it can actually generate.</li><li><b>Framing:</b> the earlier lectures' repeated sampling now happens at massive scale after this pretraining step.</li></ul>",
+      "terms": [
+        "pre-training",
+        "masked-language-model loss",
+        "GitHub",
+        "CodeContests",
+        "encoder-decoder",
+        "coverage"
+      ]
+    },
+    {
+      "t": 342,
+      "title": "GOLD regularization, value conditioning, and decoder-only models",
+      "problem": "Next-token prediction treats low- and high-likelihood tokens uniformly, so fine-tuning can fail to concentrate probability on meaningful code patterns.",
+      "why": "For code, precision matters: spreading mass across superficial token patterns makes the searchable distribution worse, regardless of how much you sample.",
+      "how": "During fine-tuning, add the GOLD weighting term that up-weights higher-likelihood tokens and down-weights lower-likelihood ones, alongside value conditioning and prediction; AlphaCode started encoder-decoder and AlphaCode 2 used decoder-only models.",
+      "detail": "<p>Before massive sampling pays off, the fine-tuning objective must concentrate probability on meaningful code structure. Standard next-token prediction weights low- and high-likelihood tokens alike, which can spread mass across superficial patterns.</p><ul><li><b>GOLD regularization:</b> during fine-tuning they add a weighting term that assigns <b>higher weight to higher-likelihood tokens</b> and lower weight to lower-likelihood tokens, improving precision and pushing probability toward meaningful patterns in code.</li><li><b>Value conditioning and prediction:</b> an additional fine-tuning trick tied to the likelihood weighting; the speaker flags it as the key detail on this slide.</li><li><b>Architecture evolution:</b> AlphaCode started as an encoder-decoder and AlphaCode 2 experimented with <b>decoder-only</b> models.</li><li><b>Takeaway:</b> fine-tuning details, not just scale, determine how searchable the sample distribution is.</li></ul>",
+      "terms": [
+        "GOLD",
+        "value conditioning",
+        "next-token prediction",
+        "precision",
+        "decoder-only",
+        "fine-tuning"
+      ]
+    },
+    {
+      "t": 398,
+      "title": "Massive sampling: one million programs per problem",
+      "problem": "With a usable model, a single solution is still only one draw from a huge space; coverage demands many independent attempts.",
+      "why": "Diverse solutions are what make clustering and selection meaningful, and machines can afford sample volumes far beyond human iteration.",
+      "how": "Generate about 1 million diverse sample programs per question, split about half Python and half C++, randomizing problem tags and ratings in the prompt and sampling at high temperature.",
+      "detail": "<p>With a usable model, AlphaCode performs <b>large-scale sampling</b> &mdash; a much bigger version of the repeated sampling covered earlier in the course.</p><ul><li><b>Scale:</b> about <b>1 million diverse sample programs per question</b>, split roughly half Python and half C++.</li><li><b>Forcing diversity:</b> the prompt randomizes the problem tags and ratings, and sampling uses a <b>high temperature</b>, so solutions differ rather than collapsing to one pattern.</li><li><b>Why machines can afford it:</b> the instructor notes this volume is feasible for machines even though it is far beyond human iteration.</li><li><b>New stage versus prior lectures:</b> unlike simply closing the loop by running tests, AlphaCode adds a <b>selection stage before</b> execution and evaluation, deciding which samples to even test.</li></ul>",
+      "terms": [
+        "large scale sampling",
+        "temperature",
+        "diversity",
+        "sample budget",
+        "tags and ratings"
+      ]
+    },
+    {
+      "t": 442,
+      "title": "Filtering and semantic clustering before submission",
+      "problem": "The judge accepts only a handful of programs, and most of the million samples are wrong or are syntactic copies of the same idea.",
+      "why": "Many programs are semantically equivalent, so resubmitting near-duplicates wastes the few allowed slots; the pipeline needs a notion of behavioral difference, not textual difference.",
+      "how": "Filter to samples that pass the example tests in the problem statement, then cluster syntactically different but semantically equivalent programs using a separately trained test-input generation model that predicts new inputs from problem descriptions.",
+      "detail": "<p>Raw samples must be curated because the judge accepts only a handful of submissions.</p><ul><li><b>Filtering:</b> keep only samples that pass the example tests given in the problem statement, discarding the rest.</li><li><b>Clustering by semantics:</b> group programs that are syntactically different but <b>semantically equivalent</b>. A separate, trained <b>test-input generation model</b> predicts new test inputs from problem descriptions and runs candidates on them to expose behavioral differences, including on unseen problems.</li><li><b>Why clustering is the crux:</b> it selects a set of solutions <b>diverse enough</b> to be worth evaluating, since only a small subset of the roughly 10 allowed submissions can go to the platform.</li><li><b>Link to coverage/selection:</b> enough samples may contain a correct program, but finding and distinguishing it is a separate, harder problem.</li></ul>",
+      "terms": [
+        "filtering",
+        "clustering",
+        "semantic equivalence",
+        "test-input generation model",
+        "submissions",
+        "diversity"
+      ]
+    },
+    {
+      "t": 501,
+      "title": "Codeforces evaluation and the first live results",
+      "problem": "The pipeline needs a real-world signal of correctness and a fair comparison against human programmers.",
+      "why": "Codeforces checks correctness and benchmarks against other performers, and the held-out CodeContests test set gives a measurable signal independent of the live judge.",
+      "how": "Submit only the curated subset (about 10 programs per problem) to 10 competitions with roughly 5,000 participants each; the result was an average ranking of about 54.3, competitive with about 28% of contestants active in the last six months.",
+      "detail": "<p>The curated candidates are submitted to <b>Codeforces</b>, the competition platform, which checks correctness and benchmarks against other performers.</p><ul><li><b>Constraint:</b> the full 1M samples cannot be submitted, so the earlier filtering and clustering is what makes submission possible.</li><li><b>Held-out signal:</b> evaluation on <b>CodeContests</b> uses a held-out test set the authors constructed, giving a measurable signal beyond the live judge.</li><li><b>Live setup:</b> the model ran live in <b>10 competitions each with about 5,000 participants</b>, using roughly <b>10 submissions per problem</b>.</li><li><b>Headline results:</b> an average ranking of about <b>54.3</b> and competitiveness with about <b>28%</b> of contestants active over the last six months; ranking reflects both <b>correctness and efficiency</b> of a submitted solution.</li></ul>",
+      "terms": [
+        "Codeforces",
+        "CodeContests",
+        "average ranking",
+        "percentile",
+        "efficiency",
+        "held-out test set"
+      ]
+    },
+    {
+      "t": 626,
+      "title": "Class Q&A: explaining cross-contest variance",
+      "problem": "AlphaCode's performance swings widely across contests, from near the top to roughly the 90th percentile, which makes reliability hard to characterize.",
+      "why": "Two distinct causes are plausible: how in-distribution the contest problems are, and whether the selection stage can pick the right candidate.",
+      "how": "The instructor throws the question back to the class and isolates two hypotheses: problem in-distributionness (coverage) and a selection bottleneck where many candidates are almost, but not completely, correct.",
+      "detail": "<p>A student asks why per-contest performance varies so widely, from near the top to roughly the 90th percentile. The instructor throws the question back, asking where the variance could come from in the pipeline.</p><ul><li><b>Hypothesis 1 &mdash; in-distributionness:</b> contests whose problems resemble training problems fare well, while contests introducing a new algorithm or a new problem style are harder; how close the inputs are to the training distribution drives coverage.</li><li><b>Hypothesis 2 &mdash; selection bottleneck:</b> even with large-scale sampling, the ability to <b>select the right candidates</b> varies by contest; there can be solutions that are <b>almost correct but not completely correct</b>, making ranking hard.</li><li><b>Conclusion:</b> both factors jointly determine where the system succeeds and where it struggles, cleanly separating the coverage question from the selection question.</li></ul>",
+      "terms": [
+        "in-distribution",
+        "selection bottleneck",
+        "coverage",
+        "variance",
+        "ranking"
+      ]
+    },
+    {
+      "t": 820,
+      "title": "pass@k versus 10@k: separating coverage from selection",
+      "problem": "It is unclear how much accuracy the selection stage costs relative to simply having a correct sample present, and whether sampling-scale gains survive filtering.",
+      "why": "pass@k submits all k samples and therefore measures coverage, while 10@k submits only 10 of k and so additionally tests the filtering and scoring process.",
+      "how": "Measure 10@k at budgets of 1K, 10K, 100K, and 1M samples on validation and test sets for 9B, 41B, and 41B-plus-clustering models; improvement is consistent, and larger models plus clustering are reliably best.",
+      "detail": "<p>Two metrics isolate the two failure modes:</p><ul><li><b>pass@k</b> &mdash; generate k samples and submit all of them to hidden tests; it measures how good the <b>search aspect</b> of sampling is, i.e. <b>coverage</b> (unlimited attempts).</li><li><b>10@k</b> &mdash; generate k samples but submit only <b>10</b>, so it additionally measures the <b>filtering and scoring</b> process.</li></ul><p>They report 10@1K, 10@10K, 10@100K, and 10@1M on validation and test sets for a <b>9B</b> model, a <b>41B</b> model, and <b>41B + clustering</b>. Larger models consistently beat smaller ones, and increasing the sample budget consistently helps; <b>41B + clustering is consistently best</b>. The speaker stresses that this matches earlier pass@k versus sample-budget results, and that a larger model extracts more from each additional sample.</p>",
+      "terms": [
+        "pass@k",
+        "10@k",
+        "coverage",
+        "selection",
+        "clustering",
+        "model size"
+      ]
+    },
+    {
+      "t": 1062,
+      "title": "Log-linear scaling and the selection saturation gap",
+      "problem": "It is not obvious whether the log-linear sampling trend survives the selection stage, or what ultimately caps performance.",
+      "why": "If diversity keeps increasing, more samples should keep helping; but a hard cap on submissions means selection can dominate the result.",
+      "how": "Plot solve rate against sampling budget: the log-linear trend holds even after selection, larger models have steeper slopes, clustering raises the level, but 10 submissions saturate near 30% versus above 40% for unlimited pass@k.",
+      "detail": "<p>The key claim is that the <b>log-linear</b> relationship between solve rate and sampling budget survives the selection stage: solve rate still rises log-linearly with the sample budget, and larger models have <b>steeper slopes</b> than a 300M-parameter baseline (the 41B curve versus the small model).</p><ul><li><b>Selection is a real bottleneck:</b> with only 10 submissions, accuracy saturates near <b>30%</b>, whereas pass@k with unlimited attempts reaches above <b>40%</b>, isolating the gap attributable to filtering and clustering.</li><li><b>Why clustering helps:</b> competitive problems are hard, so resubmitting near-duplicates wastes the few slots; submitting a <b>diverse set</b> is what buys accuracy.</li><li><b>Diversity caveat:</b> sampling more only helps if the model actually produces more diverse solutions; if ten times the samples add no new solution classes, performance does not improve.</li></ul>",
+      "terms": [
+        "log-linear",
+        "saturation",
+        "selection bottleneck",
+        "steepness",
+        "diversity",
+        "unlimited attempts"
+      ]
+    },
+    {
+      "t": 1161,
+      "title": "Q&A: extrapolation, capability gaps, diversity, and theory",
+      "problem": "A student asks whether extrapolating the log-linear trend by another factor of ten would simply double the score.",
+      "why": "Extrapolation assumes diversity keeps increasing and ignores a capability gap: weak base models hit limits, so the trend cannot be pushed without bound.",
+      "how": "The instructor redirects to AlphaCode 2, arguing that making the base model better is easier than scaling samples, that clustering exists precisely to find diverse solutions, and that the log-linear form is theoretically derivable.",
+      "detail": "<p>A student asks whether extrapolating the log-linear trend &mdash; roughly another factor of ten &mdash; would double the score. The instructor redirects to AlphaCode 2, arguing that <b>making the base model better is an easier axis than scaling samples indefinitely</b>, and that any extrapolation must confront cost.</p><ul><li><b>Capability gap:</b> if base models are not strong enough they hit limits at some point; the deeper goal is building a system that reasons and closes the loop, then distilling that into one large reasoning model.</li><li><b>Diversity assumption:</b> the plan to simply pour on more samples assumes diversity keeps increasing; clustering exists to find the diverse set, and more samples that add no new solution classes do not help.</li><li><b>Theory:</b> the pass@k versus sample-budget relationship is theoretically derivable, referenced as the <i>Large Language Monkeys</i> paper and follow-ups, which is why the log-linear form is expected rather than surprising.</li></ul>",
+      "terms": [
+        "extrapolation",
+        "capability gap",
+        "diversity",
+        "Large Language Monkeys",
+        "distillation",
+        "log-linear"
+      ]
+    },
+    {
+      "t": 1356,
+      "title": "AlphaCode takeaways: coverage, novelty, and where loss misleads",
+      "problem": "High coverage is encouraging, but the approach has clear ceilings and practical limits that must be understood before reusing it.",
+      "why": "Loss is a poor proxy for solve rate because many programs can solve a problem, and one-shot generation cannot handle problems that need multiple steps.",
+      "how": "Keep massive sampling where compute allows, recognize weak domains like dynamic programming and constructive algorithms, and under a time bound rank acceptable solutions as they are generated rather than assuming unlimited attempts.",
+      "detail": "<p>Takeaways for AlphaCode:</p><ul><li><b>Coverage is real and genuinely novel.</b> Large-scale sampling plus filtering and clustering buys high coverage, and a novelty search over the training data confirmed the generated code was <b>out-of-distribution</b> &mdash; the model was reasoning, not copying solutions.</li><li><b>Loss is a poor proxy for solve rate.</b> Because many programs can solve a problem, good loss can coexist with weakness on specific domains such as <b>dynamic programming</b> and <b>constructive algorithms</b>.</li><li><b>Cost is prohibitive.</b> A million samples per problem is impractical everywhere; under a time bound you want to <b>rank acceptable solutions as they are generated</b>, whereas an accuracy-only setting favors unlimited attempts.</li><li><b>Hard problems need structure.</b> Difficult domains needed many more experiments and the one-shot approach did not do well, so <b>multi-step</b> solution approaches are required.</li></ul>",
+      "terms": [
+        "coverage",
+        "out-of-distribution",
+        "loss",
+        "dynamic programming",
+        "constructive algorithms",
+        "multi-step"
+      ]
+    },
+    {
+      "t": 1481,
+      "title": "AlphaCode 2: fine-tuned Gemini Pro, a model family, and a learned scorer",
+      "problem": "AlphaCode pretrained a bespoke model, burned a million samples per problem, and relied on a clustering heuristic that cannot estimate which candidate is actually correct.",
+      "why": "A weaker base model forces more sampling, and semantic clustering only says programs are equivalent, not which one is right, so selection stayed heuristic.",
+      "how": "Fine-tune an existing LLM (Gemini Pro) instead of pretraining; fine-tune a family of variants with different hyperparameters, difficulty levels, and tags for diversity; and train a scoring model that estimates correctness, using CodeContests v2 plus a high-quality dataset.",
+      "detail": "<p>AlphaCode 2 inverts the recipe: instead of pretraining a bespoke model, start from an existing LLM &mdash; <b>Gemini Pro</b>, since the work was at Google &mdash; and <b>fine-tune</b> it rather than merely prompting. Three changes are layered on:</p><ul><li><b>Diversity via a model family:</b> multiple AlphaCode 2 variants with different hyperparameters, difficulty levels, and tags are fine-tuned so massive sampling draws from a spread of generators.</li><li><b>Learned scoring model:</b> a fine-tuned Gemini Pro produces a <b>scoring/reward</b> estimate of correctness, replacing the heuristic clustering-and-filtering notion of preference with a learned approximation of what deserves a high score.</li><li><b>Data:</b> fine-tuning uses the open-source <b>CodeContests v2</b> plus a separate high-quality dataset used to train the scorer; the goal is a better base model and better selection to cut sample cost.</li></ul>",
+      "terms": [
+        "Gemini Pro",
+        "fine-tuning",
+        "model family",
+        "scoring model",
+        "reward model",
+        "CodeContests v2"
+      ]
+    },
+    {
+      "t": 1636,
+      "title": "AlphaCode 2 training data: v2 segmentation and the curated scorer set",
+      "problem": "The system needs generators that produce diverse samples and a scorer that reliably estimates correctness, and neither falls out of a single dataset.",
+      "why": "Naively training one generator on one dataset yields little diversity, and a scorer needs preference data over comparable problems without being contaminated by them.",
+      "how": "Segment and tag CodeContests v2 into subsets to fine-tune multiple generator variants, and use a separate manually curated, human-annotated set to train the scorer to output a correctness probability between 0 and 1.",
+      "detail": "<p>The training stage detail answers how to get both diversity and a good scorer.</p><ul><li><b>Generator family:</b> the v2 dataset is bisected and segmented into different tagged subsets, each used to fine-tune a different generator variant, so sampling from the family yields more diverse outputs.</li><li><b>Scorer training:</b> a separate <b>manually curated, human-annotated</b> dataset teaches the scoring model to estimate the probability a code sample is correct between <b>0 and 1</b>; concretely, it learns which of two solutions to prefer and how to rank them.</li><li><b>Caveats raised in class:</b> the scorer should not train on exactly the generator problems (<b>contamination</b>), but it still needs <b>in-distribution</b> data.</li><li><b>Multi-stage caution:</b> sequentially changing data quality without mixing the previous version risks <b>catastrophic forgetting</b> in the final fine-tuning stage, which is why the recipe is deliberately staged.</li></ul>",
+      "terms": [
+        "CodeContests v2",
+        "segmentation",
+        "scoring model",
+        "human annotation",
+        "contamination",
+        "catastrophic forgetting"
+      ]
+    },
+    {
+      "t": 1746,
+      "title": "AlphaCode 2 pipeline: massive sampling to rerank and submit",
+      "problem": "Even with a better model, roughly 95% of samples do not compile or fail test inputs, so most compute is spent and discarded.",
+      "why": "Massive sampling is expensive, and after filtering you still need a principled way to pick one candidate per idea rather than relying on raw frequency.",
+      "how": "Split sampling across the model family (C++ only, randomizing temperature and metadata), execute on test inputs, remove about 95% to leave roughly 50k samples, aggregate and keep the top 10 largest clusters, then rerank with the scoring model and pick the best candidate per cluster.",
+      "detail": "<p>The AlphaCode 2 pipeline upgrades every stage of the original:</p><ul><li><b>Sampling:</b> split across the model family, now restricted to <b>C++ only</b> (AlphaCode used half Python, half C++), randomizing temperature and metadata for diversity.</li><li><b>Filtering:</b> each output is executed on test inputs and anything incorrect or non-compiling is removed &mdash; about <b>95%</b> of samples &mdash; leaving roughly <b>50k</b> candidates.</li><li><b>Curation:</b> aggregate, keep the <b>top 10 largest clusters</b>, then <b>rerank</b> using the scoring model's correctness estimate and pick the <b>best candidate per cluster</b>.</li><li><b>Evaluation:</b> the selected candidates are submitted and judged exactly as in AlphaCode, so the comparison is apples-to-apples and isolates the value of the new base model, the diversity, and the scorer.</li></ul>",
+      "terms": [
+        "large scale sampling",
+        "C++",
+        "filtering",
+        "clustering",
+        "reranking",
+        "top-10 clusters"
+      ]
+    },
+    {
+      "t": 1807,
+      "title": "AlphaCode 2 results: 100 samples match the old million",
+      "problem": "It is unclear how much the new system actually buys over AlphaCode for the same test-time compute.",
+      "why": "A better base model, a diverse generator family, and a learned scorer should each reduce the number of samples needed to reach a given solve rate.",
+      "how": "Compare solve rate against sampling budget: by about 100 samples AlphaCode 2 matches AlphaCode at 1 million, and at 1 million it reaches 43% versus 25%, roughly a 2x gain at equal budget.",
+      "detail": "<p>Comparing AlphaCode 2 with AlphaCode, with sampling budget on the x-axis and solve rate on the y-axis:</p><ul><li><b>Sample efficiency:</b> by about <b>100 samples</b>, AlphaCode 2 reaches the solve rate that AlphaCode needed <b>1 million samples</b> to reach.</li><li><b>Headline:</b> at 1M samples AlphaCode 2 solves <b>43%</b> versus AlphaCode's <b>25%</b> &mdash; close to a <b>2x</b> improvement at equal budget.</li><li><b>Sources of the gain:</b> a better base model, more diverse solutions, and a better scoring model, all layered into one system.</li><li><b>Still scaling:</b> the solve rate continues to improve with more samples, so the system benefits from both better modelling and more test-time compute.</li><li><b>Cost caveat:</b> the pipeline still discards the overwhelming majority of samples as non-compiling or incorrect, which is where the compute bill concentrates.</li></ul>",
+      "terms": [
+        "solve rate",
+        "sampling budget",
+        "sample efficiency",
+        "2x",
+        "scoring model",
+        "test-time compute"
+      ]
+    },
+    {
+      "t": 1888,
+      "title": "Q&A and practical framing: sampling cost, self-iteration, RL, production scale",
+      "problem": "A student flags that roughly 95% of sampling compute is wasted on non-compiling or wrong answers and asks whether better prompting or sampling could reduce it.",
+      "why": "This paper did not address it directly, so the class falls back on earlier course ideas and the practical question of how to build systems that use test-time compute efficiently.",
+      "how": "Use self-iteration and refinement on top of generated samples, add an RL loop so the model needs less test-time compute, aggregate information across samples, and remember that production agents run far more samples than everyday chat models.",
+      "detail": "<p>The instructor confirms this paper did not attack the waste directly, then links to earlier course ideas and a broader practical framing.</p><ul><li><b>Self-iteration:</b> generate solutions, collect any available feedback, and refine them &mdash; essentially <b>parallel search</b> plus refinement; the open question is what feedback is actually available for code.</li><li><b>RL instead of raw sampling:</b> improving the model with an RL loop can substitute for test-time sample volume, cutting inference cost.</li><li><b>Aggregation:</b> better ways to aggregate information across the sampled candidates can also reduce how many are needed.</li><li><b>Production framing:</b> everyday reasoning models use dozens of samples, while production research agents can run hundreds of thousands; the hard problem is <b>building the system</b> that reasons and closes the loop, then distilling that into a single large reasoning model.</li></ul>",
+      "terms": [
+        "self-refinement",
+        "RL loop",
+        "aggregation",
+        "distillation",
+        "test-time compute",
+        "production scale"
+      ]
+    },
+    {
+      "t": 2155,
+      "title": "Q&A on the scoring model: contamination, in-distribution data, forgetting",
+      "problem": "Why is the scoring model not simply trained on the same CodeContests v2 data used to train the generators?",
+      "why": "A scorer trained on exactly the generator problems risks contamination, yet it still needs data from a comparable distribution to generalize.",
+      "how": "Train the scorer on a separate, curated set drawn from the same distribution but not the same problems, teaching it a preference/ranking signal; handle multi-stage fine-tuning carefully to avoid forgetting.",
+      "detail": "<p>The instructor frames the answer as deliberate system design rather than an oversight.</p><ul><li><b>Contamination:</b> the scorer should not see exactly the same problems as the generators, or it can be contaminated by them.</li><li><b>In-distribution requirement:</b> it still needs data from a similar distribution, so the fix is a separate, curated set over comparable problems.</li><li><b>What the scorer learns:</b> given two solutions for a problem class, which should be preferred and what ranking to apply &mdash; a preference signal rather than raw correctness labels on generator problems.</li><li><b>Multi-stage caution:</b> mixing datasets across stages is doable but delicate; if you change data quality without mixing the previous version, the model can forget earlier information in the final fine-tuning stage.</li></ul>",
+      "terms": [
+        "scoring model",
+        "contamination",
+        "in-distribution",
+        "preference ranking",
+        "multi-stage fine-tuning",
+        "forgetting"
+      ]
+    },
+    {
+      "t": 2266,
+      "title": "Aggregate results versus humans, takeaways, and two discussion questions",
+      "problem": "It is unclear how AlphaCode 2 compares to human contestants overall, as opposed to on isolated contests.",
+      "why": "Aggregate comparison requires the percentile of contestants scoring at a given level, which contextualizes what the system-level gains mean.",
+      "how": "Report normalized score versus human percentile: about the 85th percentile, between expert and candidate/master level, up from AlphaCode's 46%, with top-two solutions exceeding roughly 99.5%.",
+      "detail": "<p>Aggregate comparison to humans uses the <b>percentile of contestants</b> at a given score:</p><ul><li><b>AlphaCode 2</b> performs around the <b>85th percentile</b>, between expert and candidate/master level contestants, a clear step up from AlphaCode, which outperformed about <b>46%</b>.</li><li>If you take the <b>top two</b> submitted solutions, AlphaCode 2 would outperform roughly <b>99.5%</b> of contestants &mdash; a large jump achieved in a single year by improving the system rather than only scaling samples.</li></ul><p>Takeaways: performance rose with <b>fewer samples</b>, driven by a better foundation model and a scoring model that selects the best candidate; but experimentation is still costly, the approach is very code-specific, and much compute is wasted on bad syntax. Two discussion questions are posed: how to adapt the methods to <b>task complexity</b>, and how to <b>embed reasoning</b> directly into the models.</p>",
+      "terms": [
+        "percentile",
+        "normalized score",
+        "top-two solutions",
+        "foundation model",
+        "scoring model",
+        "takeaways"
+      ]
+    },
+    {
+      "t": 2401,
+      "title": "Class discussion: difficulty-aware sampling",
+      "problem": "The pipeline is one-size-fits-all: it cannot adapt the sampling budget to how hard a problem actually is.",
+      "why": "Easy problems reach coverage with far fewer samples, while hard problems need more or must be decomposed, so a fixed million-sample budget is wasteful.",
+      "how": "A difficulty judge labels each question easy, medium, or hard and the sampling set carries those labels; easier questions draw more from the easier bank and need fewer samples, while hard ones use decomposition and multi-step search.",
+      "detail": "<p>For the question of adapting to task complexity, the class proposes a <b>difficulty judge</b>:</p><ul><li><b>Label first:</b> a separate model classifies each question as easy, medium, or hard, and the sampling dataset carries those labels.</li><li><b>Route the budget:</b> if a question is easy, sample from the matching bank &mdash; simpler problems are more likely to reach coverage with fewer samples, echoing the test-time-compute lectures.</li><li><b>Fewer samples when possible:</b> the point is to avoid always paying for a million samples; easier problems can be solved with an initial set plus some iterative refinement.</li><li><b>Trade-off between strategies:</b> large parallel sampling buys diversity across approaches, whereas refinement tries to fix what the model already produced; harder problems may need <b>decomposition</b> and multi-step search.</li></ul>",
+      "terms": [
+        "difficulty judge",
+        "task complexity",
+        "sampling budget",
+        "decomposition",
+        "iterative refinement",
+        "coverage"
+      ]
+    },
+    {
+      "t": 2555,
+      "title": "Class discussion: embedding reasoning into the model",
+      "problem": "The model does not capture the thinking a programmer does before writing code, so it solves hard problems in one shot rather than reasoning toward them.",
+      "why": "Training data that includes only final solutions misses the abstract pattern and the chain of thought that generalize to new problems.",
+      "how": "Add algorithmic hints and chain-of-thought to training data, use STaR-style hint rationalization, decompose hard problems into hinted subparts, run tree search with backtracking, and keep a human in the loop for out-of-distribution patterns.",
+      "detail": "<p>For embedding reasoning, the class and instructor converge on several mechanisms:</p><ul><li><b>Hints in the training data:</b> capture what programmers think before writing &mdash; the kind of algorithm, a more generic version of the pattern &mdash; so the model learns an abstract solution approach, not only output code.</li><li><b>STaR-style rationalization:</b> generate the solution, provide the answer as a hint, and ask the model to reconstruct the reasoning, then train on that chain of thought.</li><li><b>Decomposition:</b> split complex problems into subparts and add hints for each, since a correct first step can be followed by a flawed later one.</li><li><b>Tree search with backtracking:</b> sample step one, check whether it is roughly correct, sample step two, and backtrack as needed &mdash; closing the loop multi-step.</li><li><b>Human in the loop:</b> genuinely out-of-distribution patterns may need an AI-scientist-style workflow.</li></ul>",
+      "terms": [
+        "chain of thought",
+        "STaR",
+        "hints",
+        "decomposition",
+        "tree search",
+        "backtracking",
+        "human in the loop"
+      ]
+    },
+    {
+      "t": 2792,
+      "title": "Deep research agents: knowledge cutoffs and uncertainty in reasoning chains",
+      "problem": "Large reasoning models have a fixed knowledge cutoff and cannot know events after training; when they hit a gap they guess from their weights and the error cascades.",
+      "why": "The knowledge gap surfaces as uncertainty tokens in long reasoning traces (visible on GPQA), so an early guess contaminates the rest of the chain and the final answer is low-confidence.",
+      "how": "Bootstrap the gaps with external retrieval rather than trusting the weights, turning deep research agents into a way to bridge knowledge the base reasoning model does not have.",
+      "detail": "<p>The lecture pivots to <b>deep research agents</b>, built on top of large reasoning models. These reason impressively but are frozen at a <b>knowledge cutoff</b>: if something happened yesterday, the model must look it up rather than recall it.</p><ul><li><b>Failure mode:</b> when reasoning models lack knowledge they tend to <b>guess</b>, and the guess propagates as an error through the rest of the chain, leaving the final answer low-confidence.</li><li><b>Diagnostic signal:</b> on <b>GPQA</b>, uncertainty terms such as <i>perhaps</i>, <i>alternatively</i>, and <i>wait</i> appear frequently in reasoning chains &mdash; knowledge gaps surface as expressed uncertainty.</li><li><b>Goal:</b> bootstrap those gaps with external information so the uncertainty does not cascade into a wrong final answer.</li><li><b>Transition:</b> the rest of the lecture contrasts how to retrieve and integrate that information during, not before, reasoning.</li></ul>",
+      "terms": [
+        "deep research agent",
+        "knowledge cutoff",
+        "GPQA",
+        "uncertainty",
+        "reasoning chain",
+        "bootstrap"
+      ]
+    },
+    {
+      "t": 2901,
+      "title": "RAG versus agentic RAG and Search-o1's on-the-fly querying",
+      "problem": "Plain retrieval-augmented generation retrieves once at the beginning, so each reasoning step cannot request the different piece of information it actually needs.",
+      "why": "A simple weather question may need one search, but a complex multi-part problem needs new information after each reasoning step, and retrieval up front cannot adapt.",
+      "how": "Agentic RAG triggers searches during reasoning when the model hits entities it cares about, and Search-o1 goes further: the model generates queries on the go at knowledge gaps over multiple iterations, then analyzes retrieved documents rather than dumping them.",
+      "detail": "<p>Three approaches are contrasted:</p><ul><li><b>Direct reasoning:</b> the model answers alone and, on knowledge gaps, guesses from its weights.</li><li><b>Plain RAG:</b> generate a query, retrieve a document, put it in the prompt, answer. It improves over direct reasoning but <b>retrieves once at the beginning</b>, so it cannot adapt mid-reasoning; on complex, multi-part problems each reasoning step needs different information, so it suffers on multi-step reasoning.</li><li><b>Agentic RAG:</b> insert special tokens where the model cares about an entity, trigger search tool calls <i>during</i> reasoning, and insert the returned documents into the reasoning chain &mdash; effectively calling tools as part of reasoning.</li><li><b>Search-o1's refinement:</b> the model generates queries <b>on the go</b> whenever it detects a knowledge gap, issuing multiple retrieval iterations in one reasoning session and <b>analyzing retrieved documents</b> instead of dumping them.</li></ul>",
+      "terms": [
+        "retrieval augmented generation",
+        "agentic rag",
+        "Search-o1",
+        "tool call",
+        "multi-step reasoning",
+        "knowledge gap"
+      ]
+    },
+    {
+      "t": 3040,
+      "title": "Reason within documents: the chemistry walkthrough",
+      "problem": "A chemistry question asks for the carbon-atom count of product three; vanilla reasoning guesses the structure and plain retrieval dumps too much context.",
+      "why": "Fetching many related documents gives more noise than signal, so the model is overwhelmed and still answers wrongly, while a single guessed structure also fails.",
+      "how": "Search-o1 searches the unfamiliar formula, reasons within the retrieved documents, extracts only the relevant chunk, refines it to a structure, and integrates it cleanly into the reasoning chain to produce the correct answer.",
+      "detail": "<p>The chemistry walkthrough makes the distinction concrete. The question asks for the carbon-atom count of product three, produced by a chain of reactions.</p><ul><li><b>Vanilla reasoning:</b> the model encounters an unfamiliar formula, does not look it up, and <b>guesses</b> a structure from its weights; the guess is wrong and the error cascades, so the final answer is low-confidence and incorrect.</li><li><b>Agentic RAG:</b> the model issues a web search and returns documents, but it dumps too much context. Fetching about <b>10 related documents</b> gives more noise than signal, the model is overwhelmed, and it still answers wrongly &mdash; <b>14</b> carbons instead of the correct <b>10</b>.</li><li><b>Search-o1:</b> it searches the formula, <b>reasons within the retrieved documents</b>, extracts only the relevant chunk, refines to a structure, and integrates cleanly into the chain to answer correctly.</li><li><b>Lesson:</b> the ability to summarize and reason within documents, rather than stuffing the prompt, is what improves the final answer.</li></ul>",
+      "terms": [
+        "Search-o1",
+        "reason in documents",
+        "chunk extraction",
+        "over-retrieval",
+        "context length",
+        "chemistry"
+      ]
+    },
+    {
+      "t": 3300,
+      "title": "Reason-in-documents mechanics, context engineering, and pass@1 results",
+      "problem": "Agentic RAG still dumps raw, lengthy, noisy documents into the prompt, and long-context reasoning degrades when 10 or 20 documents are concatenated.",
+      "why": "The binding constraint is how much relevant, non-noisy content the model can actually reason over, not how much text you can fit in the window.",
+      "how": "Reason-in-documents analyzes each retrieved document for relevance and extracts only the relevant chunks, considering the current query and prior reasoning, then appends just those; empirically, pass@1 rises with the number of documents for Search-o1 while direct reasoning and plain RAG stay flat.",
+      "detail": "<p>Mechanically, agentic RAG and Search-o1 inject retrieval into the token stream:</p><ul><li><b>Special tokens:</b> while generating, the model emits special tokens that mark a search query; the retrieval tool returns documents that are appended to the reasoning chain.</li><li><b>Reason-in-documents module:</b> rather than dumping raw documents, it analyzes each for relevance and <b>extracts the relevant chunks</b>, appending only those &mdash; analogous to a human taking notes instead of curating every reference.</li><li><b>State assumption:</b> a memory buffer tracks the current query and prior reasoning; the structure makes this explicit rather than implicit.</li><li><b>Context-engineering limit:</b> the binding constraint is how much content the model can reason over well, a concern of the recent <i>agentic context engineering</i> work; the ideal is to reason well over everything.</li><li><b>Evidence:</b> plotting pass@1 against the number of documents, direct reasoning and plain RAG stay flat while Search-o1 <b>improves</b> &mdash; an axis of <b>parallel refinement</b> built on chunk extraction.</li></ul>",
+      "terms": [
+        "reason in documents",
+        "special tokens",
+        "memory buffer",
+        "agentic context engineering",
+        "pass@1",
+        "parallel refinement"
+      ]
+    },
+    {
+      "t": 3665,
+      "title": "Search-o1 on GPQA versus human experts and the chemistry gap",
+      "problem": "It is unclear whether Search-o1 is genuinely competitive with domain experts on hard, multi-disciplinary science questions.",
+      "why": "GPQA is a hard benchmark, and comparing against humans requires matching the right expert to the right domain rather than using a single aggregate number.",
+      "how": "Compare on the diagonal (physicists on physics, chemists on chemistry): Search-o1 is competitive and sometimes better in physics, competitive in biology, and clearly lags in chemistry, where tokenization or out-of-distribution training data may hurt.",
+      "detail": "<p>On the hard <b>GPQA</b> set, Search-o1 is compared against human experts, focusing on the <b>diagonal</b> &mdash; physicists on physics problems, and so on &mdash; because changing the domain changes the comparison baseline.</p><ul><li><b>Physics:</b> Search-o1 is competitive, sometimes better than the human experts.</li><li><b>Biology:</b> almost competitive with the biologist solving the problem.</li><li><b>Chemistry:</b> noticeably weaker, leaving headroom; the instructor suggests chemistry may be under-trained or out of distribution, and a student hypothesizes that chemistry formula tokenization (preserving meaning across sub-combinations) makes it harder.</li><li><b>Interpretation:</b> this says the system is <b>competitive</b> with experts on this class of problems, not that it outperforms experts in general.</li><li><b>Mechanism:</b> increasing the number of documents helps because the architecture extracts relevant context from each document rather than merely lengthening the prompt.</li></ul>",
+      "terms": [
+        "GPQA",
+        "human experts",
+        "diagonal comparison",
+        "chemistry tokenization",
+        "out-of-distribution",
+        "document scaling"
+      ]
+    },
+    {
+      "t": 3868,
+      "title": "Multi-hop question answering, takeaways, and Search-R1",
+      "problem": "On multi-hop question answering, plain RAG and even agentic RAG tend to saturate, so extra documents stop helping.",
+      "why": "Multi-hop questions require chaining facts across documents and iterating: identify what you do not know, refine, and construct a better next search.",
+      "how": "Search-o1 reaches state-of-the-art on HotpotQA, 2WikiMultihop, and Bamboo through an iterative multi-turn loop that reduces uncertainty; Search-R1 later teaches the same behavior with RL instead of prompting.",
+      "detail": "<p>On <b>multi-hop</b> question answering, standard RAG and even agentic RAG tend to <b>saturate</b> in performance. Search-o1 does not: on <b>HotpotQA</b>, <b>2WikiMultihop</b>, and <b>Bamboo</b>, the bolded state-of-the-art numbers are attributed to Search-o1.</p><ul><li><b>Why it works:</b> the model identifies what it does not know, refines across documents, and runs an <b>iterative multi-turn loop</b> that constructs better subsequent searches, reducing uncertainty at each step.</li><li><b>Retrieval caveat (class Q&amp;A):</b> the claim assumes at least loosely relevant documents are retrieved; with many loosely correlated documents, requiring the model to reason over all of them is where plain methods fail, whereas chunk extraction keeps it tractable.</li><li><b>Takeaways:</b> gains come from <b>reducing uncertainty</b>, improved document quality, and the multi-turn loop; larger reasoning models tend to do better.</li><li><b>Next step:</b> <b>Search-R1</b> versus Search-o1 &mdash; Search-o1 closes the loop by <b>prompting</b>, while Search-R1 teaches the model to search with an <b>RL</b> loop.</li></ul>",
+      "terms": [
+        "multi-hop",
+        "HotpotQA",
+        "2WikiMultihop",
+        "Bamboo",
+        "iterative loop",
+        "Search-R1"
+      ]
+    },
+    {
+      "t": 4135,
+      "title": "Closing Q&A: calibration, overconfidence, and knowing what you know",
+      "problem": "A student asks whether the probability a model assigns to a generation correlates with whether the answer is actually correct, including under RAG.",
+      "why": "Models tend to be overconfident, so raw probabilities are poorly calibrated; measured against correctness, a model may be about 50% correct yet roughly 80% confident.",
+      "how": "Aggregate token log-probabilities meaningfully (averaging or a geometric combination), recognize the overconfidence pattern, and use second-pass confidence estimation or RLHF to calibrate; knowing what a model knows remains open research.",
+      "detail": "<p>The closing Q&amp;A is about whether a model's own probabilities can signal correctness. A student notes each generation carries a probability and asks whether correct answers correlate with high probability, and whether RAG changes that.</p><ul><li><b>Aggregation:</b> you can compute log-probabilities of output tokens, but must aggregate meaningfully (averaging or a geometric combination) rather than summing naively.</li><li><b>Overconfidence:</b> models tend to be <b>overconfident</b>; calibrating against correctness shows that when a model is only about <b>50% correct</b> it may still be roughly <b>80% confident</b>, and it will not readily change its mind.</li><li><b>Correlation pattern:</b> if the answer is correct the model is likely confident and correct; when wrong it is often confidently wrong &mdash; the hallucination failure.</li><li><b>Open problem:</b> efforts use a second pass or RLHF to make models estimate and act on confidence; <b>knowing what they know</b> remains an active research area, and the second question is posed as a homework experiment.</li></ul>",
+      "terms": [
+        "calibration",
+        "log-probability",
+        "overconfidence",
+        "hallucination",
+        "RLHF",
+        "knowing what you know"
+      ]
+    }
+  ]
+}

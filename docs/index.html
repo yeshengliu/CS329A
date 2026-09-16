@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS329A · Self-Improving AI Agents · 学习资料</title>
+<style>
+:root{--bg:#f6f7fb;--panel:#fff;--line:#e2e6f0;--fg:#1b2030;--fg2:#4c5468;--fg3:#8b93a7;--acc:#2f5fd0;--acc2:#0e8a72}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:860px;margin:0 auto;padding:64px 24px 96px}
+h1{font-size:34px;line-height:1.2;margin:0 0 8px;letter-spacing:-.4px}
+.sub{color:var(--fg3);margin:0 0 6px}
+.lead{color:var(--fg2);margin:18px 0 40px;max-width:70ch}
+.cards{display:grid;gap:14px}
+.card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;transition:.15s}
+.card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 8px 24px rgba(30,50,120,.08)}
+.card h2{margin:0 0 6px;font-size:19px}
+.card p{margin:0;color:var(--fg2);font-size:14.5px}
+.card .tag{display:inline-block;font-size:12px;color:var(--acc2);border:1px solid var(--line);border-radius:999px;padding:1px 9px;margin-left:8px;vertical-align:2px}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--fg3);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CS329A · Self-Improving AI Agents</h1>
+  <p class="sub">Stanford Online · 课程学习资料 · Illustrated notes</p>
+  <p class="lead">基于 9 讲课程视频自动生成的配图讲解文档：每讲按真实话题切成若干小节，用 <b>问题 → 成因 → 解法</b> 的逻辑链讲解，并配上对应时间点的幻灯片截图。讲解为面向有 agent 部署经验工程师的技术深度，中英双语。</p>
+
+  <div class="cards">
+    <a class="card" href="coursebook.html">
+      <h2>配图讲解 · 中文 <span class="tag">默认</span></h2>
+      <p>9 讲 · 247 节 · 428 张幻灯片。支持全文搜索、小节目录、图片灯箱，右上角可切换 English。</p>
+    </a>
+    <a class="card" href="coursebook.en.html">
+      <h2>Illustrated Notes · English</h2>
+      <p>Same document in English. Problem → Why → How per section, with the matching slides.</p>
+    </a>
+    <a class="card" href="cs329a.html">
+      <h2>字幕全文检索文档</h2>
+      <p>9 讲逐段字幕（带时间戳与 YouTube 直达链接）、术语/概念索引、每讲笔记与进度标记。</p>
+    </a>
+  </div>
+
+  <footer>
+    字幕与幻灯片由本仓库脚本从公开课程视频生成；幻灯片版权归课程作者所有，仅作个人学习使用。
+    <br>Source: <a href="https://www.youtube.com/playlist?list=PLangBM27OtEA">YouTube playlist</a> ·
+    <a href="https://github.com/yeshengliu/CS329A">GitHub</a>
+  </footer>
+</div>
+</body>
+</html>

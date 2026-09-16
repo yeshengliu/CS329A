@@ -1,0 +1,277 @@
+{
+  "n": 5,
+  "title": "规划与多步推理",
+  "summary": "本讲梳理了三个将语言模型转变为会推理、行动与搜索的规划 agent 的系统。LATS 通过把 Monte-Carlo Tree Search 接入 LLM 循环，将推理、行动与规划统一起来：动作被采样，由 LLM-judge 价值加 self-consistency 打分，用 UCT 选择，模拟至终局状态，再进行反向传播，并通过一个 reflection 步骤把经验写回 context。它在 test-time 刷新了 HotpotQA 与 WebShop 的纪录，但付出了巨大且未被测量的算力成本，并假设动作可逆。SPRINT 针对长顺序链的延迟问题，通过（由 GPT-4o 标注的推理 DAG 加 SFT）教出一个 planner 输出独立计划、以及一组 executor 并行执行这些计划，在数学/GPQA 上把顺序 token 削减约 40% 的同时提升准确率。SWIRL 离线构建合成的多步、工具使用轨迹，用 LLM judge 为每一步打分，按过程而非仅按结果过滤，并在不进行实时工具调用的情况下运行多步 RL，实现从 GSM8K 到 HotpotQA 以及反向的泛化。反复出现的主题包括：价值/过程引导、探索与利用、并行化、验证，以及训练时算力与测试时算力的权衡。",
+  "sections": [
+    {
+      "t": 5,
+      "title": "课程导入：跨三篇论文的推理、行动与搜索",
+      "problem": "多步任务无法通过单次生成解决：agent 必须先思考要做什么，通过行动收集信息或改变状态，然后在由此产生的轨迹上进行搜索。",
+      "why": "旅行规划是贯穿全程的示例：推理预算与计划，通过浏览 Reddit 或旅行博客来行动，通过细化计划并考虑备选方案来搜索。仅靠推理永远无法触及真实世界；仅靠行动也永远选不出好的路线。",
+      "how": "本讲涵盖三篇关于多步推理与规划的论文，首先从 LATS（Language Agent Tree Search）开始，这是一篇 ICML 论文，其标题明确地将语言模型中的推理、行动与规划统一起来。",
+      "detail": "<p>CS329A 第 5 讲的开场框架，主题为 <b>Planning and Multi-Step Reasoning</b>。</p><ul><li>本课程将涵盖<b>三篇论文</b>，均关于多步推理与规划，首先从 <code>LATS</code>（<i>Language Agent Tree Search</i>）开始，这是一篇 <b>ICML</b> 论文。</li><li>目标应用需要模型<b>推理</b>要做什么，并通过这些推理步骤<b>行动</b>，然后<b>搜索/优化轨迹</b>以得到最终正确答案。</li><li>贯穿全程的示例——规划一次旅行：推理步骤涵盖预算与目的地；行动步骤浏览网页、生成搜索查询、阅读 Reddit 或旅行博客；搜索步骤根据收集到的反馈细化计划（例如考虑备选目的地、发现新的活动）。</li><li>因此 agent 在推理、行动与搜索之间交替进行，而不是一次性给出答案。</li></ul>",
+      "terms": ["LATS", "Language Agent Tree Search", "多步推理", "规划", "行动", "轨迹搜索", "ICML"]
+    },
+    {
+      "t": 138,
+      "title": "核心挑战：多样性、探索与 MCTS 的引入",
+      "problem": "LLM 会生成一个计划并执行它，但在创造多样化的候选解以及据此行动方面表现薄弱——这一局限至今仍然存在。",
+      "why": "若没有多样化的探索，多步优化会陷入一条平庸的轨迹；为了得到更好的解，agent 必须采样大量路径、对它们进行评估，并在利用的同时持续探索。",
+      "how": "该论文将已知的 RL 与多步规划技术——最重要的是 Monte-Carlo Tree Search——引入 LLM 的推理路径，并让模型把环境反馈纳入进来，以细化未来的计划与搜索。",
+      "detail": "<p>论文提出的挑战：从<i>LLM 生成一个计划并执行它</i>，走向一种鼓励对不同计划/路径进行<b>多样化与探索</b>的方法。</p><ul><li>观察到的弱点（今天依然如此）：模型在<b>创造多样化解</b>与<b>据此行动</b>方面表现很差，也不擅长规划多个优化步骤以得到解。</li><li>对策：将<b>强化学习</b>与<b>多步规划</b>中经过验证的技术——具体而言是 <b>Monte-Carlo Tree Search</b>——引入 LLM 的推理路径。</li><li>由于模型能够消费反馈，该框架还让 agent 在探索过程中接收<b>来自环境的反馈</b>，并将其回馈以细化和优化未来的计划与搜索。</li><li>整讲反复回到的张力：更多搜索能换来更高准确率，但会消耗算力，而算力并非免费。</li></ul>",
+      "terms": ["多样性", "探索", "利用", "Monte-Carlo Tree Search", "强化学习", "环境反馈", "计划细化"]
+    },
+    {
+      "t": 219,
+      "title": "LATS 演练：为动作打分并扩展树",
+      "problem": "给定一个 prompt，模型可以提出许多动作，但并没有内建信号告诉它计划中的哪条分支值得深入。",
+      "why": "如果对每个采样到的动作打分，并且只沿高分动作扩展树，agent 就会把预算花在有潜力的轨迹上，同时仍然采样其他备选方案。",
+      "how": "以夏威夷旅行 prompt 为例：采样得到诸如“问去过夏威夷的朋友”或“阅读相关 subreddit”这样的动作。框架为每个动作打分，扩展得分更高的那个（例如问朋友 A 和朋友 B），对由此产生的回答打分，然后重复。部分动作可以并行执行。",
+      "detail": "<p>具体示例：prompt = <i>plan a trip to Hawaii</i>。</p><ul><li>对模型采样得到候选动作，例如<b>询问去过夏威夷的朋友</b>或阅读相关的 <b>subreddit</b>。</li><li>框架为<b>每个动作分配一个分数</b>，并基于该分数更新<b>搜索空间/轨迹</b>——即后续扩展构成的树。</li><li>在示意图的树中，动作 1 得分更高，因此模型扩展它（询问朋友 A 和朋友 B 的意见）；这些回答的质量也有各自的分数，并从此继续扩展。</li><li>这是<b>多动作采样</b>的一种形式：某些动作（例如两个“询问朋友”分支，或两个子查询）是<b>相互独立且可以并行执行的</b>。</li><li>设计原则：从<b>最佳状态</b>继续探索，但混合<b>探索与利用</b>——这正是 <b>MCTS</b> 发挥作用的地方。</li></ul>",
+      "terms": ["多动作采样", "动作打分", "树扩展", "夏威夷旅行", "并行动作", "探索 vs 利用", "MCTS"]
+    },
+    {
+      "t": 327,
+      "title": "LATS 的差异所在：结果打分、反思与 ReAct 谱系",
+      "problem": "此前的搜索引导推理会对中间推理步骤打分，但在具身/行动场景中，一步的好坏取决于该动作被真正执行时实际发生了什么。",
+      "why": "对结果打分并让模型对轨迹进行反思（以及观察环境），比孤立地为推理选择打分能提供更丰富、更贴近实际的信号。",
+      "how": "Math-Shepherd 使用 verifier 为推理轨迹打分来引导 test-time 搜索。LATS 则根据所执行动作的结果来打分，加入模型反思以评估轨迹的进展，吸收环境观察，并继承 ReAct 的记忆/反思/环境交互——同时规划的成分大幅增加。",
+      "detail": "<p>论文将自己与两个前身进行对比：</p><ul><li><b>Math-Shepherd</b>——verifier 为<b>推理轨迹</b>打分并引导 test-time 搜索；扩展由这些推理层面的分数驱动。</li><li><b>ReAct</b>——加入记忆/反思以及对<b>环境的显式交互</b>（即“推理、行动、观察”循环）。</li></ul><p>LATS 的不同之处：</p><ul><li>打分<b>不基于推理选择</b>，而是基于模型所执行动作的<b>结果</b>——一个更贴近实际的信号。</li><li>它加入了一个<b>反思</b>步骤，让模型评估轨迹的进展，并显式利用<b>环境观察</b>。</li><li>相比 ReAct，它在流程中融入了<b>越来越多的规划</b>。</li></ul><p>这一谱系很重要：LATS = MCTS 规划 + 在 ReAct 式行动循环之上的结果/反思引导。</p>",
+      "terms": ["Math-Shepherd", "verifier", "ReAct", "结果打分", "反思", "环境观察", "test-time 搜索"]
+    },
+    {
+      "t": 431,
+      "title": "LATS 直觉与六阶段流水线（迷宫设定）",
+      "problem": "该方法需要一个具体的流程骨架，使借鉴来的 MCTS 思想成为在 LLM 推理与动作之上的可执行循环。",
+      "why": "将过程分解为具名阶段，使机制可被审查，并清楚展示 LLM、judge 与环境各自在何处做出贡献。",
+      "how": "Chain of thought 将推理分解为若干步骤；动作生成形成一棵树；搜索/规划在这棵树上运行；来自动作的 ReAct 式反馈被融入未来的搜索。具体而言，LATS 有六个阶段：selection、expansion、evaluation、simulation、back-propagation、reflection。",
+      "detail": "<p>LATS 背后的直觉：</p><ul><li><b>Chain of thought</b> 将推理过程分解为若干步骤。</li><li><b>树扩展</b>——动作生成构建一棵候选状态树。</li><li><b>搜索与规划</b>——MCTS 在这棵树上运行。</li><li><b>反馈</b>——遵循 ReAct，将已执行动作的观察纳入未来的搜索。</li></ul><p>具体方法包含<b>六个阶段</b>：<code>selection</code>、<code>expansion</code>、<code>evaluation</code>、<code>simulation</code>、<code>back-propagation</code>、<code>reflection</code>。</p><p>用于逐一讲解它们的贯穿示例：<i>在迷宫中导航以到达出口</i>。初始观察：你身处一个昏暗的房间，里面有<b>两扇门，一扇在左、一扇在右</b>；目标是到达出口。</p>",
+      "terms": ["chain of thought", "树扩展", "MCTS", "selection", "expansion", "evaluation", "simulation", "back-propagation", "reflection", "迷宫"]
+    },
+    {
+      "t": 522,
+      "title": "迷宫演练（第 1 部分）：Selection、Expansion 与观察",
+      "problem": "MCTS 需要一个起始节点和分支因子，但在这里分支必须由 LLM 生成，并在真实环境中执行。",
+      "why": "环境响应正是将采样动作转化为一个新状态的关键，该状态带有一条可追加到 context 中以供下一轮使用的观察。",
+      "how": "首先选择一个要扩展的节点（通过 UCT，稍后详述）。从初始节点出发采样动作——例如打开左门、打开右门、检查房间以寻找线索。在环境中执行每个动作，并将观察（例如“挂着画作的黑暗走廊”）追加到 context。",
+      "detail": "<p><b>Selection</b>——基于 <b>UCT</b>（稍后介绍）选择一个要扩展的节点。初始化的节点就是初始观察：<i>你身处一个昏暗的房间&hellip;</i></p><p><b>Expansion</b>——从选中的节点出发，模型采样候选动作。在示例中采样了三个：</p><ul><li>打开<b>左门</b></li><li>打开<b>右门</b></li><li><b>检查房间以寻找线索</b></li></ul><p>随后每个动作都<b>在环境中执行</b>，并将得到的<b>观察追加到 context</b>。对于“打开左门”，观察是一条<i>挂着画作的黑暗走廊</i>；右门和检查动作各自返回自己的观察。</p><p>这一阶段的要点：LLM 提供分支，而环境提供真实后果，后者成为新节点的内容。</p>",
+      "terms": ["selection", "expansion", "UCT", "动作采样", "观察", "context", "环境执行"]
+    },
+    {
+      "t": 594,
+      "title": "迷宫演练（第 2 部分）：通过 LM-Judge 与 Self-Consistency 进行评估",
+      "problem": "树需要为每个动作给出一个标量值，以决定继续哪条分支，但 episode 内部没有 ground-truth 奖励。",
+      "why": "两个廉价且互补的估计——状态看起来多有前景，以及该动作在采样中被产生的频率——组合成一个稳健的值，且无需任何训练过的 reward model。",
+      "how": "对每个已执行的动作，加入两个分数：一个是<b>LM score</b>，通过将 LLM 提示为 judge 来得到 0–1 的前景估计；另一个是<b>self-consistency score</b>，基于该动作被采样的频率（例如采样 50 次；状态 A 得分更高，因为动作 A 出现了约 75% 的次数）。两者相加/平均为一个值。",
+      "detail": "<p><b>evaluation</b> 阶段为每个由已执行动作到达的新状态打分。</p><ul><li><b>LM score</b>：将 LLM 作为 <b>judge</b> 提示，输入动作 + 观察，询问该状态多有前景，要求给出 <b>0 到 1</b> 之间的分数。</li><li><b>Self-consistency score</b>：不是采样 3 个动作，而是采样约 <b>50</b> 个，将它们归类为动作类型，并给出与该动作类型被采样的<b>频率</b>成正比的分数。例如：状态 A 的 self-consistency score 更高，因为动作 A 约 <b>75%</b> 的次数被采样到。</li></ul><p>两者被合并（相加/平均）为该动作/状态的一个<b>值</b>，例如 <code>V(SA)</code>。不需要训练单独的 reward model——value function 是基于 prompt 的。</p>",
+      "terms": ["LM as a judge", "self-consistency", "价值函数", "0-1 分数", "采样频率", "状态评估"]
+    },
+    {
+      "t": 690,
+      "title": "迷宫演练（第 3 部分）：Simulation、预算与 Back-Propagation 设定",
+      "problem": "只评估一步是不够的；agent 必须知道所选分支是否真能到达成功，然后才能信任它。",
+      "why": "从看起来最好的状态模拟（roll out）到终局结果，会产生真实的 return，用以更新通往该处的所有值。",
+      "how": "贪心地扩展得分最高的状态 SA，采样更多动作并沿着它们推进，直到到达终局状态（成功或失败）或触及最大扩展预算。在示例中，rollout 沿楼梯前进，发现出口门有标记，因此得一分。该结果正是后续 back-propagation 要传播的。",
+      "detail": "<p><b>Simulation</b>：在 evaluation 阶段之后，假设 <b>SA</b> 得分最高，而 <b>SB</b> 和 <b>SC</b> 低得多。一个<b>贪心</b>方法会扩展 SA，继续采样动作并持续扩展，<b>直到到达终局状态</b>——成功或失败——或直到用于扩展该状态的<b>预算</b>耗尽。</p><ul><li>在示例中，SA 沿楼梯方向 rollout；下一条观察恰好揭示<b>出口门有清晰标记</b>，因此该轨迹得一分。</li><li>于是 rollout 要么产生一条<b>成功轨迹</b>，要么失败。</li><li>关键问题：如何利用该终局观察来<b>反向传播</b>，更新路径上每个动作的分数。</li><li>这就是接下来要讲的 back-propagation 阶段，它使树的值反映真实结果，而不仅是局部前景。</li></ul>",
+      "terms": ["simulation", "rollout", "终局状态", "扩展预算", "贪心扩展", "back-propagation"]
+    },
+    {
+      "t": 796,
+      "title": "Value Function、UCT 与 Back-Propagation 的数学",
+      "problem": "每次都选价值最高的节点是贪心的，可能错过当前看起来弱但之后能带来更好结果的分支。",
+      "why": "在利用（当前价值）与探索（访问不足的分支）之间取得平衡，是 MCTS 的经典解法，并且必须与使用模拟 return 的价值更新相耦合。",
+      "how": "value function 是 LLM-judge 分数加上 self-consistency 分数。Selection 使用 UCT——价值 V(s) 加上一个超参数乘以探索项（父节点访问次数 n_p 除以节点访问次数 n_s）——因此访问不足的子节点会得到加成。Back-propagation 按 (old_value*(visits-1) + return)/visits 更新每个状态的价值。",
+      "detail": "<p><b>Value function</b>：<b>LLM-as-judge</b> 分数（给定观察 + 动作时成功的 0–1 概率）与 <b>self-consistency</b> 计数（该动作被采样的频率）的加权平均。</p><p><b>UCT（Upper Confidence Bounds Applied to Trees）</b>直接借鉴自 MCTS 文献，用于选择扩展哪个节点：</p><ul><li>它将一个<b>利用</b>项 <code>V(s)</code> 与一个超参数乘以<b>探索</b>项组合起来。</li><li>这里 <code>n_p</code> = <b>父节点</b>的访问次数，<code>n_s</code> = <b>当前节点</b>的访问次数；该项的行为类似 <code>sqrt(n_p / n_s)</code>。</li><li>如果某节点相对其父节点被访问得更少，比值就大，UCT 随之升高，鼓励探索；被大量访问的节点该项会缩小。</li></ul><p><b>Back-propagation</b>：在轨迹结束时（成功或失败），return 会更新路径上的价值：<code>new_value = (old_value*(visits-1) + return) / visits</code>。有学生指出这类似于 bandit 算法；讲师认同其中确有直觉，但没有最优性证明。</p>",
+      "terms": ["UCT", "upper confidence bounds", "探索项", "n_p", "n_s", "back-propagation", "return", "访问次数", "bandit learning"]
+    },
+    {
+      "t": 1003,
+      "title": "Reflection 以及 LATS 在 HotpotQA 与 WebShop 上的结果",
+      "problem": "搜索结束后树就被丢弃，因此从失败（或成功）轨迹中学到的经验无法用于未来的 episode。",
+      "why": "将模型自己的语言化 reflection 追加到 context，能提升后续搜索的质量，实际上在无需更新权重的情况下内化了经验。",
+      "how": "back-propagation 之后，模型追加一段对轨迹的 reflection——说明为何失败或成功。随后在 HotpotQA（多跳 QA，按设计至少需要从两个 Wikipedia 页面检索）和 WebShop（实际购物查询）上评估 LATS；扩大 samples/trajectories 数量能显著提升性能，reflections 又带来进一步增益，在无需 fine-tuning 的情况下接近人类专家水平。",
+      "detail": "<p><b>Reflection</b>：在 back-propagation 之后，模型追加自己关于该轨迹的<b>思考</b>——是什么导致了失败或成功。据报道这能显著提升整体质量。</p><p><b>结果</b>：</p><ul><li><b>HotpotQA</b>——多步 QA，按设计回答问题至少需要从<b>两个不同的 Wikipedia 页面</b>检索，因此任务本质上是多跳的。</li><li>随着<b>samples/trajectories 数量</b>的增加，性能显著提升；reflection 加上把推理轨迹带回能带来很大的末端增益。</li><li><b>WebShop</b>——一个实际购物数据集（例如“一张小巧便携的站立式书桌，已完全组装好，是这个颜色/饰面，在这个价位”），同样是多步流程。</li><li>在<b>没有任何 fine-tuning</b>、纯 test-time 的情况下，LATS 就取得了很高的结果——<b>接近人类专家</b>。</li><li>净效果：LATS 提供了一种机制，将更多 <b>test-time compute</b> 转化为多步推理的更好解。</li></ul>",
+      "terms": ["reflection", "HotpotQA", "WebShop", "test-time compute", "多跳检索", "人类专家基线", "no fine-tuning"]
+    },
+    {
+      "t": 1149,
+      "title": "LATS 总结、局限与讨论题",
+      "problem": "尽管结果很强，LATS 的实用性受到算力成本以及无法撤销的真实世界动作的限制。",
+      "why": "一个每次查询都扩展并 back-propagate 一棵树的框架开销很大，其搜索还假设动作廉价且可逆——这对交易类操作并不成立。",
+      "how": "总结：LATS 融合了推理、行动与规划，将 MCTS 引入 LLM 世界，作为 test-time 方法可移植/模块化，但未分析成本收益，也未处理不可逆动作（例如为服务付费）。课堂上要求讨论其优点、缺点与扩展方向。",
+      "detail": "<p><b>总结。</b>LATS 提出了一种新技术，将<b>推理、行动与规划结合在一起</b>，并把 <b>MCTS</b> 等已知思想引入语言模型世界，在多个领域取得了强劲结果。</p><ul><li><b>优势：</b>一种 test-time、模块化的方法，<b>可移植</b>且相对易于构建，并成功地将更多 test-time compute 转化为准确率。</li><li><b>缺点 1——成本：</b>每次 back-propagation 和树扩展都会增加大量成本；论文<b>未分析成本收益</b>。</li><li><b>缺点 2——不可逆动作：</b>该搜索假设动作可以被采样并回滚，但某些动作（执行交易、为服务付费）具有<b>重大后果</b>且无法撤销。</li></ul><p>随后讲师要求全班思考这篇论文的优点/缺点，以及他们会如何改造或扩展它。</p>",
+      "terms": ["成本收益", "不可逆动作", "有后果的动作", "交易", "可移植性", "test-time 方法"]
+    },
+    {
+      "t": 1260,
+      "title": "课堂讨论：Bandit 备选方案与树 vs 图的假设",
+      "problem": "学生探究 UCT 是否是唯一的探索机制，以及搜索结构内部如何处理重复动作。",
+      "why": "这些回答澄清了哪些是真正的贡献、哪些是他人可以替换的设计选择，并揭示了该方法一个隐含的结构性假设。",
+      "how": "UCT 本质上是来自 bandit learning 的置信界规则；论文未与其他 multi-armed-bandit 探索方案做比较，其主要贡献是一个可将此类优化器接入的平台。对于重复动作，其计数会被递增并纳入 UCT；LATS 假设的是树而非完全连接的图，因此不同节点中相同的动作被视为相互独立的轨迹。",
+      "detail": "<p>问答环节的两条线索：</p><ul><li><b>UCT 是唯一的选择吗？</b>有学生指出 UCT 是来自 <b>bandit learning</b> 的<b>置信界</b>规则，而在该领域有许多算法用于选择/探索 arm。讲师确认论文<b>没有</b>比较其他方案；其主要贡献反而是提供了一个<b>平台</b>，其他人可以在其上接入其他的探索-利用优化器。</li><li><b>重复动作。</b>如果同一动作出现在多个节点中/以 A-B-A-B 的形式出现，LATS 会针对给定父节点<b>递增该动作的计数</b>，进而进入 <b>UCT</b> 公式。讲者强调该方法假设的是<b>树而非完全连接的图</b>，因此重复动作被视为<b>相互独立的轨迹</b>。</li></ul><p>这些回答把该方法更多地定位为一个灵活框架，而非一个完全调优的搜索算法。</p>",
+      "terms": ["UCT", "bandit learning", "multi-armed bandit", "探索-利用", "重复动作", "树 vs 图", "平台"]
+    },
+    {
+      "t": 1415,
+      "title": "SPRINT 动机：更长的思考与更高的准确率相关",
+      "problem": "顺序的长 chain of thought 提升了难题上的准确率，却让推理变得极其缓慢和昂贵。",
+      "why": "reasoning model（o1、Gemini 2.5 Pro thinking、DeepSeek R1）被训练为在更难的问题上“思考更多”，更长的回答与更高的准确率相关——但所有这些文本都是一次一个 token 生成的。",
+      "how": "讲座展示了 DeepSeek R1 的训练曲线：随着数学性能提升，平均回答长度也随之上升。SPRINT 是一篇 2025 年的新论文（尚未在会议上发表），其动机正是利用许多推理步骤相互独立、因而可以并行执行这一事实。",
+      "detail": "<p><b>SPRINT</b> 的动机，它被描述为一篇尚未在会议上发表的 <b>2025</b> 年新论文。</p><ul><li>前沿 reasoning model——<b>o1</b>、<b>Gemini 2.5 Pro thinking</b>、<b>DeepSeek R1</b>——表现出在<b>更难的问题上思考更多</b>的倾向，而更长的思考对应<b>更高的准确率</b>。</li><li>DeepSeek R1 的曲线显示，随着训练进行，模型在数学上变得更好，<b>且</b>每次回答的<b>平均长度上升</b>——思考 token 与准确率之间呈正相关。</li><li>痛点：这些长链是 **按顺序** 生成的，因此延迟和成本成为巨大负担，尤其是在多步推理中；用户要等待很长时间才能得到回答。</li><li>SPRINT 探索对计划进行规划与<b>并行执行</b>，利用模型本身帮助它以并行方式更好地思考，然后对此进行优化。</li></ul>",
+      "terms": ["SPRINT", "DeepSeek R1", "o1", "Gemini 2.5 Pro", "chain of thought", "顺序 token", "延迟", "test-time compute"]
+    },
+    {
+      "t": 1509,
+      "title": "SPRINT 架构：独立步骤、Planner + 并行 Executor",
+      "problem": "长推理轨迹包含许多彼此不依赖的子步骤，但自回归解码迫使它们进入单一的顺序流。",
+      "why": "如果能识别出独立步骤并将它们一起输出，其执行就可以并发运行，在不丢失推理内容的情况下缩短关键路径。",
+      "how": "观察：模型会尝试不同方法、将任务分解为可并行的子任务，并验证之前的步骤。SPRINT 对 reasoning model 进行 fine-tune，使其先规划再执行：planner 输出一组计划，executor 并行运行它们，规划/执行反复交错以加速推理。",
+      "detail": "<p>SPRINT 背后的关键观察：虽然长推理有帮助，但<b>许多推理步骤彼此独立</b>——例如尝试不同方法、将任务分解为可并行运行的子任务，或验证之前的步骤。</p><ul><li>观察一条推理轨迹的图，其中一部分计算是<b>相互独立</b>的；无需等待所有步骤按顺序生成。</li><li>SPRINT 是一个<b>post-training / fine-tuning</b> 框架：它取一个 reasoning model，使其通过一个 <b>planner</b> 加上一组 <b>executor</b> 来生成回答。</li><li>planner 为问题创建一组计划；executor <b>并行</b>执行这些计划；这一过程可以<b>反复发生</b>，即 plan-set → parallel-execution → plan-set → parallel-execution。</li><li>正是<b>规划与执行的交错</b>加速了推理过程，同时让模型的输出通道仍保持为单一的 next-token 流。</li></ul>",
+      "terms": ["planner", "executor", "并行执行", "任务分解", "交错", "post-training", "supervised fine-tuning"]
+    },
+    {
+      "t": 1667,
+      "title": "SPRINT 数据构建：LLM 标注、推理 DAG 与 Packing",
+      "problem": "必须教会模型并行的 plan/execution 格式，但不存在这类轨迹的标注语料。",
+      "why": "用 plan/execution 边界标注现有的顺序轨迹，恰好能提供重构模型解码行为所需的监督信号，而 LLM 可以大规模完成这种标注。",
+      "how": "用 DeepSeek R1 生成推理轨迹，然后用 GPT-4o 逐步遍历每条轨迹，将其切分为 steps 1..k，并标注哪一段是 plan、哪一段是 execution（一个 step 可能包含多个 execution 片段）。根据这些标注构建依赖的 DAG（例如 step 4 和 step 2 都依赖 step 1，但彼此独立），然后 pack 独立步骤，使它们可以并行执行。",
+      "detail": "<p>数据创建使用 LLM 本身进行合成监督：</p><ul><li>让 <b>DeepSeek R1</b> 为一组问题生成推理轨迹与回答。</li><li>用一个如 <b>GPT-4o</b> 的模型遍历每条轨迹，将其切分为 <b>steps 1&hellip;k</b>，并标注哪部分是 <b>plan</b>、哪部分是 <b>execution</b>；有些 step 会为一个 plan 包含多个 execution 片段。</li><li>根据标注构建一个 <b>DAG</b>：例如<i>step 4 和 step 2 互不依赖，但都依赖 step 1</i>。据报道模型能很好地推断这些关系。</li><li><b>Pack</b> 独立步骤：先 step 1，然后 steps 2 和 3 <b>完全并行</b>，依此类推。</li></ul><p>结果是一个由 steps、plans 与 parallel executions 组成的数据集。这里 <b>LRM</b> = large reasoning model；由于现代 LLM 都是 reasoning model，该数据被用于<b>fine-tune</b>（SFT）一个模型——例如 DeepSeek R1——使其以这种带并行标记的方式思考。</p>",
+      "terms": ["DeepSeek R1", "GPT-4o", "标注", "DAG", "依赖图", "packing", "plan tag", "execution tag", "LRM"]
+    },
+    {
+      "t": 1816,
+      "title": "SPRINT 推理及其意义：顺序 token 瓶颈",
+      "problem": "推理时，标准 reasoning model 交替进行 plan → execute → plan → execute，因此总 wall-clock 是每个 plan 和 execution 之和。",
+      "why": "减少<b>顺序</b> token 的数量可缩短关键路径，并同时降低延迟与成本，这是该方法的核心动机。",
+      "how": "SPRINT fine-tuning 之后，模型将 plan 1 和 plan 2 一起输出，然后它们的 execution 并发开始（例如通过 calculator / Python 工具），结果被同步回 context，模型继续处理下一组 plans。模型仍然逐 token 解码；特殊标记标出 plan/execution 边界，使 harness 能够并行化 executions。",
+      "detail": "<p>顺序基线：<i>query → plan 1 → execute 1 → plan 2 → execute 2 → &hellip; → final answer</i>；总时间是这些步骤之和。</p><p>推理时经过 SPRINT 之后：</p><ul><li>模型首先生成<b>plan 1 和 plan 2</b>，因为它们是独立的。</li><li>它们的 execution 随后<b>同时</b>发生——例如两者都可以派发给 <b>calculator 或 Python</b> 工具——结果被同步回 context。</li><li>然后下一阶段/下一组 plans 以同样的方式进行。</li></ul><p>讲师强调这仍然是一个 next-token 解码器：区别在于模型被<b>训练为输出特殊标记</b>（例如 <code>&lt;plan_1&gt;</code>、<code>&lt;plan_2&gt;</code>、execution 块），使 runtime 知道哪些块相互独立并能并行运行它们。教会模型这种格式正是 SFT 数据所编码的内容。</p>",
+      "terms": ["顺序 token", "plan tags", "并行执行", "工具使用", "calculator", "Python", "wall-clock 加速", "context 同步"]
+    },
+    {
+      "t": 1980,
+      "title": "SPRINT 问答：重新规划、Context 保留与训练数据配对",
+      "problem": "如果 plans 在执行之前就被生成，那么当后续 execution 表明较早的 plan 有误时，模型如何修改它？",
+      "why": "训练配方必须保留模型回溯和修改的能力，否则强制的并行会让它变得脆弱。",
+      "how": "模型被训练为在每个时刻都进行规划，包括在能够输出可并行 plans 时对已有 plans 进行修改，而不是等 plan 1 结束再写 plan 2。它仍然能看到完整的先前 context，因此仍可回头撤销某个 plan。训练数据将 plan 1 和 plan 2 并排放置、execution 1 和 execution 2 并排放置；推理时这些 executions 真正并行运行。",
+      "detail": "<p>有学生提问：如果模型在 execution 4 之后意识到较早的某个 plan 是错的，它如何知道要去细化，例如回到 plan 3 而不是 plan 2？</p><ul><li>模型被教导要<b>在每个时刻都进行规划</b>，即使这意味着<b>修改</b>已有的 plan。如果它能生成<b>相互独立且可并行执行</b>的 plans，就应当这样做——而不是等 plan 1 执行完再生成 plan 2。</li><li>关键在于，<b>它仍然能看到全部 context</b>，因此仍可选择回头撤销某个 plan；只是被训练为在安全时优先选择并行。</li><li><b>训练数据</b>：plan 1 和 plan 2 出现<b>在彼此旁边</b>，execution 1 和 execution 2 紧随其后，因此模型学到它们可以一起输出。推理时，这些 executions 确实被并行派发。</li><li>特殊标记为 runtime 提供了实现这种并行所需的钩子。</li></ul>",
+      "terms": ["重新规划", "context 保留", "计划修改", "共同输出", "训练数据配对", "special tags"]
+    },
+    {
+      "t": 2152,
+      "title": "SPRINT 训练配方与结果：3.5% 准确率提升加上效率",
+      "problem": "教并行只是节省 token，还是重构推理过程确实改变了正确性？",
+      "why": "如果结构化的并行格式还能提升准确率，该方法就有双重价值；否则它不过是效率技巧。",
+      "how": "在一个数学数据集上生成约 6K 条 thinking 轨迹，保留并行度更高的那些，并在重新格式化后的轨迹上 SFT DeepSeek R1 distill 7B。结果：相比 R1-distill-7B 基线准确率跃升约 3.5%，同时使用的顺序 token 少得多——在顺序 token 数量上比 32B 模型更高效。",
+      "detail": "<p><b>配方：</b></p><ul><li>为<b>数学</b>数据集生成约 <b>6K 条 thinking 轨迹</b>。</li><li>保留<b>并行度更高</b>的轨迹。</li><li>在重新格式化后的轨迹上对 <b>DeepSeek R1 distill 7B</b> 进行 <b>supervised fine-tuning</b>。</li></ul><p><b>意外发现：</b>项目目标是最大化并行以减少顺序生成，但这一过程<b>还提升了准确率</b>——模型似乎喜欢这种更结构化的思考方式。</p><ul><li>相比 <b>R1-distill-7B</b> 基线准确率跃升约 <b>3.5%</b>。</li><li>同时在<b>顺序 token 数量</b>上高效得多——在该维度上优于 <b>32B</b> 模型。</li><li>SPRINT <b>探索更多、并行思考更多</b>，在固定算力下为独立方法提供了更多机会。</li></ul>",
+      "terms": ["6K 轨迹", "DeepSeek R1 distill 7B", "supervised fine-tuning", "并行化", "准确率", "顺序 token 减少", "32B 模型"]
+    },
+    {
+      "t": 2315,
+      "title": "SPRINT 的域外泛化与并行矛盾",
+      "problem": "在数学上学到的并行性未必能迁移，而且并行分支可能各自看起来正确，组合起来却是错误答案。",
+      "why": "在未见过的基准上展示迁移，说明模型学到了通用的“并行思考”行为；处理矛盾则决定了并行解码是否安全。",
+      "how": "仅在数学上训练的 SPRINT 在未见过的 <b>Countdown</b> 和 <b>GPQA Diamond</b> 上也有提升——在未对这些数据训练的情况下获得了更多并行机会和更高准确率。关于矛盾，模型会把所有内容浓缩进 context，并被期望在最终答案之前综合/解决冲突；从经验上看，这些 plans 是同一个解的独立步骤，而不是针对同一问题的相互竞争方法。",
+      "detail": "<p><b>域外泛化：</b>仅在数学上训练的 SPRINT 在 <b>Countdown</b> 和 <b>GPQA Diamond</b> 上表现仍更好——未使用这些集合的训练数据。这表明模型把<b>并行思考</b>学成了一项通用技能，而 token 节省作为副作用出现。</p><p><b>矛盾问题：</b>两个并行分支是否可能各自局部正确，但组合起来产生错误答案——那么什么优先？</p><ul><li>模型总是<b>把所有内容浓缩进 context</b>，然后必须<b>综合出最终答案</b>；如果分支相互矛盾，它被期望在作答前<b>解决冲突</b>。</li><li>顺序思考和并行思考都可能遭遇矛盾，因此比较是微妙的。</li><li>观察：这些 plans 往往是<b>同一个解的不同步骤</b>，而非针对同一问题真正不同的方法，这降低了风险。</li></ul>",
+      "terms": ["域外泛化", "Countdown", "GPQA Diamond", "矛盾解决", "综合", "独立步骤"]
+    },
+    {
+      "t": 2460,
+      "title": "SPRINT 问答：Straggler、负载均衡与任务相关的宽度",
+      "problem": "并行分支的运行时间往往不相等，因此一个慢的 straggler 就会抹掉延迟收益；而且可被利用的并行性在不同任务间并不一致。",
+      "why": "关键路径由最慢的分支决定，因此部署需要针对 straggler 的缓解措施，并根据任务结构设定现实的预期。",
+      "how": "缓解措施包括把极其简单的 executions 合并进 plan，以形成更大的并行块；即便如此，某个 step 仍可能成为 straggler（例如 step 4 远大于 step 2），而运行时间由最慢分支而非总和决定。树的宽度取决于任务：数学的顺序 token 比例低于 GPQA，说明其固有的并行性更强。据报告，在准确率相当的情况下，顺序 token 减少了约 40%。",
+      "detail": "<p><b>Straggler / 负载均衡问题：</b>如何确保相互独立的 plans 在相近的时间内运行？</p><ul><li>存在一些措施，但 <b>straggler</b> 仍可能出现（step 4 可能比 step 2 耗时多得多）。由于分支并发运行，运行时间被限制在<b>最慢分支</b>而非总和——即使不均衡这也是巨大胜利。</li><li>一种缓解措施：如果某个 execution <b>过于简单</b>，就<b>将它合并进 plan</b>，以形成更大的可并行块——这本身也是一个可跨阶段探索的优化点。</li><li>这种均衡的跨阶段优化并未被分析。</li></ul><p><b>任务相关性：</b>可被利用的并行性取决于<b>树的宽度</b>。<b>数学</b>的顺序 token 比例低于 <b>GPQA</b>，即某些任务本质上更并行。据报告，在准确率相当的情况下顺序 token 减少约 <b>40%</b>。</p>",
+      "terms": ["straggler", "负载均衡", "关键路径", "树宽度", "任务相关的并行性", "40% token 减少", "块合并"]
+    },
+    {
+      "t": 2718,
+      "title": "SPRINT 在更难问题、基线与工具使用场景中的表现",
+      "problem": "在几乎没有思考可重叠的简单问题上，并行化可能毫无意义，而且它的优势必须通过与强基线对比来体现。",
+      "why": "了解该方法在何处有帮助（困难、思考密集、工具密集的问题），能让实践者知道何时部署它、以及应与什么对比。",
+      "how": "需要更多思考的问题节省更多；当思考很短时并行机会就少，SPRINT 甚至可能更差。与 rejection-fine-tuning（RFT）基线进行比较。讲座将这一点与 Anthropic Sonnet 4.5 的 system card 联系起来，其 prompt 鼓励模型至少使用工具 100 次，并指出推理正远远超出 8–10K tokens。",
+      "detail": "<p>SPRINT 见效之处：</p><ul><li>节省随所需<b>思考</b>量增长；如果生成的思考很短，<b>并行机会就更少</b>，SPRINT 可能比基线<b>更差</b>。</li><li>它在需要大量<b>并行 token</b> 的<b>更难问题</b>上表现出色——即顺序 token 数量很高的场景。</li><li>比较基线包括 <b>rejection fine-tuning（RFT）</b>。</li></ul><p>引用的更广泛趋势：<b>Claude Sonnet 4.5 system card</b> 的 prompt 显然鼓励模型<b>尽可能多地、至少 100 次</b>使用工具。与此同时，问题正以远超 <b>8–10K tokens</b> 的方式被解决，因此重叠串行工作越来越有价值。</p>",
+      "terms": ["rejection fine-tuning", "RFT", "难题", "Sonnet 4.5 system card", "工具使用", "8-10K tokens", "thinking tokens"]
+    },
+    {
+      "t": 2826,
+      "title": "SPRINT 推理机制、训练数据对齐与 RL 展望",
+      "problem": "目前不清楚推理是一次性解码所有步骤（真正并行），还是继续一个接一个地输出 plans、只有 executions 重叠。",
+      "why": "澄清机制可避免夸大并行性：模型仍然顺序生成 token；被并行化的是工具/环境执行。",
+      "how": "推理时，模型仍然顺序生成 plans：它先输出 plan 1 和 plan 2（plan 1 一经输出其 execution 就开始，接着是 plan 2 的），结果返回 context，然后它再生成两个 plans。训练与这种提示格式一致，将相互独立的 plan 1 和 plan 2 与 execution 1 和 execution 2 并排放置。讲师指出，与 SFT 相比，RL/GRPO 能从同一份数据中获得更多收益。",
+      "detail": "<p><b>推理机制（学生提问）：</b></p><ul><li>模型学会生成可以并行执行的 plans，但它仍采用<b>顺序方式生成 plans</b>：它输出 plan 1 和 plan 2；plan 1 一经输出其 execution 就开始，接着是 plan 2 的，结果返回 context 后再生成下一对 plans。</li><li>与基线的区别：它被<b>训练为将相互独立的 plans 一起输出</b>，随后 executions 并发进行。</li><li><b>训练对齐：</b>训练数据把 plan 1 和 plan 2 并排放置、execution 1 和 execution 2 放在一起，因此模型在训练时看到的与推理 prompt 格式一致。</li></ul><p><b>未来工作：</b>论文使用的是 SFT，但 <b>RL/GRPO</b> 可以从这份数据中获取更多收益并提升泛化；重叠不同工具以实现真正的 wall-clock 加速是另一个开放的实现方向。</p>",
+      "terms": ["推理机制", "顺序 plan 生成", "训练对齐", "RL", "GRPO", "wall-clock 加速", "工具重叠"]
+    },
+    {
+      "t": 2985,
+      "title": "SWIRL 简介：结合工具的多步推理与设计目标",
+      "problem": "许多真实世界任务需要协调的多步推理与工具使用，其中误差会跨步骤累积，而且工具在训练期间往往缓慢、不稳定且难以使用。",
+      "why": "现有的 fine-tuning 范式（RLHF、RLAIF、execution feedback）针对带最终答案奖励的单步任务进行优化，对中间过程没有任何治理。",
+      "how": "SWIRL（将在 Montreal 的 COLM 上发表）是一种用于多步推理 + 工具使用的训练方法。设计目标：解决复杂的多步任务；知道何时调用工具以及如何构造查询；保持每步的准确率；从错误中恢复；知道何时停止并作答；训练期间避免使用实时工具；并能泛化到新的工具和任务。",
+      "detail": "<p><b>SWIRL</b> 被介绍为一种对语言模型进行 fine-tune 以实现多步推理的训练方法，延续了 SPRINT 的合成数据脉络。</p><p><b>动机任务：</b>使用搜索引擎的多跳 QA、数学问题求解、软件工程项目、旅行规划、数据分析——这些都是人类反复借助工具进行推理的任务。</p><p><b>挑战：</b>即便单个推理加工具步骤也很复杂；跨多个步骤时，<b>误差与复杂性会累积</b>。在训练期间实时使用工具很困难，因为工具会<b>失败、缓慢且有 bug</b>，从而拖慢本就昂贵的训练循环。单步 RLHF/RLAIF 优化最终答案并反向传播到动作，却没有过程治理。</p><p><b>设计目标：</b>知道<b>何时</b>调用工具、生成<b>正确的查询</b>、准确执行每一步、<b>从错误中恢复</b>、知道<b>何时停止</b>并作答、训练期间避免使用工具，并能<b>泛化</b>到新的工具/任务。</p>",
+      "terms": ["SWIRL", "COLM", "工具使用", "多跳 QA", "误差累积", "单步 RLHF", "过程治理", "泛化"]
+    },
+    {
+      "t": 3274,
+      "title": "SWIRL 通过迭代提示生成合成数据",
+      "problem": "多步工具使用的监督数据稀缺，且现有的单步数据集无法捕捉轨迹级别的推理/工具结构。",
+      "why": "让模型一次采取一个动作、并交错插入真实环境响应来收集轨迹，恰好能产生训练所需的多步、带标注数据。",
+      "how": "给定一个 prompt，让模型一次走一步，并在每一步告诉它可以（a）推理/自由 chain-of-thought、（b）调用工具，或（c）提出最终答案。展示环境的响应，然后用原始 prompt 加上之前的动作和结果重新提示。迭代即可在许多查询上构建深度不一的轨迹（1–5 步）。",
+      "detail": "<p><b>SWIRL 的第一步：创建合成的多步数据。</b></p><ul><li>在每一步，用原始任务和可用工具列表提示模型，并告诉它可以：产生一个<b>推理 / chain-of-thought</b> 步骤、<b>调用工具</b>，或在准备好时输出<b>最终答案</b>。</li><li>模型采取第一个动作（推理后跟一次工具调用），然后<b>环境响应被展示回</b>给它。</li><li>用原始 prompt、上一个动作和工具结果重新提示，让模型采取下一个动作或给出最终答案。</li><li>这种<b>迭代提示</b>按设计会产生长度随查询而变的轨迹——例如 <b>1、3、5</b> 步。</li></ul><p>由此得到的语料是一组多步、带工具标注的轨迹，可以<b>离线</b>大规模生成（许多问题并行处理）。这正是奖励标注与过滤阶段所操作的基底。</p>",
+      "terms": ["迭代提示", "合成数据", "chain of thought", "工具调用", "最终答案", "环境响应", "轨迹长度"]
+    },
+    {
+      "t": 3397,
+      "title": "SWIRL 过程奖励、过滤方案与 RL 示例",
+      "problem": "原始合成轨迹需要能衡量步骤质量的标签，而且不清楚应当按步骤质量还是按最终答案正确性来保留轨迹。",
+      "why": "过滤方式决定了哪些行为会得到强化：process filtering 奖励良好的中间动作，而 outcome filtering 奖励碰巧正确的结局——两者会产生不同的模型。",
+      "how": "让 LLM judge 在给定先前 context 与当前动作的情况下，为推理 + 工具调用估计一个 per-step reward。构建按 process（每一步都被判定为好）、按 outcome（最终答案正确）、两者兼顾或随机的过滤数据集。然后用多步 RL 在一个具体示例上训练：“Who is older, Glenn or Rossling?”——先搜索第一个人的年龄，再搜索第二个人的，然后输出答案。",
+      "detail": "<p><b>标注：</b>使用 <b>LLM-as-a-judge</b> 为每一步分配奖励——给定先前 context 与当前推理步骤 + 工具调用，估计该轨迹/动作有多好。这一过程对许多问题并行地<b>离线</b>完成。</p><p>训练数据的<b>过滤变体</b>：</p><ul><li><b>Process filter</b>——保留 judge 将<b>每一步</b>都评为好的轨迹。</li><li><b>Outcome filter</b>——保留<b>最终答案正确</b>的轨迹，不论每步标签如何。</li><li><b>两者兼顾</b>，以及一个<b>随机</b>基线。</li></ul><p>训练方式是<b>多步强化学习</b>。示例：<i>Who is older, Glenn or Rossling?</i>——action 1 搜索第一个人的年龄（获得奖励），展示环境结果，action 2 搜索第二个人的年龄（再获得奖励），最后一个动作在 answer 标签内输出答案，它有自己的奖励。</p>",
+      "terms": ["LLM as a judge", "过程奖励", "process filter", "outcome filter", "多步 RL", "每步奖励", "answer 标签"]
+    },
+    {
+      "t": 3613,
+      "title": "SWIRL 无需实时工具调用的训练与目标函数",
+      "problem": "在 RL 期间执行工具很慢、容易失败，而且如果仅凭所提出的查询就能分配奖励，那甚至没有必要执行。",
+      "why": "将工具执行与优化循环解耦，消除了不稳定与成本的最大来源，而查询质量奖励已经足够，因为判断一个查询是否合理并不需要工具的输出。",
+      "how": "所有工具调用都在离线数据标注阶段完成。在 RL 期间，模型提出下一个动作并接收预先计算好的奖励；judge 为<b>查询的质量</b>（例如“this person 的年龄”是一个合理的搜索）打分，而不是为工具的输出打分。目标是在给定所有先前 context（states + actions）的情况下，最大化单个动作的期望奖励，覆盖 actions 1..K。",
+      "detail": "<p><b>SWIRL 如何避免实时工具调用：</b>轨迹——prompt、actions、tool calls 和 environment responses——是<b>离线</b>收集的。在 RL 期间，模型生成下一个动作（例如到 action 1），但该动作<b>不会被执行</b>；而是使用预先计算好的奖励进行优化。</p><ul><li>所有工具调用都发生在<b>数据标注</b>阶段，位于 RL fine-tuning 之外。</li><li><b>为什么 judge 无需运行工具就能打分：</b>它评估的是<b>模型生成的查询</b>，而不是工具的输出。对于“person X 的年龄”，judge 可以在<b>看到结果之前</b>就判定这是一个合理的查询；它不需要知道实际年龄。</li><li>因此奖励是<b>过程反馈</b>，而工具调用的资源已被捕获在先前的 context 中。</li></ul><p><b>目标：</b>在给定目前为止所有 context（先前 states 与 actions 的集合）的情况下，优化<b>单个动作的期望奖励</b>，覆盖 actions 1 到 K。</p>",
+      "terms": ["离线标注", "无实时工具调用", "查询质量", "过程反馈", "期望奖励", "多步 RL", "context"]
+    },
+    {
+      "t": 3858,
+      "title": "SWIRL 推理：标签驱动的迭代式工具使用",
+      "problem": "部署时，模型必须真正使用工具、决定何时停止，并在无人介入的情况下交付最终答案。",
+      "why": "训练中学到的标签提供了干净的控制接口：runtime 可以检测到工具请求、执行它并将结果回馈，或检测到已准备好作答。",
+      "how": "用输入问题和可用工具（例如 calculator）提示 SWIRL 训练过的模型，并指示它在有用时用特殊标签输出一个数学查询，或在准备好时输出 answer 标签。Step 1：模型用数学表达式调用 calculator。工具被执行并返回其输出；再用问题、先前的思考和工具结果提示模型，如此迭代直到它输出最终答案。",
+      "detail": "<p>推理使用与数据生成相同的迭代提示接口：</p><ul><li>给模型输入问题，并指定它可以使用的工具（这里是 <b>calculator</b>）：<i>如果你认为有帮助，请生成一个用这些标签包裹的数学查询</i>。</li><li>还要告诉它：<i>一旦拥有足够信息，你就可以生成一个 answer 标签并给出最终答案</i>。</li><li><b>Step 1：</b>模型通过用它想运行的算术表达式调用 calculator 来回应；工具<b>以该输入被执行</b>并返回其输出。</li><li>用原始问题、目前的结果和工具说明重新提示：<i>如果准备好了就作答，否则继续使用工具</i>。</li><li>重复直到模型输出 <code>answer</code> 标签。</li></ul><p>这是训练轨迹在部署时的镜像：由模型而非 harness 决定<b>何时</b>调用工具、<b>何时</b>停止。</p>",
+      "terms": ["迭代提示", "calculator", "query 标签", "answer 标签", "工具执行", "终止", "推理"]
+    },
+    {
+      "t": 3976,
+      "title": "SWIRL 实验设置与过滤发现",
+      "problem": "哪种过滤方案实际能训练出最好的模型——仅 process、仅 outcome、两者兼顾，还是随机？",
+      "why": "答案揭示了对于 RL，过程质量信号占主导：仅在已经正确的结局上训练，几乎无法教会模型解决 base model 无法解决的问题。",
+      "how": "设置：一个 227B 模型创建合成的多步数据；问题来自 HotpotQA 和 GSM8K；生成约 50K 条轨迹，然后按 process、outcome、两者兼顾或随机进行过滤。结果：process-filtered 数据帮助最大——出乎意料地超过 outcome-filtered 或两者兼顾——因为过滤到已经正确的结局并不能教会模型解决它此前失败的问题。",
+      "detail": "<p><b>实验设置：</b></p><ul><li>使用一个 <b>227B</b> 模型创建多步合成数据。</li><li>问题来自 <b>HotpotQA</b> 和 <b>GSM8K</b>。</li><li>生成约 <b>50K 条轨迹</b>，其变体按 <b>process</b>、按 <b>outcome</b>、按 <b>两者兼顾</b>或<b>随机</b>进行过滤。</li></ul><p><b>关键（起初反直觉）发现：</b>在 <b>process-filtered</b> 数据上训练——即步骤被 LLM judge 多数认可、但不要求最终答案正确——帮助<b>更大</b>，超过严格只保留正确结局或过程与结果都正确的轨迹。</p><ul><li>原因：如果你只保留模型已经答对的结局的轨迹，就无法帮助它解决<b>尚不能</b>解决的问题；只是在强化它已知的东西。</li><li>process-filtered 数据反而向模型展示了<b>如何以不同方式思考</b>这类问题（朝着它无法到达的答案迈出良好的中间步骤）。</li></ul>",
+      "terms": ["227B 模型", "HotpotQA", "GSM8K", "50K 轨迹", "process filter", "outcome filter", "过滤影响"]
+    },
+    {
+      "t": 4098,
+      "title": "SWIRL 跨域泛化、规模扩展与过程改进",
+      "problem": "SWIRL 学到的是某个特定工具，还是多步工具使用的通用技能？更多合成数据是否持续有帮助？",
+      "why": "跨域迁移与有利的合成数据扩展是最有力的证据，表明该方法教的是可迁移的逐步工具使用，而不是记住某一个工具。",
+      "how": "在 GSM8K 上用 calculator 训练后，SWIRL 在带搜索工具的 HotpotQA 上测试：准确率从 65 升到 75.1；在带搜索的 HotpotQA 上训练后，它在 GSM8K 上从 65 提升到 73——反之亦然。将合成数据从 100 增加到 10,000 个训练样本，仍能持续改善一个完全不同的任务。每步的 process reward 在分布内和分布外都有上升。",
+      "detail": "<p><b>泛化结果：</b></p><ul><li>SWIRL 在 <b>GSM8K</b>（calculator 工具）上训练，然后在 <b>HotpotQA</b>（搜索工具）上测试：准确率从 <b>65 → 75.1</b>。</li><li>使用 HotpotQA 自己的工具时，增益为 <b>65 → 73</b>。</li><li>反向也成立：在带搜索工具的 <b>HotpotQA</b> 上训练，它在带 Python 的 <b>GSM8K</b> 上也有提升。</li><li>解读：迁移的不是某个工具，而是<b>分步思考并调用工具</b>的能力；测试集与训练数据是分离的。</li></ul><p><b>合成数据扩展：</b>将训练数据从 <b>100 增加到 10,000</b> 个样本（在 HotpotQA + 搜索上训练）持续提升另一个不同的数学任务 <b>GSM8K</b> 的准确率——被引为该论文最重要的图表。</p><p><b>为何会提升：</b>RL 之后平均<b>每步 process reward</b> 上升，无论在<b>分布内</b>（HotpotQA）还是<b>分布外</b>（GSM8K），即模型在每一步推理得更正确。</p>",
+      "terms": ["跨域泛化", "GSM8K", "HotpotQA", "搜索工具", "Python", "合成数据扩展", "process reward", "分布内", "分布外"]
+    },
+    {
+      "t": 4351,
+      "title": "SWIRL：RL 胜过 SFT，以及课程总结",
+      "problem": "在相同合成数据下，多步 RL 是否真的胜过 supervised fine-tuning，过滤方式的选择是否与训练算法相互作用？",
+      "why": "RL 允许模型在给定先前步骤的情况下尝试新动作并因此获得奖励，因此它能摆脱 imitation learning 只会照抄的坏轨迹。",
+      "how": "多步 RL 以可观的优势胜过 SFT。对 SFT 而言，数据需要是正确的（process 和 outcome 双重过滤），因为 SFT 是 imitation learning——错误的结局会带来伤害。RL 则为模型在每一步提供新机会并奖励新动作，因此它能跳出 imitation 陷阱。总结：SWIRL 跨数据集与工具泛化，能迁移到差异很大的任务，并能从 process-filtered 合成数据中学得更好。",
+      "detail": "<p><b>RL vs SFT：</b>整条流水线也可以用 supervised fine-tuning 来跑，但<b>多步 RL 以可观的优势表现更好</b>。</p><ul><li>对 <b>SFT</b> 而言，训练数据需要是<b>正确的</b>——process 与 outcome 双重过滤比仅 process 效果更好——这很合理，因为 SFT 是 <b>imitation learning</b>：给模型展示轨迹让它重复，因此错误的结局会带来伤害。</li><li><b>RL</b> 给模型<b>在每一步的新机会</b>：在给定先前步骤的情况下采取新动作，并因该动作获得奖励，因此它能<b>跳出</b>坏轨迹，而不是去模仿它。</li></ul><p><b>课程总结（SWIRL）：</b></p><ul><li>跨<b>数据集与工具</b>泛化，并能迁移到差异很大的任务。</li><li>从 <b>process-filtered</b> 数据中学得更好。</li><li>受益于更多<b>合成数据</b>，无论域内还是域外。</li><li>fine-tune 之后，<b>每步的过程正确性都有提升</b>，对分布内和分布外数据均是如此。</li></ul><p>结束语：多步推理与规划是一个非常活跃、快速发展的领域。</p>",
+      "terms": ["RL vs SFT", "imitation learning", "process-filtered", "outcome-filtered", "跳出", "过程正确性", "总结"]
+    }
+  ]
+}

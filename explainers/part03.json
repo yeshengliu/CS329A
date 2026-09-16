@@ -1,0 +1,459 @@
+{
+  "n": 3,
+  "title": "Robust Verification",
+  "summary": "Lecture 3 of Stanford CS329A traces four papers on verification for LLM reasoning. It starts from the generation-verification gap: repeated sampling raises coverage but selectors like majority voting stop improving. Paper 1 (OpenAI 2021) trains a GSM8K verifier with binary and LM losses, ablates verification vs fine-tuning and generator/verifier capacity, and shows verifier test-time scaling to ~400 samples. Paper 2 (Let's Verify Step by Step) contrasts outcome vs process reward models, uses human step labels (PRM800K, 2.6x active-learning efficiency), and shows PRM beats ORM and majority voting while generalizing across distribution shift. Paper 3 (Math-Shepherd) removes human annotation via hard/soft rollout-based step labels and RLs the generator against the learned PRM. Paper 4 (Beaver) ensembles weak verifiers (PRMs, ORMs, LLM judges) with weak-to-strong supervision, scales verification compute, bridges model classes, and distills to a ~400M verifier at 97% quality and 99%+ less compute. The lecture closes with discussion of coding, reasoning models, and open questions.",
+  "sections": [
+    {
+      "t": 5,
+      "title": "Lecture framing: verification and the generation-verification gap",
+      "problem": "Language models hallucinate and confidently present wrong solutions; with repeated sampling they can often produce a correct answer, but the system has no automatic way to pick it.",
+      "why": "Inference-time scaling only converts extra samples into accuracy if something can select or guide the correct answer. Last lecture showed majority voting eventually fails to track coverage: the generation-verification gap.",
+      "how": "Frame the lecture as the arc of verification research, then study four papers that progressively change how verifiers are built and used.",
+      "detail": "<p>Verification is introduced as the missing half of test-time scaling. A generator can be sampled many times, but the useful question is how to <em>automatically select the correct answer</em> or guide generation step by step. The lecture notes this is a persistent problem, not a solved one.</p><ul><li>Definition of the gap: coverage (pass@k) rises with samples while the selector (e.g. majority voting) stops improving, so the system accuracy stalls.</li><li>Four papers trace the progression of verification over roughly four years, from training verifiers on GSM8K to ensembling weak verifiers.</li><li>Recurring levers: outcome vs process supervision, human vs automatic step labels, RL with a verifier as reward, and inference-compute scaling of the verifier itself.</li></ul>",
+      "terms": [
+        "verification",
+        "generation-verification gap",
+        "repeated sampling",
+        "test-time scaling",
+        "hallucination"
+      ]
+    },
+    {
+      "t": 73,
+      "title": "Paper 1: training verifiers on GSM8K (OpenAI, 2021)",
+      "problem": "LLMs confidently emit wrong solutions, and at the time grade-school math word problems were hard for them.",
+      "why": "A benchmark requiring genuine multi-step reasoning plus a model that outputs the probability a solution is correct gives a measurable target for verification.",
+      "how": "Introduce GSM8K (~8,500 grade-school problems) and train a verifier that scores a (question, solution) pair.",
+      "detail": "<p>The first paper is an OpenAI 2021 work whose motivation was that LLMs hallucinate and present wrong solutions confidently. Its contribution is twofold.</p><ul><li>GSM8K: roughly 8,500 grade-school math problems built for quality and diversity, deliberately requiring several reasoning steps even though the arithmetic is simple. Solutions are written in natural language rather than pure math, and a single human answer was collected per problem.</li><li>A verification objective: given a question and a solution, output the probability that the solution is correct, analogous to giving a student a rubric for self-checking.</li><li>The benchmark is still used today for smaller models and as a template for custom project evals.</li></ul>",
+      "terms": [
+        "GSM8K",
+        "verifier",
+        "multi-step reasoning",
+        "hallucination"
+      ]
+    },
+    {
+      "t": 203,
+      "title": "Training the GSM8K verifier: labels, dual loss, scalar head",
+      "problem": "Supervised verifier training needs labels indicating whether each sampled solution is correct.",
+      "why": "GSM8K problems were written with human final answers, so correctness labels can be derived automatically by matching the generator final answer to ground truth.",
+      "how": "Sample many solutions per question, label them, and train a language-model verifier with a small scalar head.",
+      "detail": "<p>The generator answers question Q_i with solution S_i. For each problem the model samples 100 completions, and each is labeled correct or incorrect by comparing its final answer against the human ground truth (a single human answer collected once per problem).</p><ul><li>The verifier is itself a language model with a small scalar head producing a per-token prediction of closeness to a correct solution.</li><li>Two losses are combined: a binary correctness classification loss and a standard next-token language-modeling loss, which the paper says helps.</li><li>Question tokens are masked out of the objective; only the generated solution is optimized.</li><li>Ablations explored sentence-level vs token-level labels; token-level labels are very noisy, while sentence-level labels mark whether the previous sentence is a correct step.</li></ul>",
+      "terms": [
+        "binary label",
+        "scalar head",
+        "language modeling loss",
+        "token-level labels",
+        "sentence-level labels"
+      ]
+    },
+    {
+      "t": 427,
+      "title": "Recipe, ablations, and reading a single verifier score",
+      "problem": "The per-token head yields many predictions, but selection needs one score per solution.",
+      "why": "Scoring convention and label granularity change accuracy, so the paper ablates them and fixes a final-token rule.",
+      "how": "Fine-tune generator for two epochs, sample 100 completions, train verifier for one epoch, then read the score after the last token.",
+      "detail": "<p>The training recipe is two-stage: fine-tune the generator on a portion of the data for two epochs, sample 100 completions per question, label them, then train the verifier for a single epoch. The lecturer notes this supervised fine-tuning step is debatable today since instruction-following and math ability are now strong, so newer verifiers often skip straight to the verifier objective.</p><ul><li>Final solution score is taken after the last token; the last token prediction is treated as correct/incorrect for the whole generation.</li><li>Token-level visualization shows green (high) and red (low) spans. Correct solutions often dip mid-reasoning but end green; a wrong solution starts well, errs late, ends red.</li><li>Predicted labels match ground truth in the shown examples.</li></ul>",
+      "terms": [
+        "supervised fine-tuning",
+        "final token score",
+        "verifier ablation",
+        "per-token prediction"
+      ]
+    },
+    {
+      "t": 672,
+      "title": "Ablation: verification vs direct fine-tuning",
+      "problem": "It is unclear whether a separate verifier beats simply fine-tuning the generator on the data.",
+      "why": "The comparison determines whether the extra verifier and sampling cost is justified.",
+      "how": "Compare verification-based selection against supervised fine-tuning at different training-set sizes for 6B and 175B models.",
+      "detail": "<p>The paper compares verification against plain supervised fine-tuning at 6B and 175B scale (the 175B model is a GPT-3-class model), sweeping the amount of verifier training data. At test time the verification system samples many solutions and delivers the one with the highest verifier score.</p><ul><li>For both model sizes verification wins as the verifier training set grows, eventually outperforming the fine-tuning-only approach, so the curves cross.</li><li>With small data fine-tuning wins; for the 175B model with fewer than about 1,000 training problems, verification does not help much.</li><li>A student asks whether the two curves cross again at very large data; the lecturer expects convergence rather than a perpetual gap.</li></ul>",
+      "terms": [
+        "verification",
+        "fine-tuning",
+        "data scale",
+        "6B",
+        "175B"
+      ]
+    },
+    {
+      "t": 777,
+      "title": "Generator vs verifier capacity: who should be bigger",
+      "problem": "How should model capacity be split between the generator and the verifier.",
+      "why": "If generation is on average harder than verification, capacity should favor the generator.",
+      "how": "Compare a larger generator with a smaller verifier against the reverse configuration.",
+      "detail": "<p>The ablation tests two assignments: a larger generator with a smaller verifier, versus a smaller generator with a larger verifier. The larger generator plus smaller verifier wins, which is intuitive if generation is on average harder than verification.</p><ul><li>Finding the Pareto-optimal size ratio between generator and verifier is flagged as an open research question, especially as base generators improve rapidly.</li><li>Many off-the-shelf verifier and reward models now exist, with leaderboards for testing them, so the question becomes how to select and size them against a chosen generator.</li><li>This reframes verification as a capacity-budget allocation problem rather than defaulting to a big verifier.</li></ul>",
+      "terms": [
+        "generator size",
+        "verifier size",
+        "Pareto optimal",
+        "reward model leaderboard"
+      ]
+    },
+    {
+      "t": 859,
+      "title": "Test-time scaling of the verifier and the generation-verification gap",
+      "problem": "Selection accuracy must keep improving as more samples are drawn, otherwise extra compute is wasted.",
+      "why": "Measuring where the verifier stops tracking isolates the generation-verification gap.",
+      "how": "Increase completions per problem and use the verifier highest score, comparing against per-problem ground truth.",
+      "detail": "<p>Sweeping completions per problem, the verifier keeps improving accuracy up to roughly 400 samples, after which gains flatten; at around 800 the verifier fails to track which solutions are best relative to the true distribution. Evaluation takes the highest-scoring of the N solutions and checks it against per-problem ground truth.</p><ul><li>Context from the previous lecture: majority voting fails after roughly 10 to 50 samples even though coverage keeps rising, and that setting never usefully reached 50 samples.</li><li>The verifier extends the useful range from tens of samples to hundreds, directly narrowing the generation-verification gap in end-to-end accuracy rather than coverage.</li><li>This motivates later work that scales the verifier itself rather than only the generator.</li></ul>",
+      "terms": [
+        "test-time scaling",
+        "majority voting",
+        "coverage",
+        "pass@k",
+        "verifier accuracy"
+      ]
+    },
+    {
+      "t": 1037,
+      "title": "Paper 1 discussion: why accuracy drops, and stopping at 100",
+      "problem": "Accuracy falls after roughly 400 samples even though more samples cannot reduce coverage.",
+      "why": "Explains the precision limit of the verifier as a selector.",
+      "how": "Examine score separability as the candidate pool grows.",
+      "detail": "<p>Asked why accuracy drops after 400, the lecturer explains that coverage is not the issue: as the pool grows to 800, the verifier must separate near-tied solutions, and two solutions very close in score - one correct, one not - cannot be distinguished as reliably as at 400. That loss of precision causes the drop.</p><ul><li>In the deployed system they stopped at 100 samples, where most of the gains occur and results are consistent.</li><li>A student asks whether scaling the verifier is worthwhile; yes, and verifier test-time scaling is covered in later slides.</li><li>Design lesson: verifier sharpness, not generator coverage, caps accuracy at large sample counts.</li></ul>",
+      "terms": [
+        "precision",
+        "ranking",
+        "coverage",
+        "verifier scaling"
+      ]
+    },
+    {
+      "t": 1240,
+      "title": "Paper 1 discussion: crossover and keeping the generator general",
+      "problem": "Do fine-tuning and verification curves cross again at very large data, and what is the practical benefit of a verifier.",
+      "why": "Clarifies when a verifier is preferable to customizing the generator.",
+      "how": "Conceptual comparison of data regimes and of what each approach modifies.",
+      "detail": "<p>Asked whether the two curves cross again with much more data, the lecturer expects that with a huge amount of data fine-tuning and verification would converge to similar performance. The decisive advantage of a verifier is therefore more than a small accuracy delta.</p><ul><li>The verifier leaves the base generator untouched, so it does not overfit the generator to a single dataset or task.</li><li>The base generator stays general, and the verifier can then guide it at inference without retraining the model.</li><li>This separation is what makes verifiers reusable across tasks and ports cleanly into the later ensemble and RL approaches.</li></ul>",
+      "terms": [
+        "generalization",
+        "verifier",
+        "base model",
+        "supervised fine-tuning"
+      ]
+    },
+    {
+      "t": 1285,
+      "title": "Paper 2: Let's Verify Step by Step - outcome vs process supervision",
+      "problem": "A single wrong step early in a chain of thought can derail the whole answer, but outcome supervision only observes the final result.",
+      "why": "The error location is the information needed; outcome labels provide no credit assignment across steps.",
+      "how": "Introduce outcome-based reward models (ORM) and process-based reward models (PRM).",
+      "detail": "<p>Paper 2, also from OpenAI and less than two years after the first, starts from the same persistent problem - LLMs hallucinate and stay wrong even as they improve - but focuses on step-by-step reasoning: one wrong early step can corrupt the whole final answer. It frames two reward-modeling approaches.</p><ul><li>Outcome-based reward model (ORM): assigns one reward to the entire solution based on whether the final answer is correct, exactly as in the previous paper.</li><li>Process-based reward model (PRM): assigns a distinct reward per step of the solution, giving a denser and more localized signal for credit assignment.</li><li>This outcome-versus-process dichotomy organizes the rest of the lecture and recurs in later papers.</li></ul>",
+      "terms": [
+        "outcome reward model",
+        "process reward model",
+        "credit assignment",
+        "chain of thought"
+      ]
+    },
+    {
+      "t": 1356,
+      "title": "Training ORM vs PRM: human step labels and reward products",
+      "problem": "PRM training requires per-step correctness labels, which do not exist for free.",
+      "why": "Human annotators can judge whether each step is correct given the preceding steps, enabling precise process supervision.",
+      "how": "Get one solution per problem, have annotators label each step, and define the final reward as the product of step rewards.",
+      "detail": "<p>For a math problem the generator produces one solution with steps 1..n, and the ground truth fixes whether the final answer is correct. ORM stops there: the label is final correctness. PRM goes further.</p><ul><li>Human annotators review each model step and assign correct/incorrect (plus neutral in practice) labels, building a stepwise dataset.</li><li>The final stepwise reward can be computed as the product of the per-step rewards; the paper trains against these annotations.</li><li>Because the generator can be prompted to emit explicit steps, the PRM can be run per step and multiplied to score and then accept or retry an answer.</li><li>This is process supervision, with explicit credit assignment and more precise labels than final-answer-only.</li></ul>",
+      "terms": [
+        "process supervision",
+        "step labels",
+        "product of step rewards",
+        "credit assignment",
+        "annotators"
+      ]
+    },
+    {
+      "t": 1506,
+      "title": "Why process supervision: false positives, interpretability, PRM800K",
+      "problem": "Outcome supervision can reward a solution with wrong reasoning that happens to end at the right answer.",
+      "why": "Supervising every step suppresses this failure mode and yields human-endorsed, interpretable reasoning.",
+      "how": "Collect high-quality step labels, prioritizing cases that expose the failure mode, and release the dataset.",
+      "detail": "<p>The key property is that process supervision manages false positives far better than outcome supervision. Models surprisingly often hallucinate a path and still reach a correct final answer; with only the final answer as signal, that wrong process is reinforced.</p><ul><li>Because every step is scored, it is less likely to land in the mode where steps are wrong but the final answer is right, and it encourages interpretable, human-endorsed reasoning.</li><li>The paper released PRM800K, an open-source dataset of roughly 800K step-level labels.</li><li>To collect it efficiently they generated many stepwise samples and prioritized <em>convincing wrong</em> answers - correct final answer but incorrect intermediate steps - making annotation 2.6x more data efficient than random selection.</li><li>The loop was iterative: collect labels, train a PRM, use it to surface harder samples, and improve data quality. Labels were positive, negative, or neutral; e.g. a final step giving x=7 instead of 15/14 is incorrect.</li></ul>",
+      "terms": [
+        "PRM800K",
+        "convincing wrong answers",
+        "false positive",
+        "active learning",
+        "neutral label"
+      ]
+    },
+    {
+      "t": 1709,
+      "title": "ORM/PRM training setup and scoring conventions",
+      "problem": "The two reward models need concrete scoring rules that affect selection.",
+      "why": "Scoring conventions must match how the reward is aggregated at test time.",
+      "how": "Fine-tune GPT-4 for both, then train ORM and PRM on their respective label types.",
+      "detail": "<p>Both reward models used GPT-4 as the base and were fine-tuned on this data, with supervised fine-tuning first; this mirrors Paper 1's two-stage recipe. The training pairs, however, differ by supervision type.</p><ul><li>ORM: pairs of generated sample and final correctness; the score is the final token score of the completion, i.e. the token-level convention from Paper 1.</li><li>PRM: generated sample plus stepwise correctness labels; the score is the product of per-step probabilities.</li><li>The convention matters because it determines how a single scalar is produced from either one label (outcome) or many (process).</li><li>Test-time selection then picks the highest-scoring candidate under whichever convention was trained.</li></ul>",
+      "terms": [
+        "GPT-4",
+        "final token score",
+        "product of probabilities",
+        "supervised fine-tuning"
+      ]
+    },
+    {
+      "t": 1765,
+      "title": "Results: PRM beats ORM and majority voting",
+      "problem": "Quantify whether process supervision improves selection on math.",
+      "why": "Benchmarks with n samples per problem reveal the selector quality.",
+      "how": "Compare PRM, ORM, and majority voting across sample counts.",
+      "detail": "<p>PRM outperforms both ORM and majority voting. With n the number of solutions per problem, majority voting again fails after roughly 100 samples; ORM (blue) improves over it, and PRM (orange) is best.</p><ul><li>PRM detects correct solutions in rare cases: problems whose sample distribution has less than 5% correct answers, where voting cannot find the signal.</li><li>Both PRM and ORM benefit from more labels, but PRM is more sample efficient. Roughly, 100 labeled solutions per problem for ORM is comparable to about one solution per problem for PRM, because each PRM label covers many steps.</li><li>The paper credits larger data and its active-learning collection for these gains.</li></ul>",
+      "terms": [
+        "sample efficiency",
+        "majority voting",
+        "ORM",
+        "PRM",
+        "rare correct answers"
+      ]
+    },
+    {
+      "t": 1859,
+      "title": "Generalization: distribution shift and new domains",
+      "problem": "A verifier must transfer to unseen datasets and domains, not just the training distribution.",
+      "why": "Deployment robustness depends on tolerating distribution shift.",
+      "how": "Evaluate the selectors on new domains and datasets.",
+      "detail": "<p>Generalizability to new domains and datasets is highlighted as a first-class target for verifier and reward-model design, not just in-distribution accuracy.</p><ul><li>Majority voting generalizes better than ORM, meaning outcome reward models can overfit the training distribution.</li><li>PRM is better than majority voting overall and tolerates substantially more distribution shift.</li><li>Combined with the accuracy and sample-efficiency gains, PRM is presented as the stronger approach at this point in the lecture.</li><li>Later papers revisit the same theme, reporting gains on harder benchmarks such as MATH and GPQA relative to GSM8K.</li><li>The lecture frames this as a design objective for anyone building reward models for deployment.</li></ul>",
+      "terms": [
+        "distribution shift",
+        "generalization",
+        "out-of-domain",
+        "ORM",
+        "PRM"
+      ]
+    },
+    {
+      "t": 1907,
+      "title": "Paper 2 discussion: PRM risks, PRM+ORM, threshold cost",
+      "problem": "PRM can assign false credit when a step looks locally plausible but does not contribute to the final answer.",
+      "why": "The reward is a proxy, so optimizing it can diverge from final-answer correctness.",
+      "how": "Discuss combining PRM and ORM and the extra hyperparameter PRM introduces.",
+      "detail": "<p>Asked whether PRM can ever hurt, the lecturer confirms that a step can look locally good yet not contribute to the correct final answer, i.e. false credit assignment. The mitigation is hybridization.</p><ul><li>Many newer approaches combine PRM-based and ORM-based selection to capture the precision of process rewards and the reliability of outcome rewards.</li><li>PRM also introduces a threshold that must be tuned to decide when to accept or retry an answer.</li><li>That threshold is an additional system hyperparameter and a source of complexity compared with outcome-only scoring.</li><li>Trade-off: process supervision is more data-efficient and precise but not free.</li><li>Net effect: PRM is preferred but usually wrapped with an outcome signal and tuned thresholds.</li></ul>",
+      "terms": [
+        "false credit assignment",
+        "PRM+ORM",
+        "threshold",
+        "hyperparameter"
+      ]
+    },
+    {
+      "t": 1961,
+      "title": "Paper 2 discussion: label costs, majority voting, reward hacking",
+      "problem": "PRM requires K times the number of steps in labels, and optimizing a generator against a PRM may be gamed by skipping reasoning.",
+      "why": "Cost and validity determine whether PRM is practical, and generator-side use changes the failure modes.",
+      "how": "Compare label budgets, define majority voting, and rely on human labels plus prompting to prevent shortcuts.",
+      "detail": "<p>The lecturer notes the comparison is hard: ORM needs K labels per problem while PRM needs K times the number of steps, and the number of steps is hard to control, though the paper tried to match budgets.</p><ul><li>Majority voting in this context means taking the final answer repeated most often, with no reward model and no view of the reasoning process.</li><li>A student asks about hacking: a solution could declare x directly and skip intermediate step scores. The PRM sees the question, previous steps, and current step, but does not by itself force step-by-step generation; the generator is unchanged and can be prompted to reason.</li><li>If the PRM is instead used to fine-tune the generator, care is needed so the chain of thought stays sensible; human step labels would score reasoning-skipping steps low.</li><li>The lecture assumes human labels here and notes the next paper removes that assumption.</li></ul>",
+      "terms": [
+        "label budget",
+        "majority voting",
+        "reward hacking",
+        "generator fine-tuning"
+      ]
+    },
+    {
+      "t": 2268,
+      "title": "Paper 3: Math-Shepherd - verification without human annotation",
+      "problem": "PRMs are data-hungry and human step annotation is expensive to scale.",
+      "why": "Automating step-quality labels while also feeding the verifier back into generator optimization via RL would remove the bottleneck.",
+      "how": "Define automatic annotation and combine it with RL against the learned reward model.",
+      "detail": "<p>Math-Shepherd, subtitled verify and reinforce step by step without human annotation, starts from the observation that stronger verifiers improve reasoning behavior, especially when combined with test-time scaling, and that PRMs show more potential than ORMs but require a large amount of hard-to-collect data.</p><ul><li>Goal: automate the collection of step-level labels so verifier quality can scale with compute instead of human annotator hours.</li><li>Second contribution: bring the learned reward model into the generator optimization loop via reinforcement learning.</li><li>This directly addresses the data bottleneck identified as the main weakness of process supervision in Paper 2.</li><li>The paper also covers how the PRM can be used both to select answers and to reinforce the generator.</li></ul>",
+      "terms": [
+        "Math-Shepherd",
+        "automatic annotation",
+        "reinforcement learning",
+        "reward model"
+      ]
+    },
+    {
+      "t": 2343,
+      "title": "Hard vs soft estimation of step quality",
+      "problem": "Without humans, how is a step labeled as good.",
+      "why": "A step is valuable if it can still lead to the correct final answer, which can be estimated by rolling out completions.",
+      "how": "Sample n completions from the current step and measure how often they reach a correct final answer.",
+      "detail": "<p>The quality of a reasoning step is defined as its <em>potential</em> to reach the final correct answer. From a given step, the method samples n completions and observes whether they end correctly.</p><ul><li>Hard estimate: the step is labeled success if <em>any</em> of the n generations after it reaches the correct final answer; a binary label.</li><li>Soft estimate: the fraction of those n generations that reach the correct final answer; a frequency in [0,1].</li><li>Example with n=3: for step one, hard estimate = 1 while soft estimate = 2/3.</li><li>This replaces human annotation with rollout statistics, at the cost of generation compute.</li></ul>",
+      "terms": [
+        "hard estimate",
+        "soft estimate",
+        "rollout",
+        "step potential",
+        "automatic labeling"
+      ]
+    },
+    {
+      "t": 2445,
+      "title": "Drawbacks of rollout-based annotation",
+      "problem": "Rollout labels are only as good as the samples used to produce them.",
+      "why": "Sampling error and the outcome-only view create systematic bias in step labels.",
+      "how": "Enumerate the failure modes and the hope that more samples mitigate them.",
+      "detail": "<p>Students identify the central weaknesses, and the lecturer confirms both.</p><ul><li>Hard problems get no signal: if almost no rollout is correct, a valid step receives score zero. A trajectory that would need n=100 to be found is missed at n=3 and wrongly labeled.</li><li>Unpredictable or unusual but valid solution paths can be scored low simply because few rollouts followed them.</li><li>Wrong middle steps can still reach a correct final answer, so those steps get labeled correct; the hope is that more samples expose the wrongness in some trajectory, but this is not guaranteed.</li><li>Net trade-off: labeling is free of humans but noisy, biased against hard or novel reasoning.</li></ul>",
+      "terms": [
+        "sampling error",
+        "hard problems",
+        "unpredictable paths",
+        "bias"
+      ]
+    },
+    {
+      "t": 2605,
+      "title": "Verification and RL with the PRM; benchmark results",
+      "problem": "How the automatically labeled PRM is used, and whether it matches human-annotated PRMs.",
+      "why": "Both selection at test time and generator training need evaluation.",
+      "how": "Sample candidate solutions, select the highest PRM score, and separately RL the generator against the PRM.",
+      "detail": "<p>At verification time the system samples candidate solutions, scores them with the PRM, and selects the highest-scoring one. The same PRM is also used as a reward model for RL on the generator.</p><ul><li>Hard vs soft: as n grew, soft annotations seemed to do better, but with rollout depth n=4 they got their best results anyway, so the choice barely mattered; they used hard estimation because it was easier to measure.</li><li>Comparisons: self-consistency / majority voting (red), ORM (blue), and Math-Shepherd PRM (green). The green PRM wins despite using no human annotation, and it outperformed the human-labeled PRM800K.</li><li>Gains were larger on MATH, which is harder than GSM8K.</li><li>Consistent across LLaMA 70B, LLaMA 34B, and DeepSeek 67B.</li></ul>",
+      "terms": [
+        "self-consistency",
+        "MATH",
+        "PRM800K",
+        "hard vs soft",
+        "rollout depth"
+      ]
+    },
+    {
+      "t": 2789,
+      "title": "Reinforcing the generator: RL/PPO with PRM reward",
+      "problem": "Can the PRM also improve the generator, not just select outputs.",
+      "why": "Self-generated annotations plus RL create a self-improvement loop without human labels.",
+      "how": "Run PPO on Mistral 7B against the trained PRM and compare with RL against an ORM.",
+      "detail": "<p>The paper reinforces the model against the PRM it trained. Using Mistral 7B and PPO with the PRM as reward yields much higher results than RL with an ORM.</p><ul><li>The improvement is slightly smaller than the gain from test-time scaling with the same PRM, but it is a distinct, training-time route to better reasoning.</li><li>This is multi-level self-improvement: the model generates its own annotations, a PRM is trained on them, and the PRM then improves the generator both at test time and through RL fine-tuning.</li><li>Stacking RL, PPO, and verification on top gives further gains, but the lecturer notes the optimizations appear to plateau.</li></ul>",
+      "terms": [
+        "PPO",
+        "Mistral 7B",
+        "self-improvement",
+        "RL reward",
+        "plateau"
+      ]
+    },
+    {
+      "t": 2876,
+      "title": "Paper 3 discussion: self-correction, compute allocation, decoding",
+      "problem": "PRMs as currently defined reward correct steps, so they do not obviously encourage recovering from errors; and comparing these systems fairly is tricky.",
+      "why": "Design and evaluation choices materially affect results and reproducibility.",
+      "how": "Use rubrics and tools for extra signal, control total inference compute, and keep data sources matched.",
+      "detail": "<p>Asked whether PRMs can incentivize self-correction, the lecturer agrees this is desirable and describes ways to add signal: give the scorer a rubric or rules to check each step, and allow tool use such as a calculator or symbolic solver, which can both score and solve more reliably.</p><ul><li>Controlling test compute is an open issue: under a fixed budget one can sample more from the generator or more from the verifier, and how to allocate between them is unresolved.</li><li>Fair comparison requires ORM and PRM to come from the same data; training data matters a lot.</li><li>A question about greedy decoding and temperature: the RL results use greedy decoding, and repeating the whole pipeline (new labels, new verifier) from the PPO model was not tried and would be interesting.</li></ul>",
+      "terms": [
+        "self-correction",
+        "rubric",
+        "tool use",
+        "compute allocation",
+        "greedy decoding"
+      ]
+    },
+    {
+      "t": 3107,
+      "title": "Paper 4: shrinking the gap with weak-verifier ensembles",
+      "problem": "The generation-verification gap remains, but training yet another verifier is not the only option.",
+      "why": "Existing verifiers can be combined using inference compute to form a stronger selector.",
+      "how": "Ensemble many imperfect verifiers, including PRMs, ORMs, and LLM judges.",
+      "detail": "<p>This Stanford 2025 paper takes a different approach: rather than training a new verifier, reduce the generation-verification gap with inference compute, specifically by ensembling verifiers. <em>Weak</em> here means no verifier is perfect, not that deliberately bad verifiers were chosen - these are the best available.</p><ul><li>Weak verifiers correlate with the true correctness label but carry imperfections.</li><li>Three categories are considered: PRMs, ORMs, and LLMs used as judges.</li><li>An LLM judge can simply be asked whether an answer is correct, or can use tools and rubrics to produce a score.</li><li>The ensemble aims to produce one much more capable verifier from many weak ones.</li></ul>",
+      "terms": [
+        "weak verifier",
+        "ensemble",
+        "LLM-as-judge",
+        "rubric",
+        "inference compute"
+      ]
+    },
+    {
+      "t": 3182,
+      "title": "Ensembling and the score-weight-select pipeline",
+      "problem": "Naively combining verifier scores does not reliably help.",
+      "why": "Verifier scales and quality differ, so aggregation needs normalization, filtering, and learned weights.",
+      "how": "Score, normalize, filter low-quality verifiers, then combine with weights fitted on labels.",
+      "detail": "<p>Across four datasets the paper compares top-1, top-5, and top-10 verifiers (by some ranking). Ensembling helps but not monotonically. What always helps is learning how to combine them.</p><ul><li>With a small labeled training set, fit one weight per verifier via simple methods such as naive averaging or logistic regression, then apply the learned weights to test data for the corresponding task.</li><li>Pipeline: score outputs of the verifiers, normalize them onto a common scale, and filter out low-quality verifiers.</li><li>Filtering is emphasized as important - a verifier must be above a certain quality to enter the pool at all.</li><li>Verifier outputs may be 0/1 or log-probabilities of correctness.</li></ul>",
+      "terms": [
+        "score-weight-select",
+        "logistic regression",
+        "normalization",
+        "verifier filtering",
+        "naive ensemble"
+      ]
+    },
+    {
+      "t": 3400,
+      "title": "Beaver: weak-to-strong aggregation",
+      "problem": "Estimating the probability that a solution is correct from many noisy verifier labels with almost no ground truth.",
+      "why": "This is a weak-supervision problem: combine weak signals into a stronger one.",
+      "how": "Use the Beaver method, inspired by Snorkel, assuming verifiers capture independent aspects of correctness.",
+      "detail": "<p>The setup is n queries, k solutions per query, and m verifiers, giving n times k times m labels. The target is the probability that solution j is correct given all verifier labels.</p><ul><li>Key assumption: each verifier captures an independent aspect of correctness. If all verifiers agreed on every sample, nothing new would be learned, so the signal comes from similarity and dissimilarity across the pool.</li><li>Under independence, plus the basic definition of conditional probability, the method writes the target probability and an optimization that yields a weight per verifier.</li><li>Beaver uses weak supervision to estimate verifier accuracy from very little labeled data. It is motivated by Snorkel and related Stanford work.</li><li>The weak-to-strong aggregation beats a naive ensemble, with large gains on hard sets such as GPQA diamond, MATH, and MMLU Pro where the baseline is low.</li></ul>",
+      "terms": [
+        "weak supervision",
+        "Beaver",
+        "Snorkel",
+        "independence assumption",
+        "GPQA diamond"
+      ]
+    },
+    {
+      "t": 3569,
+      "title": "Scaling verification compute and bridging model classes",
+      "problem": "Inference compute can be spent in several places, and the best allocation is unclear.",
+      "why": "Different scaling axes trade off, and the system-level accuracy (not coverage) is what matters.",
+      "how": "Compare sampling more generations, larger models, and more verifiers against oracle and baselines.",
+      "detail": "<p>Ways to scale verification compute include sampling more generations (10 to 100 to 1000), using larger generation and verification models, and increasing the number of verifiers in the pool.</p><ul><li>Dashed dark red is the pass@k oracle: an idealized selector that always picks a correct answer. Verifiers exist because that oracle is unavailable.</li><li>Purple assumes a large body of labels (supervised); blue uses only 1% of training labels (unsupervised); orange is the naive ensemble, still with quality filtering.</li><li>All are substantially better than majority voting and than multi-agent verification (MAV), which is rubric-style LLM prompting and in two cases is worse than majority voting.</li><li>On hard problems accuracy jumps from slightly over 40% to over 70%, matching o3-mini. A LLaMA 3.1 8B generator with a verifier pool of 8B and below averages about 70%, comparable to 7B-class majority voting; the 70B class reaches 86.2%, comparable to o3-mini. These are end-to-end solution accuracies, not coverage.</li></ul>",
+      "terms": [
+        "pass@k oracle",
+        "multi-agent verification",
+        "supervised vs unsupervised",
+        "model-class gap",
+        "o3-mini"
+      ]
+    },
+    {
+      "t": 3860,
+      "title": "Distilling Beaver into a small verifier",
+      "problem": "Running many verifier models over many samples for every problem is expensive.",
+      "why": "A single distilled verifier preserves most of the ensemble quality at a fraction of the compute.",
+      "how": "Train Beaver once, then distill it into a much smaller model.",
+      "detail": "<p>Ensembling means running a large number of models on every solution (and many solutions per problem), which multiplies cost. The proposal is to train Beaver once and then distill it into a much smaller model.</p><ul><li>The distilled model can be tiny - around 400 million parameters, versus the original pool in the 70B range.</li><li>It captures about 97% of the accuracy of the large verifier pool while using 99+% less compute at test time.</li><li>Both the distilled and original versions are open-sourced, with checkpoints available for agentic and test-time-scaling projects.</li><li>Plotted as success rate against total inference compute, the distilled model dominates, and even the original Beaver becomes more FLOP-efficient than naive ensembling and majority voting at higher accuracy levels.</li></ul>",
+      "terms": [
+        "distillation",
+        "400M parameters",
+        "compute efficiency",
+        "open-source checkpoints"
+      ]
+    },
+    {
+      "t": 3997,
+      "title": "Recap: the four-paper trajectory of verification",
+      "problem": "Synthesize how verification research changed over the four papers.",
+      "why": "The progression shows the field moving from trained verifiers to automatic process labels to ensembled weak verifiers.",
+      "how": "Summarize each paper and the recurring themes.",
+      "detail": "<p>The lecture recaps four papers spanning roughly four years and the trajectory of verification research.</p><ul><li>Verification improves both training and inference quality.</li><li>Process rewards are very effective, generally more so than outcome rewards, but the best results likely come from combining PRMs and ORMs.</li><li>Math-Shepherd showed that verifier training scales with data: the more data thrown at verifier training, the better it gets, and the verifier can then be used during RL fine-tuning to improve the generator.</li><li>Beaver took a different route: weak-supervised optimization over an ensemble of verifiers. It uses test-time scaling by adding more verifiers rather than sampling one verifier more, and can be distilled into a much smaller model while retaining most of the quality.</li></ul>",
+      "terms": [
+        "process reward",
+        "outcome reward",
+        "RL fine-tuning",
+        "ensemble",
+        "distillation"
+      ]
+    },
+    {
+      "t": 4096,
+      "title": "Q&A: beyond math - coding and generated unit tests",
+      "problem": "Almost all covered benchmarks are math or reasoning problems.",
+      "why": "Reasoning tasks generally should benefit from the same verification machinery, and coding offers a natural oracle.",
+      "how": "Discuss coding as a target and the CodeMonkeys idea of generating unit tests as verifiers.",
+      "detail": "<p>Asked whether other domains could work, the lecturer notes that some of the covered benchmarks already include coding problems and that coding is a very interesting area for verification and reasoning more broadly.</p><ul><li>CodeMonkeys is mentioned as a paper taking an entirely different approach: instead of directly training a verifier, have the model generate unit tests at test time, and those tests become the verifier.</li><li>This links verification to executable oracles and tool use, a theme raised earlier for self-correction and rubrics.</li><li>The broader claim is that these verification techniques should transfer to any reasoning task, not only math word problems.</li></ul>",
+      "terms": [
+        "coding",
+        "CodeMonkeys",
+        "unit tests",
+        "executable oracle"
+      ]
+    },
+    {
+      "t": 4162,
+      "title": "Q&A: reasoning models, future test-time scaling, verifier architecture",
+      "problem": "How verification interacts with reasoning models, whether test-time scaling becomes training-only, and whether generator and verifier should share a family.",
+      "why": "These questions probe the long-run design of self-improving reasoning systems.",
+      "how": "Open discussion rather than a recipe.",
+      "detail": "<p>The final discussion moves to broader implications.</p><ul><li>Reasoning models benefit from this too: much of their training generates reasoning steps, uses a reward, and runs an RL loop, feeding positive trajectories into the next round. Test-time scaling is inherently used to generate training data, and more sampling lets the model explore more of the solution space.</li><li>Asked whether repeated sampling becomes training-only with pass@1 inference, the lecturer sees that as the desired direction for efficiency, with a caveat: sharpening the model to one answer may lose the creativity and diversity that are valuable features.</li><li>On whether generator and verifier should be the same family, the lecturer calls it a good open research question. Models often judge their own generations better than another family's, but some models benefit from a different class of verifier. No specific study of same-size/same-family versus different-size/family is known.</li></ul>",
+      "terms": [
+        "reasoning models",
+        "pass@1",
+        "positive trajectories",
+        "creativity",
+        "model family"
+      ]
+    }
+  ]
+}
