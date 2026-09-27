@@ -472,6 +472,7 @@ function setupPosTrack(n) {
       if (!S.part || S.part.n !== n) return;
       /* 校正位置期间不要写记忆，否则「路过顶部」会被误记成位置 0 */
       if (Date.now() < restoringUntil) return;
+      if (!readArmed) return;   /* 用户还没自己滚动过，不要写记忆 */
       if (scrollY < 40) { POS[n] = 0; savePos(); return; }
       const ps = $$('#reader .para'); if (!ps.length) return;
       const line = scrollY + 90;
@@ -494,27 +495,41 @@ function paintRead(n) {
   renderOverall();
   renderParts();
 }
-let readDecks = [];
+let readDecks = [], readArmed = false;
 function setupReadTrack(n) {
   if (readDecks.length) { readDecks.forEach(t => clearTimeout(t)); }
   readDecks = [];
+  readArmed = false;          /* 切讲后等用户真的滚动过，再开始记进度 */
   let saveTimer = null;
   if (readDecks.h) removeEventListener('scroll', readDecks.h);
   const h = () => {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       if (!S.part || S.part.n !== n) return;
+      if (Date.now() < restoringUntil) return;   /* 恢复定位途中不记 */
+      if (!readArmed) return;                    /* 用户还没自己滚动过，不记 */
       const pct = scrollPct(S.part);
       if (pct > pctOf(n)) { setPct(n, pct, pct >= 92); paintRead(n); }
     }, 320);
   };
   readDecks.h = h;
   addEventListener('scroll', h, { passive: true });
-  h();
 }
+/* 用户自己滚动/按键才算数；程序化定位（切讲恢复、搜索跳转、目录跳转）不算 */
+(() => {
+  const arm = () => { if (Date.now() >= restoringUntil) readArmed = true; };
+  addEventListener('wheel', arm, { passive: true });
+  addEventListener('touchmove', arm, { passive: true });
+  addEventListener('keydown', e => {
+    if (['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].indexOf(e.key) >= 0) arm();
+  });
+})();
 
 function flash(el) { el.classList.add('hit', 'flash'); setTimeout(() => el.classList.remove('flash'), 1500); }
+/* 程序化跳转（目录/时间点/搜索）期间不记进度，避免「跳过去」被当成「读过了」 */
+function suppressRead(ms) { restoringUntil = Math.max(restoringUntil, Date.now() + (ms || 1200)); }
 function gotoTime(t, exact = false) {
+  suppressRead(1500);
   const paras = S.part.paras; let best = 0;
   for (let i = 0; i < paras.length; i++) if (paras[i].t <= t + (exact ? 0.5 : 0)) best = i;
   const el = $(`#p-${S.part.n}-${best}`); if (!el) return;

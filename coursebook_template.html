@@ -408,7 +408,10 @@ function openPart(n,opts){
     return `<button class="sec-link${isDone(part.n,i)?' done':''}" data-i="${i}" title="${esc(ts.title)}">
       <span class="n">${fmt(s.t)} · ${esc(ts.title)}</span></button>`;
   }).join('');
-  $$('#toc .sec-link').forEach(b=>b.onclick=()=>document.getElementById(`sec-${part.n}-${b.dataset.i}`).scrollIntoView());
+  $$('#toc .sec-link').forEach(b=>b.onclick=()=>{
+    suppressMarking(1500);
+    document.getElementById(`sec-${part.n}-${b.dataset.i}`).scrollIntoView();
+  });
   $$('#main .secchk').forEach(b=>b.onclick=e=>{
     e.stopPropagation();
     const i=+b.dataset.i, e0=partProg(part.n)[i];
@@ -460,10 +463,12 @@ function restorePosition(forceIndex){
 }
 /* 用户一旦自己滚动，就不要再抢滚动位置 */
 let userScrolled=false;
-addEventListener('wheel',()=>{userScrolled=true;},{passive:true});
-addEventListener('touchmove',()=>{userScrolled=true;},{passive:true});
+addEventListener('wheel',()=>{userScrolled=true;if(Date.now()>=restoringUntil)armProg(true);},{passive:true});
+addEventListener('touchmove',()=>{userScrolled=true;if(Date.now()>=restoringUntil)armProg(true);},{passive:true});
 addEventListener('keydown',e=>{
-  if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].indexOf(e.key)>=0)userScrolled=true;
+  if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].indexOf(e.key)>=0){
+    userScrolled=true; if(Date.now()>=restoringUntil)armProg(true);
+  }
 });
 /* 重新绘制本页所有进度相关 UI（侧栏 / 目录 / 节标题 / 本讲进度条） */
 function paintProgress(){
@@ -520,32 +525,40 @@ function setupSpy(){
   }),{rootMargin:'-64px 0px -72% 0px'});
   $$('#main section.sec').forEach(s=>spy.observe(s));
 }
-/* 自动完成：某节有足够比例滚入视口即视为已读；手动标记优先，不会被自动覆盖/清除 */
-let progSpy;
+/* 自动完成：只有当用户在本讲内「真的滚动过」之后，滚过的小节才算已读。
+   否则切讲/跳转时新讲刚渲染出来、或恢复到记忆位置，都会把沿途小节误标成已读
+   （曾出现刚跳到 p4 什么都没读就被标了 7 节）。
+   「读过」的判定：小节顶端已经越过视口顶部（说明它被完整滚过），或它整体
+   较短且有大半在视口内。手动标记始终优先，不被自动覆盖或清除。 */
+let progSpy, progArmed=false;
+function armProg(armed){progArmed=armed;}
+/* 程序化跳转（搜索/目录）期间不要自动标记，否则「跳过去」会被当成「读过了」 */
+function suppressMarking(ms){restoringUntil=Math.max(restoringUntil,Date.now()+(ms||1200));}
 function setupProgSpy(){
   if(progSpy)progSpy.disconnect();
-  const seen={};
-  progSpy=new IntersectionObserver(es=>{
-    let changed=false;
-    es.forEach(e=>{
-      if(!e.isIntersecting)return;
-      const i=+e.target.dataset.i;
-      if(seen[i])return;
-      const vis=e.intersectionRatio;
-      const h=e.boundingClientRect.height||1;
-      /* 短节滚过一半、长节滚过 40% 即标记 */
-      const need=h<420?0.5:0.4;
-      if(vis>=need){
-        seen[i]=1;
-        const el=partProg(part.n)[i];
-        const manual=el&&el.m;
-        if(!manual&&!isDone(part.n,i)){setDone(part.n,i,true,false);changed=true;}
-      }
-    });
-    if(changed)paintProgress();
-  },{threshold:[0,0.4,0.5,0.75,1]});
+  progArmed=false;          /* 每次开讲/切讲都重新武装，等用户滚动后再开始标记 */
+  progSpy=new IntersectionObserver(()=>{progSpyCb();},{threshold:[0,0.25,0.5,0.75,1]});
   $$('#main section.sec').forEach(sec=>progSpy.observe(sec));
   setupPosTrack();
+}
+function progSpyCb(){
+  if(!part||!progArmed)return;
+  if(Date.now()<restoringUntil)return;   /* 恢复定位途中不标记 */
+  const secs=$$('#main section.sec'); if(!secs.length)return;
+  const vh=innerHeight, line=scrollY+vh*0.6;
+  let changed=false;
+  for(const sec of secs){
+    const i=+sec.dataset.i;
+    const e=partProg(part.n)[i];
+    if(e&&(e.m||e.a))continue;            /* 已标记（含手动）跳过 */
+    const r=sec.getBoundingClientRect();
+    const goneAbove=r.bottom<=line;       /* 已经滚过这一节 */
+    const mostlyIn=Math.min(r.bottom,vh)-Math.max(r.top,0)>=r.height*0.75&&r.height<=vh*0.9;
+    if(goneAbove||mostlyIn){
+      if(!(e&&e.m)){setDone(part.n,i,true,false);changed=true;}
+    }
+  }
+  if(changed)paintProgress();
 }
 
 /* 记住「当前读到哪一小节」：取阅读线上方最靠下的那一节 */
@@ -556,6 +569,9 @@ function setupPosTrack(){
     if(!part)return;
     /* 校正位置期间不写记忆，避免把「程序化经过顶部」误记成位置 0 */
     if(Date.now()<restoringUntil)return;
+    /* 注意：这里不能武装自动标记。scrollIntoView（搜索结果/目录跳转）同样会触发
+       scroll 事件，把它当作「用户在阅读」会把沿途小节全部误标。武装只认真实输入。 */
+    if(!progArmed)return;
     const secs=$$('#main section.sec'); if(!secs.length)return;
     const line=scrollY+innerHeight*0.35;
     if(scrollY<40){rememberPos(part.n,0);return;}
@@ -590,7 +606,7 @@ function doSearch(q){
     closePanel(); const n=+b.dataset.n;
     /* 跨讲跳转：直接按目标小节打开，不要用记忆位置覆盖 */
     if(n!==part.n) openPart(n,{section:+b.dataset.i});
-    else document.getElementById(`sec-${n}-${b.dataset.i}`).scrollIntoView({behavior:'auto'});
+    else{suppressMarking(1500);document.getElementById(`sec-${n}-${b.dataset.i}`).scrollIntoView({behavior:'auto'});}
   });
 }
 function openPanel(){$('#overlay').classList.add('open');$('#searchPanel').classList.add('open');$('#q').focus();}
