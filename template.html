@@ -44,12 +44,43 @@ header.top{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:
 .tbtn:hover{color:var(--fg);border-color:var(--acc)}
 .tbtn.on{color:var(--acc);border-color:var(--acc)}
 
-.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:0;min-height:calc(100vh - 58px)}
+.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:0;min-height:calc(100vh - 58px);
+  transition:grid-template-columns .2s ease}
+body.sbcol .layout{grid-template-columns:46px minmax(0,1fr)}
+body.sbcol main{max-width:none}
+#sidebar{position:relative;min-width:0}
+#sbToggle{position:absolute;top:10px;left:10px;z-index:2;width:26px;height:26px;border-radius:7px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--fg2);font-size:12px;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+#sbToggle:hover{color:var(--fg);border-color:var(--acc)}
+#sbToggle .g{transition:transform .2s ease}
+body.sbcol #sbToggle .g{transform:rotate(180deg)}
 aside{position:sticky;top:58px;align-self:start;height:calc(100vh - 58px);overflow:auto;
-  border-right:1px solid var(--line);background:var(--bg2);padding:14px}
+  border-right:1px solid var(--line);background:var(--bg2);padding:14px;transition:padding .2s ease}
+body.sbcol aside{padding:46px 4px 20px;overflow:hidden}
+body.sbcol aside .sbody{opacity:0;pointer-events:none;width:0;height:0;overflow:hidden;
+  transition:opacity .12s ease}
+.rail{position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column;
+  align-items:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .14s ease .06s}
+body.sbcol .rail{opacity:1}
+.rail .rt{writing-mode:vertical-rl;font-size:10.5px;letter-spacing:1.6px;color:var(--fg3);text-transform:uppercase}
+.rail .rb{flex:1;width:4px;border-radius:99px;background:var(--bg3);overflow:hidden;display:flex;align-items:flex-end;min-height:40px}
+.rail .rb i{display:block;width:100%;height:0;background:linear-gradient(180deg,var(--acc),var(--acc2));transition:height .25s}
+.rail .rp{font:10px var(--mono);color:var(--acc)}
 aside h4{margin:6px 6px 8px;font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--fg3)}
 .partitem{display:grid;grid-template-columns:30px 1fr auto;gap:9px;align-items:start;width:100%;
   text-align:left;padding:9px 10px;border-radius:10px;color:var(--fg2);margin-bottom:3px}
+.pitem-prog{display:flex;align-items:center;gap:7px;margin-top:5px}
+.pitem-prog .t{flex:1;height:3px;border-radius:99px;background:var(--bg3);overflow:hidden}
+.pitem-prog .t i{display:block;height:100%;width:0;background:var(--acc);transition:width .25s}
+.pitem-prog .c{font:10.5px var(--mono);color:var(--fg3)}
+.partitem.read .pitem-prog .t i{background:var(--acc2)}
+.partitem.read .pitem-prog .c{color:var(--acc2)}
+.sbprog{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 11px;margin:4px 0 12px}
+.sbprog .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:11.5px;color:var(--fg3)}
+.sbprog .row b{font:12px var(--mono);color:var(--acc2)}
+.sbprog .t{height:5px;border-radius:99px;background:var(--bg3);overflow:hidden;margin-top:7px}
+.sbprog .t i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .25s}
 .partitem:hover{background:var(--bg3);color:var(--fg)}
 .partitem.active{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--fg)}
 .partitem .num{font:12px/1.5 var(--mono);color:var(--fg3);padding-top:1px}
@@ -72,7 +103,11 @@ main{padding:26px 30px 120px;max-width:1080px}
 .phead h1{margin:0 0 6px;font-size:27px;line-height:1.25}
 .pmeta{display:flex;gap:14px;flex-wrap:wrap;color:var(--fg3);font-size:13px;align-items:center}
 .pmeta .pill{border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg2)}
-.pbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0}
+.pbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 8px;border-top:1px solid var(--line);padding:10px 0 0}
+.pread{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:0 0 20px;
+  border-bottom:1px solid var(--line);padding:0 0 10px;font-size:12.5px;color:var(--fg3)}
+.pread .t{width:150px;height:4px;border-radius:99px;background:var(--bg3);overflow:hidden}
+.pread .t i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .25s}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px}
 .chip{font-size:12.5px;color:var(--fg2);border:1px solid var(--line);background:var(--bg2);
   border-radius:999px;padding:4px 11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -128,11 +163,18 @@ textarea.notes{width:100%;min-height:220px;resize:vertical;background:var(--bg);
 .stat{color:var(--fg3);font-size:12.5px;margin-top:8px}
 
 @media(max-width:900px){
-  .layout{grid-template-columns:1fr}
-  aside{position:static;height:auto;max-height:none;border-right:0;border-bottom:1px solid var(--line)}
+  .layout,body.sbcol .layout{grid-template-columns:1fr}
+  #sidebar{position:static;border-bottom:1px solid var(--line)}
+  aside{position:static;height:auto;max-height:none;border-right:0;border-bottom:0}
+  body.sbcol aside{display:none}
+  body.sbcol #sidebar{border-bottom:0}
+  #sbToggle{position:static;width:auto;height:26px;padding:0 10px;font-size:12px;gap:6px}
+  #sbToggle .g{transform:none!important}
+  .rail{display:none}
   main{padding:18px}
   .brand small{display:none}
 }
+@media print{#sidebar,#sbToggle,.rail,.pread{display:none!important}}
 @media(max-width:640px){
   header.top{position:static;flex-wrap:wrap;gap:8px;padding:8px 12px}
   .brand{order:1;flex:1 1 auto;font-size:15px}
@@ -157,6 +199,7 @@ textarea.notes{width:100%;min-height:220px;resize:vertical;background:var(--bg);
     <kbd>/</kbd>
   </div>
   <div class="tools">
+    <button class="tbtn" id="btnSide" title="收起/展开侧栏">☰</button>
     <button class="tbtn" id="btnGlossary" title="术语与概念索引">概念</button>
     <button class="tbtn" id="btnNotes" title="本讲笔记">笔记</button>
     <button class="tbtn" id="btnTheme" title="切换主题">◐</button>
@@ -164,14 +207,25 @@ textarea.notes{width:100%;min-height:220px;resize:vertical;background:var(--bg);
 </header>
 
 <div class="layout">
-  <aside>
-    <h4>Lectures</h4>
-    <div id="partlist"></div>
-    <div class="outline" id="outlinebox" hidden>
-      <h4>On this page</h4>
-      <div id="outlinelist"></div>
-    </div>
-  </aside>
+  <div id="sidebar">
+    <button id="sbToggle" type="button" aria-expanded="true" title="收起/展开侧栏"><span class="g">❯</span></button>
+    <aside>
+      <div class="sbody">
+        <div class="sbprog" id="sbprog"></div>
+        <h4>Lectures</h4>
+        <div id="partlist"></div>
+        <div class="outline" id="outlinebox" hidden>
+          <h4>On this page</h4>
+          <div id="outlinelist"></div>
+        </div>
+      </div>
+      <div class="rail" aria-hidden="true">
+        <span class="rt">Progress</span>
+        <span class="rb"><i id="railF"></i></span>
+        <span class="rp" id="railP">0%</span>
+      </div>
+    </aside>
+  </div>
   <main id="main"><div class="empty"><h2>选择左侧任意一讲开始</h2><p>字幕已全部离线内嵌，可直接搜索、跳转、记笔记。</p></div></main>
 </div>
 
@@ -213,7 +267,55 @@ const S = {
     set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
   }
 };
+/* ---------- 浏览进度 ----------
+   沿用的 cs329a:read 数组仍然有效（数组里的 part 视为 100% 学完）；
+   新数据存 cs329a:prog:v1 = {"<part>":{"pct":0-100,"done":0|1,"t":更新时间}} */
+const PROG_KEY = 'cs329a:prog:v1';
 const readSet = new Set(S.ls.get('cs329a:read', []));
+let PROG = (() => { const r = S.ls.get(PROG_KEY, null); return (r && typeof r === 'object') ? r : {}; })();
+const saveProg = () => { try { S.ls.set(PROG_KEY, PROG); } catch (e) {} };
+function entry(n) { const e = PROG[n]; return (e && typeof e === 'object') ? e : null; }
+/* 兼容旧数据：cs329a:read 里的讲号 = 已学完 */
+function pctOf(n) { const e = entry(n); if (e) return Math.max(0, Math.min(100, e.pct || 0)); return readSet.has(n) ? 100 : 0; }
+function doneOf(n) { const e = entry(n); if (e && e.done) return true; return readSet.has(n) || pctOf(n) >= 100; }
+function setPct(n, v, done) {
+  v = Math.max(0, Math.min(100, Math.round(v)));
+  PROG[n] = { pct: v, done: done === undefined ? v >= 100 : !!done, t: Date.now() };
+  if (PROG[n].done) readSet.add(n); else readSet.delete(n);
+  saveProg(); S.ls.set('cs329a:read', [...readSet]);
+}
+function markDone(n) { setPct(n, 100, true); }
+function resetPart(n) { delete PROG[n]; readSet.delete(n); saveProg(); S.ls.set('cs329a:read', [...readSet]); }
+function totalStats() {
+  let done = 0, sum = 0;
+  for (const p of DATA.parts) { sum += pctOf(p.n); if (doneOf(p.n)) done++; }
+  return { done, total: DATA.parts.length, pct: DATA.parts.length ? Math.round(sum / DATA.parts.length) : 0 };
+}
+/* 当前讲的阅读百分比：按最靠下的已滚过段落估算 */
+function scrollPct(part) {
+  const ps = $$('#reader .para'); if (!ps.length) return 0;
+  const line = scrollY + innerHeight * 0.62;
+  let i = 0; for (const p of ps) if (p.offsetTop <= line) i++;
+  return Math.round(i / ps.length * 100);
+}
+
+/* ---------- 侧栏收缩 ---------- */
+const mqMobile = () => matchMedia('(max-width:900px)').matches;
+function setSidebar(collapsed, persist) {
+  document.body.classList.toggle('sbcol', collapsed);
+  const b = $('#sbToggle');
+  if (b) b.setAttribute('aria-expanded', String(!collapsed));
+  const btn = $('#btnSide'); if (btn) btn.classList.toggle('on', collapsed);
+  if (persist) { try { localStorage.setItem('cs329a:sb', collapsed ? 'col' : 'open'); } catch (e) {} }
+}
+function initSidebar() {
+  let saved = null; try { saved = localStorage.getItem('cs329a:sb'); } catch (e) {}
+  setSidebar(saved ? saved === 'col' : mqMobile(), false);
+  matchMedia('(max-width:900px)').addEventListener('change', e => {
+    let s2 = null; try { s2 = localStorage.getItem('cs329a:sb'); } catch (err) {}
+    if (!s2) setSidebar(e.matches, false);
+  });
+}
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -240,14 +342,26 @@ function snippet(text, q, span = 190) {
 /* ---------- sidebar ---------- */
 function renderParts() {
   $('#partlist').innerHTML = DATA.parts.map(p => {
-    const read = readSet.has(p.n), note = !!S.ls.get(noteKey(p.n), '');
-    return `<button class="partitem" data-n="${p.n}">
+    const read = doneOf(p.n), note = !!S.ls.get(noteKey(p.n), ''), pct = pctOf(p.n);
+    return `<button class="partitem${read ? ' read' : ''}" data-n="${p.n}">
       <span class="num">${p.n}</span>
-      <span><span class="tt">${esc(p.title)}</span><span class="mt">${fmt(p.duration)} · ${p.paras.length} 段</span></span>
-      <span class="badges"><span class="dot ${read ? 'on' : ''}" title="已读"></span><span class="dot note ${note ? 'on' : ''}" title="有笔记"></span></span>
+      <span><span class="tt">${esc(p.title)}</span><span class="mt">${fmt(p.duration)} · ${p.paras.length} 段</span>
+        <span class="pitem-prog"><span class="t"><i style="width:${pct}%"></i></span><span class="c">${pct}%</span></span>
+      </span>
+      <span class="badges"><span class="dot ${read ? 'on' : ''}" title="已学完"></span><span class="dot note ${note ? 'on' : ''}" title="有笔记"></span></span>
     </button>`;
   }).join('');
   $$('.partitem').forEach(b => b.onclick = () => openPart(+b.dataset.n));
+  renderOverall();
+}
+function renderOverall() {
+  const st = totalStats();
+  const box = $('#sbprog');
+  if (box) box.innerHTML = `<div class="row"><span>总体进度</span><b>${st.pct}%</b></div>
+    <div class="row" style="margin-top:3px"><span>${st.done}/${st.total} 讲已学完</span></div>
+    <div class="t"><i style="width:${st.pct}%"></i></div>`;
+  const rf = $('#railF'); if (rf) rf.style.height = st.pct + '%';
+  const rp = $('#railP'); if (rp) rp.textContent = st.pct + '%';
 }
 
 function renderOutline(part) {
@@ -262,7 +376,6 @@ function renderOutline(part) {
 function openPart(n, opts = {}) {
   const part = DATA.parts.find(p => p.n === n); if (!part) return;
   S.part = part;
-  readSet.add(n); S.ls.set('cs329a:read', [...readSet]);
   renderParts();
   const prev = DATA.parts.find(p => p.n === n - 1), next = DATA.parts.find(p => p.n === n + 1);
   $('#main').innerHTML = `
@@ -278,10 +391,11 @@ function openPart(n, opts = {}) {
     <div class="pbar">
       ${prev ? `<button class="tbtn" data-go="${prev.n}">← Part ${prev.n}</button>` : ''}
       ${next ? `<button class="tbtn" data-go="${next.n}">Part ${next.n} →</button>` : ''}
-      <button class="tbtn" id="markUnread">标记未读</button>
+      <button class="tbtn" id="markDone">${doneOf(n) ? '标记未学完' : '标记本讲学完'}</button>
       <button class="tbtn" id="openNotes">本讲笔记</button>
       <button class="tbtn" id="toTop">回到顶部</button>
     </div>
+    <div class="pread" id="pread"></div>
     ${part.outline.length ? `<div class="chips">${part.outline.map(o =>
       `<button class="chip" data-t="${o.t}"><b>${fmt(o.t)}</b>${esc(o.label)}</button>`).join('')}</div>` : ''}
     <div id="reader"></div>`;
@@ -292,18 +406,50 @@ function openPart(n, opts = {}) {
   renderOutline(part);
   $$('#main [data-go]').forEach(b => b.onclick = () => openPart(+b.dataset.go));
   $$('#main .chip').forEach(b => b.onclick = () => gotoTime(+b.dataset.t));
-  $('#markUnread').onclick = () => { readSet.delete(n); S.ls.set('cs329a:read', [...readSet]); renderParts(); };
+  $('#markDone').onclick = () => { doneOf(n) ? resetPart(n) : markDone(n); openPart(n); };
   $('#openNotes').onclick = openNotes;
   $('#toTop').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
   document.body.classList.toggle('compact', S.compact);
   document.body.classList.toggle('nots', !S.ts);
   history.replaceState(null, '', `#p${n}`);
+  paintRead(n);
   setupSpy();
+  setupReadTrack(n);
   if (opts.highlight != null) {
     const el = $(`#p-${n}-${opts.highlight}`);
     if (el) { el.scrollIntoView({ block: 'center' }); flash(el); }
   } else if (opts.t) gotoTime(opts.t, true);
   else scrollTo({ top: 0 });
+}
+
+/* 本讲进度条：滚到哪儿就记到哪儿，只增不减（除非用户重置） */
+function paintRead(n) {
+  const box = $('#pread'); if (!box || !S.part) return;
+  const pct = pctOf(S.part.n), total = S.part.paras.length;
+  const at = Math.round(total * pct / 100);
+  box.innerHTML = `<span>本讲进度</span><span class="t"><i style="width:${pct}%"></i></span>
+    <b style="color:var(--acc2);font:12px var(--mono)">${pct}%</b>
+    <span>约 ${at}/${total} 段</span>${doneOf(S.part.n) ? '<span style="color:var(--acc2)">✓ 已学完</span>' : ''}`;
+  renderOverall();
+  renderParts();
+}
+let readDecks = [];
+function setupReadTrack(n) {
+  if (readDecks.length) { readDecks.forEach(t => clearTimeout(t)); }
+  readDecks = [];
+  let saveTimer = null;
+  if (readDecks.h) removeEventListener('scroll', readDecks.h);
+  const h = () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      if (!S.part || S.part.n !== n) return;
+      const pct = scrollPct(S.part);
+      if (pct > pctOf(n)) { setPct(n, pct, pct >= 92); paintRead(n); }
+    }, 320);
+  };
+  readDecks.h = h;
+  addEventListener('scroll', h, { passive: true });
+  h();
 }
 
 function flash(el) { el.classList.add('hit', 'flash'); setTimeout(() => el.classList.remove('flash'), 1500); }
@@ -448,6 +594,9 @@ addEventListener('hashchange', () => { const m = location.hash.match(/^#p(\d+)/)
 /* ---------- boot ---------- */
 function boot() {
   document.documentElement.dataset.theme = S.ls.get('cs329a:theme', 'dark');
+  initSidebar();
+  $('#sbToggle').onclick = () => setSidebar(!document.body.classList.contains('sbcol'), true);
+  $('#btnSide').onclick = () => setSidebar(!document.body.classList.contains('sbcol'), true);
   renderParts(); renderGlossary();
   const m = location.hash.match(/^#p(\d+)/);
   if (m) openPart(+m[1]);

@@ -44,18 +44,55 @@ select#partsel{background:var(--panel);color:var(--fg);border:1px solid var(--li
 #btnLang{font-weight:700;min-width:52px}
 .tools{display:flex;gap:6px;align-items:center;flex:0 0 auto}
 
-.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1400px;margin:0 auto}
-aside{position:sticky;top:56px;align-self:start;height:calc(100vh - 56px);overflow:auto;padding:16px 14px 60px;border-right:1px solid var(--line)}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1400px;margin:0 auto;
+  transition:grid-template-columns .2s ease}
+body.sbcol .layout{grid-template-columns:46px minmax(0,1fr)}
+body.sbcol main{max-width:none}
+aside{position:sticky;top:56px;align-self:start;height:calc(100vh - 56px);overflow:auto;
+  padding:16px 14px 60px;border-right:1px solid var(--line);transition:padding .2s ease}
+#sidebar{position:relative;min-width:0}
+#sbToggle{position:absolute;top:10px;left:10px;z-index:2;width:26px;height:26px;border-radius:7px;
+  border:1px solid var(--line);background:var(--panel);color:var(--fg2);font-size:12px;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0}
+#sbToggle:hover{color:var(--fg);border-color:var(--acc)}
+#sbToggle .g{transition:transform .2s ease}
+body.sbcol #sbToggle .g{transform:rotate(180deg)}
+body.sbcol aside{padding:46px 4px 60px;overflow:hidden}
+body.sbcol aside .sbody{opacity:0;pointer-events:none;width:0;height:0;overflow:hidden;
+  transition:opacity .12s ease}
+body.sbcol aside .rail{opacity:1}
+.rail{position:absolute;top:46px;left:0;right:0;bottom:0;display:flex;flex-direction:column;
+  align-items:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .14s ease .06s}
+.rail .rt{writing-mode:vertical-rl;font-size:10.5px;letter-spacing:1.6px;color:var(--fg3);text-transform:uppercase}
+.rail .rb{flex:1;width:4px;border-radius:99px;background:var(--panel2);overflow:hidden;display:flex;align-items:flex-end;min-height:40px}
+.rail .rb i{display:block;width:100%;background:linear-gradient(180deg,var(--acc),var(--acc2));height:0;transition:height .25s}
+.rail .rp{font:10px var(--mono);color:var(--acc)}
 aside h4{margin:6px 6px 8px;font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--fg3)}
 .lec{display:flex;gap:9px;width:100%;text-align:left;padding:7px 9px;border-radius:9px;color:var(--fg2);margin-bottom:2px}
 .lec:hover{background:var(--panel2);color:var(--fg)}
 .lec.active{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--fg)}
 .lec b{font:12px var(--mono);color:var(--fg3);padding-top:2px}
-.sec-link{display:block;width:100%;text-align:left;padding:5px 9px;border-radius:7px;color:var(--fg3);
-  font-size:12.8px;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lec .lwrap{min-width:0;flex:1}
+.lec .lt{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lec .lbar{display:flex;align-items:center;gap:6px;margin-top:5px}
+.lec .lbar .t{flex:1;height:3px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.lec .lbar .t i{display:block;height:100%;width:0;background:var(--acc);transition:width .25s}
+.lec .lbar .c{font:10.5px var(--mono);color:var(--fg3);flex:0 0 auto}
+.lec.done .lbar .t i{background:var(--acc2)}
+.lec.done .lbar .c{color:var(--acc2)}
+.sec-link{display:flex;align-items:center;gap:6px;width:100%;text-align:left;padding:5px 9px;border-radius:7px;color:var(--fg3);
+  font-size:12.8px;border-left:2px solid transparent}
 .sec-link:hover{color:var(--fg);background:var(--panel2)}
 .sec-link.active{color:var(--acc);border-left-color:var(--acc)}
+.sec-link .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.sec-link.done .n{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--acc2) 55%,transparent)}
+.sec-link.done::before{content:"✓";flex:0 0 auto;color:var(--acc2);font-size:11px}
 .tocwrap{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+.sbprog{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 11px;margin:4px 0 12px}
+.sbprog .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:11.5px;color:var(--fg3)}
+.sbprog .row b{font:12px var(--mono);color:var(--acc2)}
+.sbprog .t{height:5px;border-radius:99px;background:var(--panel2);overflow:hidden;margin-top:7px}
+.sbprog .t i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .25s}
 
 main{padding:26px 34px 140px;max-width:1020px}
 .lechead h1{margin:0 0 8px;font-size:30px;line-height:1.2;letter-spacing:-.4px}
@@ -65,9 +102,19 @@ main{padding:26px 34px 140px;max-width:1020px}
   border-radius:10px;padding:14px 16px;margin-bottom:26px;color:var(--fg2)}
 section.sec{padding:22px 0 10px;border-top:1px solid var(--line);scroll-margin-top:70px}
 section.sec:first-of-type{border-top:0}
-.sec h2{margin:0 0 12px;font-size:22px;line-height:1.3;letter-spacing:-.2px}
+.sec h2{margin:0 0 12px;font-size:22px;line-height:1.3;letter-spacing:-.2px;display:flex;align-items:flex-start;gap:9px}
 .sec h2 .t{font:12px var(--mono);color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,transparent);
-  border-radius:6px;padding:3px 8px;margin-right:10px;vertical-align:2px}
+  border-radius:6px;padding:3px 8px;vertical-align:2px;flex:0 0 auto;margin-top:2px}
+.sec h2 .h{flex:1;min-width:0}
+.secchk{flex:0 0 auto;width:24px;height:24px;margin-top:1px;border-radius:50%;border:1.5px solid var(--line);
+  background:var(--panel);color:transparent;font-size:12px;line-height:1;display:flex;align-items:center;
+  justify-content:center;padding:0;transition:.15s}
+.secchk:hover{border-color:var(--acc2);color:var(--fg3)}
+section.sec.done .secchk{background:var(--acc2);border-color:var(--acc2);color:#fff}
+section.sec.done h2{color:var(--fg3)}
+.secbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:-4px 0 14px;font-size:12.5px;color:var(--fg3)}
+.secbar .t{width:130px;height:4px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.secbar .t i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .25s}
 .prose{color:var(--fg2);max-width:74ch}
 .prose p{margin:0 0 10px}
 .prose ul{margin:0 0 10px;padding-left:22px}
@@ -115,8 +162,18 @@ mark{background:var(--hit);color:var(--hitfg);border-radius:3px;padding:0 2px}
 #lightbox .x{position:absolute;top:16px;right:22px;color:#fff;font-size:30px;opacity:.8}
 #lightbox .cap{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:#cfd6e6;font:12.5px var(--mono)}
 
-@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
-  main{padding:20px}.brand small{display:none}}
+@media(max-width:900px){
+  .layout,body.sbcol .layout{grid-template-columns:1fr}
+  #sidebar{position:static;border-bottom:1px solid var(--line)}
+  aside{position:static;height:auto;border-right:0;border-bottom:0}
+  body.sbcol aside{display:none}
+  body.sbcol #sidebar{border-bottom:0}
+  #sbToggle{position:static;width:auto;height:26px;padding:0 10px;font-size:12px;gap:6px}
+  #sbToggle .g{transform:none!important}
+  .rail{display:none}
+  body.sbcol aside{opacity:1}
+  main{padding:20px}.brand small{display:none}
+}
 @media(max-width:640px){
   header.top{position:static;flex-wrap:wrap;gap:8px;padding:8px 12px}
   .brand{order:1;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
@@ -134,7 +191,7 @@ mark{background:var(--hit);color:var(--hitfg);border-radius:3px;padding:0 2px}
   aside{padding:12px 10px 24px}
   select#partsel{text-overflow:ellipsis}
 }
-@media print{header.top,aside,.overlay,.panel,#lightbox,#progress{display:none!important}
+@media print{header.top,aside,#sidebar,.overlay,.panel,#lightbox,#progress,.secchk,.secbar{display:none!important}
   .layout{display:block}main{max-width:none;padding:0}.figs{grid-template-columns:1fr 1fr}
   body.ponly .prose,body.ponly .chain{display:block} section.sec{break-inside:avoid}}
 </style>
@@ -147,6 +204,7 @@ mark{background:var(--hit);color:var(--hitfg);border-radius:3px;padding:0 2px}
   <div class="searchwrap"><span class="ic">⌕</span>
     <input id="q" type="search" autocomplete="off"><kbd>/</kbd></div>
   <div class="tools">
+    <button class="tbtn" id="btnSide" data-i18n="sideBtn" title="收起/展开侧栏">☰</button>
     <button class="tbtn" id="btnPonly" data-i18n="ponly">只看图</button>
     <button class="tbtn" id="btnLang">EN</button>
     <button class="tbtn" id="btnTheme" title="theme">◐</button>
@@ -154,10 +212,21 @@ mark{background:var(--hit);color:var(--hitfg);border-radius:3px;padding:0 2px}
 </header>
 
 <div class="layout">
-  <aside>
-    <h4 data-i18n="lectures">讲座</h4><div id="leclist"></div>
-    <div class="tocwrap"><h4 data-i18n="toc">本讲目录</h4><div id="toc"></div></div>
-  </aside>
+  <div id="sidebar">
+    <button id="sbToggle" type="button" aria-expanded="true"></button>
+    <aside>
+      <div class="sbody">
+        <div class="sbprog" id="sbprog"></div>
+        <h4 data-i18n="lectures">讲座</h4><div id="leclist"></div>
+        <div class="tocwrap"><h4 data-i18n="toc">本讲目录</h4><div id="toc"></div></div>
+      </div>
+      <div class="rail" aria-hidden="true">
+        <span class="rt" id="railT">CS329A</span>
+        <span class="rb"><i id="railF"></i></span>
+        <span class="rp" id="railP">0%</span>
+      </div>
+    </aside>
+  </div>
   <main id="main"></main>
 </div>
 
@@ -177,11 +246,17 @@ const I18N = {
       original:"原讲座", listen:"听原声/同步播放", sections:"节", figures:"图", searchTitle:"搜索",
       sectionUnit:"节（全 9 讲）", noMatch:"无匹配。", typeKw:"输入关键词。", figure:"图", summary:"本讲速览",
       problem:"问题", why:"成因", how:"解法",
+      sideBtn:"☰", sideShow:"展开侧栏", sideHide:"收起侧栏", overall:"总体进度", doneUnit:"节",
+      done:"已完成", notDone:"未完成", markDone:"标记完成", markUndone:"取消完成",
+      progOf:"本讲进度", markAll:"本讲全部完成", resetPart:"重置本讲",
       langBtn:"EN", htmlLang:"zh-CN"},
   en:{brandMain:"Illustrated Notes", lectures:"Lectures", toc:"On this page", ponly:"Figures only", searchPh:"Search notes / terms…",
       original:"Original talk", listen:"Audio + slides", sections:"sections", figures:"figures", searchTitle:"Search",
       sectionUnit:" sections (all 9 lectures)", noMatch:"No match.", typeKw:"Type a keyword.", figure:"Fig",
       summary:"Overview", problem:"Problem", why:"Why", how:"How",
+      sideBtn:"☰", sideShow:"Show sidebar", sideHide:"Hide sidebar", overall:"Overall progress", doneUnit:"sections",
+      done:"Done", notDone:"Not done", markDone:"Mark done", markUndone:"Undo",
+      progOf:"Lecture progress", markAll:"Mark lecture done", resetPart:"Reset lecture",
       langBtn:"中文", htmlLang:"en"}
 };
 const LANG = (()=>{ try{return localStorage.getItem('cs329a:lang')||DEFAULT_LANG}catch(e){return DEFAULT_LANG} })();
@@ -195,6 +270,49 @@ const yt=(id,t)=>`https://www.youtube.com/watch?v=${id}&t=${Math.floor(t)}s`;
 const tr=o=>o?o[LANG]||o.en||o.zh:o;
 let part=null;
 
+/* ---------- 浏览进度（localStorage） ----------
+   cs329a:prog:v1 = {"<part>":{"<sectionIndex>":{"a":1,"m":1}}}
+   a = 自动（滚动经过视口即完成）  m = 手动点击（优先级高于自动） */
+const PROG_KEY='cs329a:prog:v1';
+let PROG={};
+(function(){const raw=LS.get(PROG_KEY,null); if(raw&&typeof raw==='object')PROG=raw;})();
+let progTimer;
+function saveProg(){clearTimeout(progTimer);progTimer=setTimeout(()=>{try{LS.set(PROG_KEY,PROG)}catch(e){}},250);}
+function partProg(n){const o=PROG[n];return (o&&typeof o==='object')?o:{};}
+function isDone(n,i){const e=partProg(n)[i];return !!(e&&(e.m||e.a));}
+function setDone(n,i,val,manual){
+  const all=PROG[n]&&typeof PROG[n]==='object'?PROG[n]:(PROG[n]={});
+  if(val){const e=all[i]&&typeof all[i]==='object'?all[i]:(all[i]={}); manual?e.m=1:e.a=1;}
+  else{ if(all[i]){manual?delete all[i].m:delete all[i].a; if(!all[i].m&&!all[i].a)delete all[i];} }
+  if(!Object.keys(all).length)delete PROG[n];
+  saveProg();
+}
+function countDone(n){const p=DATA.parts.find(x=>x.n===n); if(!p)return 0;
+  let c=0; for(let i=0;i<p.sections.length;i++) if(isDone(n,i))c++; return c;}
+function totalStats(){let done=0,total=0;
+  for(const p of DATA.parts){total+=p.sections.length;done+=countDone(p.n);}
+  return {done,total,pct:total?Math.round(done/total*100):0};}
+
+/* ---------- 侧栏收缩 ---------- */
+const mqMobile=()=>matchMedia('(max-width:900px)').matches;
+function setSidebar(collapsed,persist){
+  document.body.classList.toggle('sbcol',collapsed);
+  const b=$('#sbToggle');
+  if(b){b.setAttribute('aria-expanded',String(!collapsed));
+    b.title=collapsed?T('sideShow'):T('sideHide');
+    b.innerHTML=`<span class="g">❯</span>${mqMobile()?`<span>${T(collapsed?'sideShow':'sideHide')}</span>`:''}`;}
+  if(persist){try{localStorage.setItem('cs329a:sb',collapsed?'col':'open')}catch(e){}}
+  const t=$('#railT'); if(t)t.textContent=document.documentElement.lang.startsWith('zh')?'学习进度':'PROGRESS';
+}
+function initSidebar(){
+  let saved=null; try{saved=localStorage.getItem('cs329a:sb')}catch(e){}
+  setSidebar(saved?saved==='col':mqMobile(),false);
+  matchMedia('(max-width:900px)').addEventListener('change',e=>{
+    let s2=null; try{s2=localStorage.getItem('cs329a:sb')}catch(err){}
+    if(!s2)setSidebar(e.matches,false);
+  });
+}
+
 function boot(){
   document.documentElement.dataset.theme=LS.get('cs329a:cbtheme','light');
   document.documentElement.lang=I18N[LANG].htmlLang;
@@ -202,6 +320,8 @@ function boot(){
   $('#btnPonly').classList.toggle('on', document.body.classList.contains('ponly'));
   $$('[data-i18n]').forEach(e=>{const k=e.dataset.i18n; if(k!=='ponly')e.textContent=T(k);});
   $('#q').placeholder=T('searchPh'); $('#btnPonly').textContent=T('ponly');
+  initSidebar();
+  $('#sbToggle').onclick=()=>setSidebar(!document.body.classList.contains('sbcol'),true);
   $('#partsel').onchange=e=>openPart(+e.target.value);
   $('#btnLang').onclick=()=>{try{localStorage.setItem('cs329a:lang', LANG==='zh'?'en':'zh')}catch(e){}; location.reload();};
   const m=location.hash.match(/^#p(\d+)/);
@@ -209,9 +329,23 @@ function boot(){
 }
 function renderChrome(){
   $('#partsel').innerHTML=DATA.parts.map(p=>`<option value="${p.n}">${esc(tr(p).title)}</option>`).join('');
-  $('#leclist').innerHTML=DATA.parts.map(p=>
-    `<button class="lec" data-n="${p.n}"><b>${p.n}</b><span>${esc(tr(p).title)}</span></button>`).join('');
+  $('#leclist').innerHTML=DATA.parts.map(p=>{
+    const tot=p.sections.length, d=countDone(p.n), pct=tot?Math.round(d/tot*100):0;
+    return `<button class="lec${d&&d===tot?' done':''}" data-n="${p.n}"><b>${p.n}</b>
+      <span class="lwrap"><span class="lt">${esc(tr(p).title)}</span>
+        <span class="lbar"><span class="t"><i style="width:${pct}%"></i></span><span class="c">${d}/${tot}</span></span>
+      </span></button>`;}).join('');
   $$('#leclist .lec').forEach(b=>b.onclick=()=>openPart(+b.dataset.n));
+  renderOverall();
+}
+function renderOverall(){
+  const st=totalStats();
+  const box=$('#sbprog');
+  if(box)box.innerHTML=`<div class="row"><span>${T('overall')}</span><b>${st.pct}%</b></div>
+    <div class="row" style="margin-top:3px"><span>${st.done}/${st.total} ${T('doneUnit')||T('sections')}</span></div>
+    <div class="t"><i style="width:${st.pct}%"></i></div>`;
+  const rf=$('#railF'); if(rf)rf.style.height=st.pct+'%';
+  const rp=$('#railP'); if(rp)rp.textContent=st.pct+'%';
 }
 function openPart(n){
   part=DATA.parts.find(p=>p.n===n); if(!part)return;
@@ -230,15 +364,53 @@ function openPart(n){
       </div>
     </div>
     <div class="summary"><b>${T('summary')}：</b>${esc(tp.summary)}</div>
+    <div class="secbar" id="partProg"></div>
     ${part.sections.map((s,i)=>secHTML(s,i)).join('')}`;
   $('#toc').innerHTML=part.sections.map((s,i)=>{
-    const ts=tr(s); return `<button class="sec-link" data-i="${i}" title="${esc(ts.title)}">${fmt(s.t)} · ${esc(ts.title)}</button>`;
+    const ts=tr(s);
+    return `<button class="sec-link${isDone(part.n,i)?' done':''}" data-i="${i}" title="${esc(ts.title)}">
+      <span class="n">${fmt(s.t)} · ${esc(ts.title)}</span></button>`;
   }).join('');
   $$('#toc .sec-link').forEach(b=>b.onclick=()=>document.getElementById(`sec-${part.n}-${b.dataset.i}`).scrollIntoView());
+  $$('#main .secchk').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const i=+b.dataset.i, e0=partProg(part.n)[i];
+    /* 已手动标记 -> 取消；仅有自动标记（或没有）-> 记为手动完成 */
+    if(e0 && e0.m){setDone(part.n,i,false,true);setDone(part.n,i,false,false);}
+    else setDone(part.n,i,true,true);
+    paintProgress();
+  });
   $$('#main .term').forEach(b=>b.onclick=()=>{const t=b.dataset.term; $('#q').value=t; doSearch(t); openPanel();});
   $$('#main figure img').forEach(im=>im.onclick=()=>lightbox(im));
   history.replaceState(null,'',`#p${n}`);
+  paintProgress();
   setupSpy();
+  setupProgSpy();
+}
+/* 重新绘制本页所有进度相关 UI（侧栏 / 目录 / 节标题 / 本讲进度条） */
+function paintProgress(){
+  if(!part)return;
+  const n=part.n, tot=part.sections.length, d=countDone(n), pct=tot?Math.round(d/tot*100):0;
+  $$('#main section.sec').forEach(sec=>{
+    const i=+sec.dataset.i, on=isDone(n,i);
+    sec.classList.toggle('done',on);
+    const b=sec.querySelector('.secchk');
+    if(b){b.textContent=on?'✓':''; b.setAttribute('aria-pressed',String(on));
+      b.title=on?T('markUndone'):T('markDone');}
+  });
+  const pb=$('#partProg');
+  if(pb)pb.innerHTML=`<span>${T('progOf')}</span><span class="t"><i style="width:${pct}%"></i></span>
+    <b style="color:var(--acc2);font:12px var(--mono)">${d}/${tot} · ${pct}%</b>
+    <button class="tbtn" id="markAll" style="padding:3px 9px;font-size:12px">${T('markAll')}</button>
+    <button class="tbtn" id="resetPart" style="padding:3px 9px;font-size:12px">${T('resetPart')}</button>`;
+  const ma=$('#markAll'); if(ma)ma.onclick=()=>{for(let i=0;i<tot;i++)setDone(n,i,true,true);paintProgress();};
+  const rp=$('#resetPart'); if(rp)rp.onclick=()=>{
+    if(!confirm(T('resetPart')+'?'))return;
+    for(let i=0;i<tot;i++){setDone(n,i,false,true);setDone(n,i,false,false);}
+    paintProgress();};
+  $$('#toc .sec-link').forEach(b=>b.classList.toggle('done',isDone(n,+b.dataset.i)));
+  renderChrome();
+  const sel=$('#partsel'); if(sel)sel.value=n;
 }
 function secHTML(s,i){
   const ts=tr(s);
@@ -247,8 +419,9 @@ function secHTML(s,i){
       <img loading="lazy" src="${f.file}" alt="Part ${part.n}" data-cap="Part ${part.n} · ${fmt(f.t)}">
       <figcaption><span>${T('figure')} ${i+1}.${k+1}</span><a href="${yt(part.id,f.t)}" target="_blank" rel="noopener">${fmt(f.t)} ↗</a></figcaption>
     </figure>`).join('');
-  return `<section class="sec" id="sec-${part.n}-${i}">
-    <h2><span class="t">${fmt(s.t)}</span>${esc(ts.title)}</h2>
+  return `<section class="sec" id="sec-${part.n}-${i}" data-i="${i}">
+    <h2><span class="t">${fmt(s.t)}</span><span class="h">${esc(ts.title)}</span>
+      <button class="secchk" data-i="${i}" aria-pressed="false"></button></h2>
     <div class="chain">
       <div class="node p"><span class="tag">${T('problem')}</span><div>${ts.problem}</div></div>
       <div class="node w"><span class="tag">${T('why')}</span><div>${ts.why}</div></div>
@@ -269,6 +442,33 @@ function setupSpy(){
   }),{rootMargin:'-64px 0px -72% 0px'});
   $$('#main section.sec').forEach(s=>spy.observe(s));
 }
+/* 自动完成：某节有足够比例滚入视口即视为已读；手动标记优先，不会被自动覆盖/清除 */
+let progSpy;
+function setupProgSpy(){
+  if(progSpy)progSpy.disconnect();
+  const seen={};
+  progSpy=new IntersectionObserver(es=>{
+    let changed=false;
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const i=+e.target.dataset.i;
+      if(seen[i])return;
+      const vis=e.intersectionRatio;
+      const h=e.boundingClientRect.height||1;
+      /* 短节滚过一半、长节滚过 40% 即标记 */
+      const need=h<420?0.5:0.4;
+      if(vis>=need){
+        seen[i]=1;
+        const el=partProg(part.n)[i];
+        const manual=el&&el.m;
+        if(!manual&&!isDone(part.n,i)){setDone(part.n,i,true,false);changed=true;}
+      }
+    });
+    if(changed)paintProgress();
+  },{threshold:[0,0.4,0.5,0.75,1]});
+  $$('#main section.sec').forEach(sec=>progSpy.observe(sec));
+}
+
 function lightbox(im){$('#lbimg').src=im.src;$('#lbcap').textContent=im.dataset.cap||'';$('#lightbox').classList.add('open');}
 $('#lightbox').onclick=()=>$('#lightbox').classList.remove('open');
 

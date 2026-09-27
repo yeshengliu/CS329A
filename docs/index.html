@@ -19,6 +19,11 @@ h1{font-size:34px;line-height:1.2;margin:0 0 8px;letter-spacing:-.4px}
 .card h2{margin:0 0 6px;font-size:19px}
 .card p{margin:0;color:var(--fg2);font-size:14.5px}
 .card .tag{display:inline-block;font-size:12px;color:var(--acc2);border:1px solid var(--line);border-radius:999px;padding:1px 9px;margin-left:8px;vertical-align:2px}
+.prog{display:none;align-items:center;gap:9px;margin-top:12px;padding-top:11px;border-top:1px dashed var(--line)}
+.prog.on{display:flex}
+.prog .t{flex:1;height:5px;border-radius:99px;background:#eef1f7;overflow:hidden}
+.prog .t i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .3s}
+.prog .c{font:11.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--acc2);white-space:nowrap}
 footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--fg3);font-size:13.5px}
 </style>
 </head>
@@ -29,17 +34,21 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
   <p class="lead">基于 9 讲课程视频自动生成的配图讲解文档：每讲按真实话题切成若干小节，用 <b>问题 → 成因 → 解法</b> 的逻辑链讲解，并配上对应时间点的幻灯片截图。讲解为面向有 agent 部署经验工程师的技术深度，中英双语。</p>
 
   <div class="cards">
-    <a class="card" href="coursebook.html">
+    <a class="card" href="coursebook.html" data-prog="cb">
       <h2>配图讲解 · 中文 <span class="tag">默认</span></h2>
-      <p>9 讲 · 247 节 · 428 张幻灯片。支持全文搜索、小节目录、图片灯箱，右上角可切换 English。</p>
+      <p>9 讲 · 247 节 · 428 张幻灯片。支持全文搜索、小节目录、图片灯箱，右上角可切换 English。<br>
+        <span style="font-size:13.5px">侧栏（讲座 + 目录）可一键收起，手机上默认收起；阅读进度按小节记录在本地。</span></p>
+      <div class="prog"><span class="t"><i></i></span><span class="c"></span></div>
     </a>
-    <a class="card" href="coursebook.en.html">
+    <a class="card" href="coursebook.en.html" data-prog="cb">
       <h2>Illustrated Notes · English</h2>
       <p>Same document in English. Problem → Why → How per section, with the matching slides.</p>
+      <div class="prog"><span class="t"><i></i></span><span class="c"></span></div>
     </a>
-    <a class="card" href="cs329a.html">
+    <a class="card" href="cs329a.html" data-prog="doc">
       <h2>字幕全文检索文档</h2>
       <p>9 讲逐段字幕（带时间戳与 YouTube 直达链接）、术语/概念索引、每讲笔记与进度标记。</p>
+      <div class="prog"><span class="t"><i></i></span><span class="c"></span></div>
     </a>
   </div>
 
@@ -49,5 +58,40 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
     <a href="https://github.com/yeshengliu/CS329A">GitHub</a>
   </footer>
 </div>
+<script>
+/* 读取两个阅读页写在 localStorage 里的进度，做一张入口摘要。
+   纯本地读取；没有记录、或浏览器禁用存储时保持隐藏，不影响静态站点。 */
+(function(){
+  var TOT_CB = {sections: 247, parts: 9};
+  var TOT_DOC = {parts: 9};
+  function ls(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
+  function paint(card, pct, label){
+    if (!card || !(pct > 0)) return;
+    var box = card.querySelector('.prog');
+    box.querySelector('i').style.width = Math.min(100, pct) + '%';
+    box.querySelector('.c').textContent = pct + '% · ' + label;
+    box.classList.add('on');
+  }
+  // 配图讲解：{"<part>":{"<section>":{"a":1,"m":1}}}
+  var cb = ls('cs329a:prog:v1'), cbDone = 0;
+  if (cb && typeof cb === 'object') {
+    for (var p in cb) { var sec = cb[p]; if (sec && typeof sec === 'object')
+      for (var i in sec) { var e = sec[i]; if (e && (e.m || e.a)) cbDone++; } }
+  }
+  paint(document.querySelector('[data-prog="cb"]'),
+        Math.round(cbDone / TOT_CB.sections * 100), cbDone + '/' + TOT_CB.sections + ' 节');
+
+  // 字幕文档：cs329a:prog:v1 里 pct，兼容旧的 cs329a:read 数组
+  var d = ls('cs329a:prog:v1'), sum = 0, done = 0, read = ls('cs329a:read') || [];
+  for (var n = 1; n <= TOT_DOC.parts; n++) {
+    var e2 = d && d[n], pct2 = 0;
+    if (e2 && typeof e2 === 'object') pct2 = e2.pct || 0;
+    else if (read.indexOf(n) >= 0) pct2 = 100;
+    sum += pct2; if (pct2 >= 100) done++;
+  }
+  paint(document.querySelector('[data-prog="doc"]'),
+        Math.round(sum / TOT_DOC.parts), done + '/' + TOT_DOC.parts + ' 讲');
+})();
+</script>
 </body>
 </html>
