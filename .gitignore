@@ -12,3 +12,10 @@
 *.pyc
 .DS_Store
 node_modules/
+
+# local build/verification tooling (recreated on demand, never published)
+/.venv/
+/.uvcache/
+/.uvpython/
+/.npmcache/
+/.pw-browsers/

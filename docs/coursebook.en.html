@@ -271,11 +271,46 @@ const tr=o=>o?o[LANG]||o.en||o.zh:o;
 let part=null;
 
 /* ---------- 浏览进度（localStorage） ----------
-   cs329a:prog:v1 = {"<part>":{"<sectionIndex>":{"a":1,"m":1}}}
-   a = 自动（滚动经过视口即完成）  m = 手动点击（优先级高于自动） */
-const PROG_KEY='cs329a:prog:v1';
+   cs329a:cb:prog = {"<part>":{"<sectionIndex>":{"a":1,"m":1}}}
+   a = 自动（滚动经过视口即完成）  m = 手动点击（优先级高于自动）
+   cs329a:cb:pos  = {"<part>":{"i":<最后可见小节>,"s":"<小节id>"}}
+   切讲时回到上次读到的小节；什么都没读过就回到顶部。 */
+const PROG_KEY='cs329a:cb:prog';
+const POS_KEY='cs329a:cb:pos';
 let PROG={};
 (function(){const raw=LS.get(PROG_KEY,null); if(raw&&typeof raw==='object')PROG=raw;})();
+function keyLen(v){return (v&&typeof v==='object')?Object.keys(v).length:0;}
+
+/* 记忆：每讲最后读到的小节 */
+let POS=(function(){
+  const out={};
+  const saved=LS.get(POS_KEY,null);
+  if(saved&&typeof saved==='object')return saved;
+  /* 一次性迁移：旧版把进度写在与字幕页共用的 cs329a:prog:v1 里（结构不同，会互相破坏）。
+     这里只认领本页形状的条目（值为 {a|m}），并把它挪到 cs329a:cb:prog。 */
+  const legacy=LS.get('cs329a:prog:v1',null), keep={}, rest={};
+  if(legacy&&typeof legacy==='object'){
+    for(const k in legacy){
+      const v=legacy[k]; if(!v||typeof v!=='object')continue;
+      const looksOurs=Object.keys(v).some(i=>{const e=v[i];return e&&typeof e==='object'&&(e.a||e.m);});
+      if(looksOurs)keep[k]=v; else rest[k]=v;
+    }
+    if(Object.keys(keep).length)LS.set(PROG_KEY,keep);
+    /* 字幕页的条目（{pct,done}）原样留在旧键里，由它自己认领 */
+    LS.set('cs329a:prog:v1',rest);
+    /* 用最后完成的那一节反推一个合理的初始位置 */
+    for(const k in keep){
+      const done=Object.keys(keep[k]).map(Number).filter(function(i){const e=keep[k][i];return e&&(e.a||e.m);});
+      if(done.length)out[k]={i:Math.max.apply(null,done)};
+    }
+  }
+  if(Object.keys(out).length)LS.set(POS_KEY,out);
+  return out;
+})();
+function savePos(){try{LS.set(POS_KEY,POS)}catch(e){}}
+let posTimer;
+function rememberPos(n,i){POS[n]={i:i};clearTimeout(posTimer);posTimer=setTimeout(savePos,300);}
+
 let progTimer;
 function saveProg(){clearTimeout(progTimer);progTimer=setTimeout(()=>{try{LS.set(PROG_KEY,PROG)}catch(e){}},250);}
 function partProg(n){const o=PROG[n];return (o&&typeof o==='object')?o:{};}
@@ -347,7 +382,8 @@ function renderOverall(){
   const rf=$('#railF'); if(rf)rf.style.height=st.pct+'%';
   const rp=$('#railP'); if(rp)rp.textContent=st.pct+'%';
 }
-function openPart(n){
+function openPart(n,opts){
+  opts=opts||{};
   part=DATA.parts.find(p=>p.n===n); if(!part)return;
   renderChrome();
   $('#partsel').value=n;
@@ -386,7 +422,48 @@ function openPart(n){
   paintProgress();
   setupSpy();
   setupProgSpy();
+  /* 切讲后回到本讲上次读到的小节；没有记录则回到顶部。
+     明确指定了目标小节（如搜索结果跳转）时，以目标为准。 */
+  restorePosition(opts.section);
 }
+
+/* 把视口放回上次读到的小节。
+   切讲瞬间新讲的图片还在懒加载，页面高度会继续增长，一次 scrollIntoView 会被
+   随后的布局变化顶偏（曾经出现同一讲一次落在 312、一次落在 0 的情况）。
+   所以：先定位，再在若干时间点重复校正；用户一旦自己滚动就立刻停止校正。 */
+let restoreToken=0;
+let restoringUntil=0;   /* 校正期间不要记录位置，否则会把「路过顶部」误记成位置 0 */
+function restorePosition(forceIndex){
+  let idx=null;
+  if(forceIndex!=null)idx=forceIndex;
+  else{const p=POS[part.n]; if(p&&typeof p.i==='number')idx=p.i;}
+  const want=(idx==null||idx<=0)?null:idx;   /* null = 回到顶部 */
+  const n=part.n, token=++restoreToken;
+  userScrolled=false;
+  restoringUntil=Date.now()+1600;
+  const apply=()=>{
+    if(token!==restoreToken||userScrolled||!part||part.n!==n)return false;
+    const el=want==null?null:document.getElementById(`sec-${n}-${want}`);
+    if(want!=null&&el){
+      /* scrollIntoView 受 smooth 影响，这里用绝对定位更可控 */
+      window.scrollTo({top:el.offsetTop-64,behavior:'auto'});
+    }else{
+      window.scrollTo({top:0,behavior:'auto'});
+    }
+    return true;
+  };
+  apply();
+  /* 在布局逐步稳定的几个时间点重复校正 */
+  [80,240,600,1100].forEach(t=>setTimeout(apply,t));
+  setTimeout(()=>{restoringUntil=0;},1300);
+}
+/* 用户一旦自己滚动，就不要再抢滚动位置 */
+let userScrolled=false;
+addEventListener('wheel',()=>{userScrolled=true;},{passive:true});
+addEventListener('touchmove',()=>{userScrolled=true;},{passive:true});
+addEventListener('keydown',e=>{
+  if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].indexOf(e.key)>=0)userScrolled=true;
+});
 /* 重新绘制本页所有进度相关 UI（侧栏 / 目录 / 节标题 / 本讲进度条） */
 function paintProgress(){
   if(!part)return;
@@ -467,6 +544,25 @@ function setupProgSpy(){
     if(changed)paintProgress();
   },{threshold:[0,0.4,0.5,0.75,1]});
   $$('#main section.sec').forEach(sec=>progSpy.observe(sec));
+  setupPosTrack();
+}
+
+/* 记住「当前读到哪一小节」：取阅读线上方最靠下的那一节 */
+let posTrackH=null;
+function setupPosTrack(){
+  if(posTrackH)removeEventListener('scroll',posTrackH);
+  posTrackH=()=>{
+    if(!part)return;
+    /* 校正位置期间不写记忆，避免把「程序化经过顶部」误记成位置 0 */
+    if(Date.now()<restoringUntil)return;
+    const secs=$$('#main section.sec'); if(!secs.length)return;
+    const line=scrollY+innerHeight*0.35;
+    if(scrollY<40){rememberPos(part.n,0);return;}
+    let cur=0;
+    for(const sec of secs){ if(sec.offsetTop<=line)cur=+sec.dataset.i; else break; }
+    rememberPos(part.n,cur);
+  };
+  addEventListener('scroll',posTrackH,{passive:true});
 }
 
 function lightbox(im){$('#lbimg').src=im.src;$('#lbcap').textContent=im.dataset.cap||'';$('#lightbox').classList.add('open');}
@@ -490,8 +586,10 @@ function doSearch(q){
       <div class="rq">Part ${r.p.n} · ${fmt(r.s.t)} · ${esc(t)}</div>
       <div class="rt">${esc(r.ts.title)}</div></button>`;}).join('');
   $$('#searchResults .result').forEach(b=>b.onclick=()=>{
-    closePanel(); const n=+b.dataset.n; if(n!==part.n) openPart(n);
-    setTimeout(()=>document.getElementById(`sec-${n}-${b.dataset.i}`).scrollIntoView(),60);
+    closePanel(); const n=+b.dataset.n;
+    /* 跨讲跳转：直接按目标小节打开，不要用记忆位置覆盖 */
+    if(n!==part.n) openPart(n,{section:+b.dataset.i});
+    else document.getElementById(`sec-${n}-${b.dataset.i}`).scrollIntoView({behavior:'auto'});
   });
 }
 function openPanel(){$('#overlay').classList.add('open');$('#searchPanel').classList.add('open');$('#q').focus();}

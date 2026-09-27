@@ -65,24 +65,25 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
   var TOT_CB = {sections: 247, parts: 9};
   var TOT_DOC = {parts: 9};
   function ls(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
-  function paint(card, pct, label){
-    if (!card || !(pct > 0)) return;
+  // count 有值就显示，避免「读了 1 节但四舍五入成 0%」被当成没读
+  function paint(card, pct, label, count){
+    if (!card || !(count > 0)) return;
     var box = card.querySelector('.prog');
     box.querySelector('i').style.width = Math.min(100, pct) + '%';
-    box.querySelector('.c').textContent = pct + '% · ' + label;
+    box.querySelector('.c').textContent = (pct > 0 ? pct + '% · ' : '') + label;
     box.classList.add('on');
   }
-  // 配图讲解：{"<part>":{"<section>":{"a":1,"m":1}}}
-  var cb = ls('cs329a:prog:v1'), cbDone = 0;
+  // 配图讲解：cs329a:cb:prog = {"<part>":{"<section>":{"a":1,"m":1}}}
+  var cb = ls('cs329a:cb:prog') || ls('cs329a:prog:v1'), cbDone = 0;
   if (cb && typeof cb === 'object') {
     for (var p in cb) { var sec = cb[p]; if (sec && typeof sec === 'object')
       for (var i in sec) { var e = sec[i]; if (e && (e.m || e.a)) cbDone++; } }
   }
   paint(document.querySelector('[data-prog="cb"]'),
-        Math.round(cbDone / TOT_CB.sections * 100), cbDone + '/' + TOT_CB.sections + ' 节');
+        Math.round(cbDone / TOT_CB.sections * 100), cbDone + '/' + TOT_CB.sections + ' 节', cbDone);
 
-  // 字幕文档：cs329a:prog:v1 里 pct，兼容旧的 cs329a:read 数组
-  var d = ls('cs329a:prog:v1'), sum = 0, done = 0, read = ls('cs329a:read') || [];
+  // 字幕文档：cs329a:doc:prog 里 pct，兼容旧的 cs329a:read 数组
+  var d = ls('cs329a:doc:prog') || ls('cs329a:prog:v1'), sum = 0, done = 0, read = ls('cs329a:read') || [];
   for (var n = 1; n <= TOT_DOC.parts; n++) {
     var e2 = d && d[n], pct2 = 0;
     if (e2 && typeof e2 === 'object') pct2 = e2.pct || 0;
@@ -90,7 +91,7 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
     sum += pct2; if (pct2 >= 100) done++;
   }
   paint(document.querySelector('[data-prog="doc"]'),
-        Math.round(sum / TOT_DOC.parts), done + '/' + TOT_DOC.parts + ' 讲');
+        Math.round(sum / TOT_DOC.parts), done + '/' + TOT_DOC.parts + ' 讲', sum);
 })();
 </script>
 </body>

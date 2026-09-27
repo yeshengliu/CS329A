@@ -269,10 +269,32 @@ const S = {
 };
 /* ---------- 浏览进度 ----------
    沿用的 cs329a:read 数组仍然有效（数组里的 part 视为 100% 学完）；
-   新数据存 cs329a:prog:v1 = {"<part>":{"pct":0-100,"done":0|1,"t":更新时间}} */
-const PROG_KEY = 'cs329a:prog:v1';
+   本页数据存 cs329a:doc:prog = {"<part>":{"pct":0-100,"done":0|1,"t":更新时间}}
+   cs329a:doc:pos = {"<part>":<上次读到的段落序号>}，切讲时回到那里。
+   注意：配图讲解页用 cs329a:cb:prog / cs329a:cb:pos，两页结构不同，故意分开存。 */
+const PROG_KEY = 'cs329a:doc:prog';
+const POS_KEY  = 'cs329a:doc:pos';
 const readSet = new Set(S.ls.get('cs329a:read', []));
-let PROG = (() => { const r = S.ls.get(PROG_KEY, null); return (r && typeof r === 'object') ? r : {}; })();
+let PROG = (function () {
+  const r = S.ls.get(PROG_KEY, null);
+  if (r && typeof r === 'object') return r;
+  /* 迁移：旧版与配图页共用 cs329a:prog:v1；只认领本页形状（{pct,done}）的条目 */
+  const legacy = S.ls.get('cs329a:prog:v1', null), mine = {}, rest = {};
+  if (legacy && typeof legacy === 'object') {
+    for (const k in legacy) {
+      const v = legacy[k];
+      if (!v || typeof v !== 'object') continue;
+      if ('pct' in v || 'done' in v) mine[k] = v; else rest[k] = v;
+    }
+    if (Object.keys(mine).length) S.ls.set(PROG_KEY, mine);
+    S.ls.set('cs329a:prog:v1', rest);   /* 配图页的条目留在原处，它自己会认领 */
+  }
+  return mine;
+})();
+let POS = (function () {
+  const r = S.ls.get(POS_KEY, null); return (r && typeof r === 'object') ? r : {};
+})();
+const savePos = () => { try { S.ls.set(POS_KEY, POS); } catch (e) {} };
 const saveProg = () => { try { S.ls.set(PROG_KEY, PROG); } catch (e) {} };
 function entry(n) { const e = PROG[n]; return (e && typeof e === 'object') ? e : null; }
 /* 兼容旧数据：cs329a:read 里的讲号 = 已学完 */
@@ -415,11 +437,50 @@ function openPart(n, opts = {}) {
   paintRead(n);
   setupSpy();
   setupReadTrack(n);
-  if (opts.highlight != null) {
-    const el = $(`#p-${n}-${opts.highlight}`);
-    if (el) { el.scrollIntoView({ block: 'center' }); flash(el); }
-  } else if (opts.t) gotoTime(opts.t, true);
-  else scrollTo({ top: 0 });
+  setupPosTrack(n);
+  /* 回到本讲上次读到的段落；没有记录就从顶部开始。搜索结果跳转时以目标段落为准。 */
+  restorePosition(opts.highlight != null ? opts.highlight : POS[n]);
+
+}
+
+/* 回到上次读到的段落；定位后校正一次，避免懒加载/布局变化把位置带偏 */
+let restoringUntil = 0;
+function restorePosition(idx) {
+  restoringUntil = Date.now() + 1400;
+  setTimeout(() => { restoringUntil = 0; }, 1200);
+  if (!S.part) { scrollTo({ top: 0, behavior: 'auto' }); return; }
+  /* 没有记录，或记录就是第一段：确定性回到顶部（不继承上一讲的像素偏移） */
+  if (idx == null || idx <= 0) {
+    scrollTo({ top: 0, behavior: 'auto' });
+    setTimeout(() => { if (scrollY > 80) scrollTo({ top: 0, behavior: 'auto' }); }, 200);
+    return;
+  }
+  const go = () => {
+    const el = $(`#p-${S.part.n}-${idx}`);
+    if (el) el.scrollIntoView({ block: 'start', behavior: 'auto' });
+  };
+  go();
+  setTimeout(go, 200);
+}
+/* 记住当前读到的段落（视口上方最靠下的那一段） */
+let posH = null, posT = null;
+function setupPosTrack(n) {
+  if (posH) removeEventListener('scroll', posH);
+  posH = () => {
+    clearTimeout(posT);
+    posT = setTimeout(() => {
+      if (!S.part || S.part.n !== n) return;
+      /* 校正位置期间不要写记忆，否则「路过顶部」会被误记成位置 0 */
+      if (Date.now() < restoringUntil) return;
+      if (scrollY < 40) { POS[n] = 0; savePos(); return; }
+      const ps = $$('#reader .para'); if (!ps.length) return;
+      const line = scrollY + 90;
+      let cur = 0;
+      for (const p of ps) { if (p.offsetTop <= line) cur = +p.dataset.i; else break; }
+      POS[n] = cur; savePos();
+    }, 300);
+  };
+  addEventListener('scroll', posH, { passive: true });
 }
 
 /* 本讲进度条：滚到哪儿就记到哪儿，只增不减（除非用户重置） */
