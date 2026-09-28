@@ -316,9 +316,9 @@ function totalStats() {
 /* 当前讲的阅读百分比：按最靠下的已滚过段落估算 */
 function scrollPct(part) {
   const ps = $$('#reader .para'); if (!ps.length) return 0;
-  /* 与配图页一致：读到视口中部才算这一单位读完 */
-  const line = scrollY + innerHeight * 0.5;
-  let i = 0; for (const p of ps) if (p.offsetTop <= line) i++;
+  /* 与配图页一致：某一段的底端完全划过视口顶端，才算这一段读过去了 */
+  let i = 0;
+  for (const p of ps) { if (p.getBoundingClientRect().bottom <= 0) i++; else break; }
   return Math.round(i / ps.length * 100);
 }
 
@@ -496,10 +496,31 @@ function paintRead(n) {
   renderOverall();
   renderParts();
 }
+/* 触底停留 5 秒才算「学完」；中途滚走取消计时，再次触底重新计 */
+const BOTTOM_HOLD_MS = 5000;
+let bottomTimer = null;
+function atDocBottom() {
+  return scrollY + innerHeight >= document.documentElement.scrollHeight - 8;
+}
+function cancelBottomTimer() { if (bottomTimer) { clearTimeout(bottomTimer); bottomTimer = null; } }
+function scheduleBottomDone(n) {
+  if (doneOf(n)) { cancelBottomTimer(); return; }
+  if (!readArmed || Date.now() < restoringUntil || !atDocBottom()) { cancelBottomTimer(); return; }
+  /* 每次 scroll 事件都重置：只有真正在底部停住 5 秒才算学完 */
+  cancelBottomTimer();
+  bottomTimer = setTimeout(() => {
+    bottomTimer = null;
+    if (!S.part || S.part.n !== n) return;
+    if (!readArmed || Date.now() < restoringUntil) return;
+    if (!atDocBottom()) return;
+    markDone(n); paintRead(n);
+  }, BOTTOM_HOLD_MS);
+}
 let readDecks = [], readArmed = false;
 function setupReadTrack(n) {
   if (readDecks.length) { readDecks.forEach(t => clearTimeout(t)); }
   readDecks = [];
+  cancelBottomTimer();
   readArmed = false;          /* 切讲后等用户真的滚动过，再开始记进度 */
   let saveTimer = null;
   if (readDecks.h) removeEventListener('scroll', readDecks.h);
@@ -510,7 +531,8 @@ function setupReadTrack(n) {
       if (Date.now() < restoringUntil) return;   /* 恢复定位途中不记 */
       if (!readArmed) return;                    /* 用户还没自己滚动过，不记 */
       const pct = scrollPct(S.part);
-      if (pct > pctOf(n)) { setPct(n, pct, pct >= 92); paintRead(n); }
+      if (pct > pctOf(n)) { setPct(n, pct, false); paintRead(n); }
+      scheduleBottomDone(n);   /* 触底停留 5 秒才算学完 */
     }, 320);
   };
   readDecks.h = h;
