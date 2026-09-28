@@ -525,11 +525,11 @@ function setupSpy(){
   }),{rootMargin:'-64px 0px -72% 0px'});
   $$('#main section.sec').forEach(s=>spy.observe(s));
 }
-/* 自动完成：只有当用户在本讲内「真的滚动过」之后，滚过的小节才算已读。
-   否则切讲/跳转时新讲刚渲染出来、或恢复到记忆位置，都会把沿途小节误标成已读
-   （曾出现刚跳到 p4 什么都没读就被标了 7 节）。
-   「读过」的判定：小节顶端已经越过视口顶部（说明它被完整滚过），或它整体
-   较短且有大半在视口内。手动标记始终优先，不被自动覆盖或清除。 */
+/* 自动完成：只有当用户在本讲内「真的滚动过」之后，才可能标记；跳转/恢复不算。
+   （否则切讲时新讲刚渲染出来、或恢复到记忆位置，都会把沿途小节误标成已读。）
+   判定时机：某一节的下一节已经到达视口中部，才认为这一节读完了。
+   也就是「读到下一节的中段」才把上一节划掉，而不是它刚一离开视口顶部就算。
+   手动标记始终优先，不被自动覆盖或清除。 */
 let progSpy, progArmed=false;
 function armProg(armed){progArmed=armed;}
 /* 程序化跳转（搜索/目录）期间不要自动标记，否则「跳过去」会被当成「读过了」 */
@@ -543,19 +543,25 @@ function setupProgSpy(){
 }
 function progSpyCb(){
   if(!part||!progArmed)return;
-  if(Date.now()<restoringUntil)return;   /* 恢复定位途中不标记 */
+  if(Date.now()<restoringUntil)return;   /* 恢复定位/跳转途中不标记 */
   const secs=$$('#main section.sec'); if(!secs.length)return;
-  const vh=innerHeight, line=scrollY+vh*0.6;
+  const mid=innerHeight/2;               /* 视口中部：下一节到这里，上一节才算读完 */
   let changed=false;
-  for(const sec of secs){
-    const i=+sec.dataset.i;
+  for(let k=0;k<secs.length;k++){
+    const sec=secs[k], i=+sec.dataset.i;
     const e=partProg(part.n)[i];
-    if(e&&(e.m||e.a))continue;            /* 已标记（含手动）跳过 */
-    const r=sec.getBoundingClientRect();
-    const goneAbove=r.bottom<=line;       /* 已经滚过这一节 */
-    const mostlyIn=Math.min(r.bottom,vh)-Math.max(r.top,0)>=r.height*0.75&&r.height<=vh*0.9;
-    if(goneAbove||mostlyIn){
-      if(!(e&&e.m)){setDone(part.n,i,true,false);changed=true;}
+    if(e&&(e.m||e.a))continue;           /* 已标记（含手动）跳过 */
+    const next=secs[k+1];
+    if(!next){
+      /* 最后一节：滚到页面底部即视为读完 */
+      if(scrollY+innerHeight>=document.body.scrollHeight-8){
+        setDone(part.n,i,true,false);changed=true;
+      }
+      continue;
+    }
+    /* 下一节的顶端到达（或越过）视口中部 -> 当前这一节读完 */
+    if(next.getBoundingClientRect().top<=mid){
+      setDone(part.n,i,true,false);changed=true;
     }
   }
   if(changed)paintProgress();
@@ -574,10 +580,13 @@ function setupPosTrack(){
     if(!progArmed)return;
     const secs=$$('#main section.sec'); if(!secs.length)return;
     const line=scrollY+innerHeight*0.35;
-    if(scrollY<40){rememberPos(part.n,0);return;}
-    let cur=0;
-    for(const sec of secs){ if(sec.offsetTop<=line)cur=+sec.dataset.i; else break; }
-    rememberPos(part.n,cur);
+    if(scrollY<40){rememberPos(part.n,0);}
+    else{
+      let cur=0;
+      for(const sec of secs){ if(sec.offsetTop<=line)cur=+sec.dataset.i; else break; }
+      rememberPos(part.n,cur);
+    }
+    progSpyCb();   /* 同一处统一重新判定，避免挂多个 scroll 监听 */
   };
   addEventListener('scroll',posTrackH,{passive:true});
 }

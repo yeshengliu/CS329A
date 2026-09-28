@@ -316,7 +316,8 @@ function totalStats() {
 /* 当前讲的阅读百分比：按最靠下的已滚过段落估算 */
 function scrollPct(part) {
   const ps = $$('#reader .para'); if (!ps.length) return 0;
-  const line = scrollY + innerHeight * 0.62;
+  /* 与配图页一致：读到视口中部才算这一单位读完 */
+  const line = scrollY + innerHeight * 0.5;
   let i = 0; for (const p of ps) if (p.offsetTop <= line) i++;
   return Math.round(i / ps.length * 100);
 }
